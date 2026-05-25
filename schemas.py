@@ -30,6 +30,7 @@ class AgentID(str, Enum):
     EARNINGS    = "earnings"
     COMPETITIVE = "competitive"
     AAN         = "AAN"
+    EXTERNAL    = "external"   # any third-party or provider-agnostic agent (e.g. OpenClaw)
 
 
 class ParseStatus(str, Enum):

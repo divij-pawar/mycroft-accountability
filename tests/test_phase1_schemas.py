@@ -13,10 +13,10 @@ import uuid
 from datetime import datetime, timezone
 import unittest
 
-# Allow running from project root
+# Allow running from accountability_layer/ directory
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from accountability_layer.schemas import (
+from schemas import (
     AgentID,
     Citation,
     ConfidenceClassification,
@@ -28,7 +28,7 @@ from accountability_layer.schemas import (
     RunStatus,
     ValidationError,
 )
-from accountability_layer.directive import (
+from directive import (
     ACTIVE_DIRECTIVE,
     DIRECTIVE_V1_0_0,
     get_active_directive,
@@ -256,7 +256,7 @@ class TestRunSessionHappyPath(unittest.TestCase):
 
     def test_directive_version_stored(self):
         rs = make_run_session()
-        self.assertEqual(rs.directive_version, "v1.0.0")
+        self.assertEqual(rs.directive_version, "v1.1.0")
 
     def test_aan_not_triggered_by_default(self):
         rs = make_run_session()
@@ -458,7 +458,7 @@ class TestDirective(unittest.TestCase):
 
     def test_active_directive_is_v1(self):
         d = get_active_directive()
-        self.assertEqual(d.version, "v1.0.0")
+        self.assertEqual(d.version, "v1.1.0")
 
     def test_directive_text_contains_thought_log_block(self):
         d = get_active_directive()
@@ -525,7 +525,7 @@ class TestSerialisationRoundTrip(unittest.TestCase):
     def test_run_session_to_dict_contains_directive_version(self):
         rs = make_run_session()
         d = rs.to_dict()
-        self.assertEqual(d["directive_version"], "v1.0.0")
+        self.assertEqual(d["directive_version"], "v1.1.0")
 
     def test_run_id_in_reasoning_object_matches_session(self):
         run_id = uuid.uuid4()

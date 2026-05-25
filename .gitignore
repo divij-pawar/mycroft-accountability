@@ -1,3 +1,11 @@
 */__pycache__
 .env
 *.pyc
+/.claude
+/openclaw
+# Runtime data — never commit DB or persisted run history
+web/data/*.db
+web/data/*.json
+web/data/*.json.migrated
+# Accidental pip install artefacts
+=*
