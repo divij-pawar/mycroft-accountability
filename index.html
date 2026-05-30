@@ -112,29 +112,26 @@
     <script>
         async function loadDocumentationIndex() {
             const container = document.getElementById('docs-container');
+            const repo = 'divij-pawar/mycroft-accountability';
             
             try {
-                // Fetch the docs directory listing
-                const response = await fetch('docs/');
-                const html = await response.text();
+                // Use GitHub API to fetch docs folder contents
+                const response = await fetch(`https://api.github.com/repos/${repo}/contents/docs`);
+                if (!response.ok) throw new Error('Failed to fetch from GitHub API');
                 
-                // Parse HTML to extract file names
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(html, 'text/html');
-                const links = doc.querySelectorAll('a[href$=".html"]');
-                
-                const files = Array.from(links)
-                    .map(link => link.getAttribute('href'))
-                    .filter(href => href && !href.startsWith('?') && href !== '../')
+                const files = await response.json();
+                const htmlFiles = files
+                    .filter(file => file.name.endsWith('.html'))
+                    .map(file => file.name)
                     .sort();
 
-                if (files.length === 0) {
+                if (htmlFiles.length === 0) {
                     container.innerHTML = '<div class="empty-state">No documentation files found.</div>';
                     return;
                 }
 
                 // Create card for each file
-                files.forEach(file => {
+                htmlFiles.forEach(file => {
                     const title = file
                         .replace('.html', '')
                         .replace(/_/g, ' ')
@@ -154,7 +151,7 @@
                 });
             } catch (error) {
                 console.error('Error loading documentation index:', error);
-                // Fallback: manually list known files
+                // Fallback: hardcoded list (update this manually if needed)
                 const fallbackFiles = [
                     'accountability_layer_week1.html',
                     'inversion_audit_engine_week3.html',
