@@ -125,6 +125,16 @@
         <p class="field-hint" id="failureHint">Agent responds correctly every time.</p>
       </div>
 
+      <!-- Consistency probe — ADR-06 mitigation -->
+      <div class="field-group">
+        <label class="field-label toggle-label">
+          <input type="checkbox" id="cfgConsistencyProbe" class="toggle-checkbox" />
+          Consistency Probe
+          <span class="field-hint-inline">(ADR-06)</span>
+        </label>
+        <p class="field-hint">Runs query twice and scores conclusion agreement. Doubles API calls.</p>
+      </div>
+
       <div class="divider"></div>
       <h3 class="section-title">Active Directive</h3>
       <div class="directive-badge" id="directiveBadge">v1.0.0</div>

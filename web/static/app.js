@@ -43,9 +43,10 @@
   const cfgConf        = $('cfgConf');
   const cfgConfLabel   = $('cfgConfLabel');
   const confClassHint  = $('confClassHint');
-  const cfgFailureMode = $('cfgFailureMode');
-  const failureHint    = $('failureHint');
-  const directiveBadge = $('directiveBadge');
+  const cfgFailureMode      = $('cfgFailureMode');
+  const failureHint         = $('failureHint');
+  const cfgConsistencyProbe = $('cfgConsistencyProbe');
+  const directiveBadge      = $('directiveBadge');
 
   const chatMessages = $('chatMessages');
   const btnToggleCtx = $('btnToggleContext');
@@ -149,6 +150,7 @@
     confClassHint.textContent = confHint(cfg.confidence_score ?? 0.75);
     failureHint.textContent   = failureHintText(cfg.failure_mode || 'none');
     geminiFields.style.display = cfg.provider === 'gemini' ? '' : 'none';
+    cfgConsistencyProbe.checked = cfg.consistency_probe ?? false;
   }
 
   async function pushConfig(patch) {
@@ -194,6 +196,9 @@
   cfgFailureMode.addEventListener('change', () => {
     failureHint.textContent = failureHintText(cfgFailureMode.value);
     pushConfig({ failure_mode: cfgFailureMode.value });
+  });
+  cfgConsistencyProbe.addEventListener('change', () => {
+    pushConfig({ consistency_probe: cfgConsistencyProbe.checked });
   });
 
   // ── Scope toggle ──────────────────────────────────────────────────────────────
@@ -285,6 +290,46 @@
     </div>`;
   }
 
+  // ── Consistency badge ─────────────────────────────────────────────────────────
+
+  function consistencyHtml(c) {
+    if (!c) return '';
+    if (c.agreement === 'UNKNOWN') {
+      return `<div class="msg-consistency">
+        <span class="badge badge-neutral">Consistency</span>
+        <span class="badge-neutral">UNKNOWN</span>
+        ${c.probe_error ? `<span class="consistency-note">${esc(c.probe_error)}</span>` : ''}
+      </div>`;
+    }
+    const cls = { HIGH: 'badge-success', MEDIUM: 'badge-warning', LOW: 'badge-halt' }[c.agreement] || 'badge-neutral';
+    const diverged = c.divergent_numbers && c.divergent_numbers.length
+      ? ` <span class="consistency-note">divergent: ${c.divergent_numbers.map(esc).join(', ')}</span>` : '';
+    return `<div class="msg-consistency">
+      <span class="badge-neutral">Consistency</span>
+      <span class="badge ${cls}">${esc(c.agreement)}</span>
+      <span class="consistency-score">${esc(String(c.score))}</span>${diverged}
+    </div>`;
+  }
+
+  // ── Claims summary ────────────────────────────────────────────────────────────
+
+  const CLAIM_ICONS = { citation: '🔗', quantitative: '📊', hedge: '⚠', causal: '→' };
+  const CLAIM_CLS   = { citation: 'claim-citation', quantitative: 'claim-quant', hedge: 'claim-hedge', causal: 'claim-causal' };
+
+  function claimsHtml(claims) {
+    if (!claims || claims.length === 0) return '';
+    const pills = claims.map(c => {
+      const icon = CLAIM_ICONS[c.claim_type] || '·';
+      const cls  = CLAIM_CLS[c.claim_type]   || '';
+      const tip  = esc(c.context || c.text);
+      return `<span class="claim-pill ${cls}" title="${tip}">${icon} ${esc(c.text.slice(0, 40))}${c.text.length > 40 ? '…' : ''}</span>`;
+    }).join('');
+    return `<details class="msg-claims">
+      <summary>Claims <span class="badge-neutral">${claims.length}</span> <span class="claims-hint">ADR-06 — unverified</span></summary>
+      <div class="claims-pills">${pills}</div>
+    </details>`;
+  }
+
   function appendAgentBubble(data) {
     clearEmpty(chatMessages);
     const outer = document.createElement('div');
@@ -331,6 +376,8 @@
     }
 
     body += confLineHtml(data);
+    body += consistencyHtml(data.consistency);
+    body += claimsHtml(data.claims);
     body += sourcesHtml(data.data_sources);
 
     if (data.run_id) {
@@ -658,6 +705,51 @@
       html += detailSection('Directive',
         detailRow('Version', `<span class="badge-neutral">${esc(run.session.directive_version)}</span>`)
       );
+    }
+
+    // ── Consistency probe (ADR-06) ──
+    if (run.consistency) {
+      const c   = run.consistency;
+      const cls = { HIGH: 'badge-success', MEDIUM: 'badge-warning', LOW: 'badge-halt' }[c.agreement] || 'badge-neutral';
+      let cHtml = [
+        detailRow('Agreement', `<span class="badge ${cls}">${esc(c.agreement)}</span>`),
+        detailRow('Score',     `<span class="badge-neutral">${esc(String(c.score))}</span>`),
+        detailRow('Word overlap',   `<span class="badge-neutral">${esc(String(c.word_overlap))}</span>`),
+        detailRow('Number overlap', `<span class="badge-neutral">${esc(String(c.number_overlap))}</span>`),
+      ].join('');
+      if (c.divergent_numbers && c.divergent_numbers.length) {
+        cHtml += detailRow('Divergent values', `<span class="detail-error-inline">${c.divergent_numbers.map(esc).join(', ')}</span>`);
+      }
+      if (c.probe_conclusion) {
+        cHtml += `<div class="detail-probe-conclusion">
+          <div class="detail-label" style="margin-bottom:4px">Probe conclusion</div>
+          <div class="detail-md md">${renderMd(c.probe_conclusion)}</div>
+        </div>`;
+      }
+      if (c.probe_error) {
+        cHtml += detailRow('Error', `<span class="detail-error-inline">${esc(c.probe_error)}</span>`);
+      }
+      html += detailSection('Consistency Probe — ADR-06', cHtml);
+    }
+
+    // ── Claims (ADR-06) ──
+    if (run.claims && run.claims.length) {
+      const claimRows = run.claims.map(c => {
+        const icon = { citation: '🔗', quantitative: '📊', hedge: '⚠', causal: '→' }[c.claim_type] || '·';
+        const cls  = { citation: 'claim-citation', quantitative: 'claim-quant', hedge: 'claim-hedge', causal: 'claim-causal' }[c.claim_type] || '';
+        const verBadge = c.verified
+          ? `<span class="badge badge-success">verified</span>`
+          : `<span class="badge-neutral">unverified</span>`;
+        const urlLink = c.source_url && c.source_url !== 'N/A'
+          ? ` <a class="claim-url" href="${esc(c.source_url)}" target="_blank" rel="noopener">${esc(c.source_url.slice(0, 50))}…</a>` : '';
+        return `<div class="detail-claim">
+          <span class="claim-pill ${cls}">${icon} ${esc(c.claim_type)}</span>
+          <span class="detail-claim-text">${esc(c.text)}</span>
+          ${verBadge}${urlLink}
+          <div class="detail-claim-context">${esc(c.context)}</div>
+        </div>`;
+      }).join('');
+      html += detailSection(`Claims — ${run.claims.length} extracted`, claimRows);
     }
 
     // ── Reviewer Flags (UN-05) ──

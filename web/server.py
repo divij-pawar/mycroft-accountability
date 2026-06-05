@@ -39,6 +39,8 @@ from adapters.gemini_adapter import (
     RateLimitMinuteError,
 )
 from adapters.mock_adapter import make_mock_adapter
+from claims import extract_claims
+from consistency import run_consistency_probe
 from directive import get_active_directive
 from middleware import HaltError, run_validation_loop
 from schemas import (
@@ -97,12 +99,13 @@ async def startup() -> None:
 # ── Live config ────────────────────────────────────────────────────────────────
 
 _config: dict = {
-    "provider":         "mock",
-    "model":            "gemini-2.5-flash",
-    "temperature":      0.7,
-    "agent_id":         "external",
-    "failure_mode":     "none",
-    "confidence_score": 0.75,
+    "provider":          "mock",
+    "model":             "gemini-2.5-flash",
+    "temperature":       0.7,
+    "agent_id":          "external",
+    "failure_mode":      "none",
+    "confidence_score":  0.75,
+    "consistency_probe": False,   # ADR-06 mitigation — run query twice, compare conclusions
 }
 
 
@@ -162,12 +165,13 @@ class ChatRequest(BaseModel):
 
 
 class ConfigUpdate(BaseModel):
-    provider:         Optional[Literal["gemini", "mock"]] = None
-    model:            Optional[str]   = None
-    temperature:      Optional[float] = None
-    agent_id:         Optional[str]   = None
-    failure_mode:     Optional[Literal["none", "retry_success", "halt"]] = None
-    confidence_score: Optional[float] = None
+    provider:          Optional[Literal["gemini", "mock"]] = None
+    model:             Optional[str]   = None
+    temperature:       Optional[float] = None
+    agent_id:          Optional[str]   = None
+    failure_mode:      Optional[Literal["none", "retry_success", "halt"]] = None
+    confidence_score:  Optional[float] = None
+    consistency_probe: Optional[bool]  = None
 
 
 class TokenRequest(BaseModel):
@@ -225,6 +229,8 @@ async def update_config(update: ConfigUpdate):
         _config["confidence_score"] = round(
             max(0.0, min(1.0, update.confidence_score)), 2
         )
+    if update.consistency_probe is not None:
+        _config["consistency_probe"] = update.consistency_probe
     return _config
 
 
@@ -280,6 +286,9 @@ async def chat(
         "session":            None,
         "error":              None,
         "config_snapshot":    dict(_config),
+        # ADR-06 mitigations — populated after successful run
+        "claims":             [],    # structured claims extracted from thought_log
+        "consistency":        None,  # consistency probe result (if enabled)
     }
 
     initiated_at = datetime.now(timezone.utc)
@@ -316,6 +325,26 @@ async def chat(
         if result.final_response:
             payload["conclusion"]  = result.final_response.conclusion
             payload["thought_log"] = None if investor else result.final_response.thought_log
+
+            # ── ADR-06: claim extraction (always runs on successful auditor runs) ──
+            thought_log_text = result.final_response.thought_log
+            if thought_log_text:
+                payload["claims"] = [
+                    c.to_dict() for c in extract_claims(thought_log_text)
+                ]
+
+            # ── ADR-06: consistency probe (optional — doubles API calls) ──────────
+            if _config.get("consistency_probe") and result.final_response.conclusion:
+                probe = run_consistency_probe(
+                    subject=request.message,
+                    context=request.context,
+                    agent_id=agent_id,
+                    confidence_score=confidence,
+                    data_sources=data_sources,
+                    call_agent_fn=adapter,
+                    primary_conclusion=result.final_response.conclusion,
+                )
+                payload["consistency"] = probe.to_dict()
 
     except HaltError as exc:
         session = RunSession(

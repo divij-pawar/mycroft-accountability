@@ -536,6 +536,84 @@ html, body { height: 100%; font-family: system-ui, -apple-system, sans-serif;
   border-radius: var(--radius-sm); color: var(--text-muted);
 }
 
+/* ── Consistency probe badge (ADR-06) ────────────────────── */
+.msg-consistency {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  font-size: 11px; color: var(--text-muted);
+}
+.consistency-score {
+  font-family: monospace; font-size: 11px; color: var(--text-faint);
+}
+.consistency-note {
+  font-size: 10px; color: var(--text-faint); font-style: italic;
+}
+
+/* ── Claims (ADR-06) ──────────────────────────────────────── */
+.msg-claims {
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  background: #f8fafc; font-size: 12px;
+}
+.msg-claims summary {
+  padding: 5px 10px; cursor: pointer; user-select: none;
+  color: var(--text-muted); list-style: none;
+  display: flex; align-items: center; gap: 6px;
+}
+.msg-claims summary::before { content: '▶'; font-size: 10px; transition: transform .15s; }
+.msg-claims[open] summary::before { transform: rotate(90deg); }
+.msg-claims summary:hover { color: var(--primary); }
+.claims-hint { font-size: 10px; color: var(--text-faint); font-style: italic; }
+.claims-pills {
+  padding: 8px 10px 10px;
+  display: flex; flex-wrap: wrap; gap: 5px;
+  border-top: 1px solid var(--border);
+}
+.claim-pill {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 8px; border-radius: 20px;
+  font-size: 11px; font-weight: 500;
+  border: 1px solid; cursor: default;
+  max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.claim-citation  { background: var(--primary-faint); color: var(--primary);    border-color: #bfdbfe; }
+.claim-quant     { background: #f0fdf4;               color: #15803d;           border-color: #bbf7d0; }
+.claim-hedge     { background: #fffbeb;               color: #92400e;           border-color: #fde68a; }
+.claim-causal    { background: #f5f3ff;               color: #5b21b6;           border-color: #ddd6fe; }
+
+/* ── Config toggle checkbox ───────────────────────────────── */
+.toggle-label {
+  display: flex; align-items: center; gap: 6px; cursor: pointer;
+}
+.toggle-checkbox {
+  width: 14px; height: 14px; accent-color: var(--primary); cursor: pointer;
+}
+
+/* ── Detail modal — consistency + claims ─────────────────── */
+.detail-probe-conclusion {
+  margin-top: 10px; padding: 10px 12px;
+  background: #f8fafc; border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.detail-error-inline {
+  font-size: 11px; color: var(--danger); font-family: monospace;
+}
+.detail-claim {
+  padding: 8px 0; border-bottom: 1px solid var(--border);
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px;
+}
+.detail-claim:last-child { border-bottom: none; }
+.detail-claim-text {
+  font-size: 12px; color: var(--text); font-weight: 500; flex: 1;
+}
+.detail-claim-context {
+  width: 100%; font-size: 11px; color: var(--text-muted);
+  font-style: italic; margin-top: 2px; padding-left: 2px;
+}
+.claim-url {
+  font-size: 10px; color: var(--primary); text-decoration: none;
+  font-family: monospace; overflow: hidden; text-overflow: ellipsis;
+}
+.claim-url:hover { text-decoration: underline; }
+
 /* ── Reviewer flags (UN-05) ───────────────────────────────── */
 .detail-flag {
   display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px;
