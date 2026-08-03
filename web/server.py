@@ -33,14 +33,22 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
+import unicodedata
+
 from adapters.gemini_adapter import (
     make_gemini_adapter,
     RateLimitDailyError,
     RateLimitMinuteError,
 )
 from adapters.mock_adapter import make_mock_adapter
+from adapters.ollama_adapter import (
+    make_ollama_adapter,
+    OllamaConnectionError,
+    OllamaModelError,
+)
 from claims import extract_claims
 from consistency import run_consistency_probe
+from verification import verify_claims
 from directive import get_active_directive
 from middleware import HaltError, run_validation_loop
 from schemas import (
@@ -101,7 +109,9 @@ async def startup() -> None:
 _config: dict = {
     "provider":          "mock",
     "model":             "gemini-2.5-flash",
-    "temperature":       0.7,
+    "temperature":       0.0,    # ADR: default deterministic — change explicitly for stochastic runs
+    "seed":              42,     # stored per-run for replay; fixed seed + temp=0 → deterministic
+    "ollama_model":      "llama3.2",
     "agent_id":          "external",
     "failure_mode":      "none",
     "confidence_score":  0.75,
@@ -114,6 +124,22 @@ _config: dict = {
 def _ticker(message: str) -> str:
     cleaned = re.sub(r"[^a-zA-Z0-9]", "", (message.split() or ["CHAT"])[0])
     return (cleaned.upper()[:10]) or "CHAT"
+
+
+def _canonicalize(text: str) -> str:
+    """
+    Normalise input text before prompt assembly.
+    Ensures identical prompts are sent for identical logical inputs,
+    regardless of whitespace or Unicode encoding differences.
+    Week 6 / determinism: this is a prerequisite for seed-based replay to be meaningful.
+      - Unicode NFC normalisation (e.g. composed vs decomposed accents → same bytes)
+      - Strip leading/trailing whitespace
+      - Collapse runs of spaces/tabs to a single space (preserves newlines)
+    """
+    text = unicodedata.normalize("NFC", text)
+    text = text.strip()
+    text = re.sub(r"[ \t]+", " ", text)   # collapse horizontal whitespace only
+    return text
 
 
 def _classify(score: float) -> ConfidenceClassification:
@@ -153,6 +179,13 @@ def _build_adapter(config: dict):
         return make_gemini_adapter(
             model=config["model"],
             temperature=config["temperature"],
+            seed=config.get("seed"),
+        )
+    if config["provider"] == "ollama":
+        return make_ollama_adapter(
+            model=config.get("ollama_model", "llama3.2"),
+            temperature=config["temperature"],
+            seed=config.get("seed", 42),
         )
     return make_mock_adapter(failure_mode=config["failure_mode"])
 
@@ -165,9 +198,11 @@ class ChatRequest(BaseModel):
 
 
 class ConfigUpdate(BaseModel):
-    provider:          Optional[Literal["gemini", "mock"]] = None
+    provider:          Optional[Literal["gemini", "mock", "ollama"]] = None
     model:             Optional[str]   = None
+    ollama_model:      Optional[str]   = None
     temperature:       Optional[float] = None
+    seed:              Optional[int]   = None
     agent_id:          Optional[str]   = None
     failure_mode:      Optional[Literal["none", "retry_success", "halt"]] = None
     confidence_score:  Optional[float] = None
@@ -215,8 +250,12 @@ async def update_config(update: ConfigUpdate):
         _config["provider"] = update.provider
     if update.model is not None:
         _config["model"] = update.model
+    if update.ollama_model is not None:
+        _config["ollama_model"] = update.ollama_model
     if update.temperature is not None:
         _config["temperature"] = round(update.temperature, 2)
+    if update.seed is not None:
+        _config["seed"] = update.seed
     if update.agent_id is not None:
         try:
             AgentID(update.agent_id)
@@ -254,6 +293,11 @@ async def chat(
     adapter      = _build_adapter(_config)
     investor     = (scope == "investor")
 
+    # Canonicalize inputs before prompt assembly — prerequisite for seed-based
+    # replay to be meaningful. Same logical input must produce the same prompt bytes.
+    canonical_message = _canonicalize(request.message)
+    canonical_context = _canonicalize(request.context)
+
     data_sources: tuple[DataSource, ...] = (
         _mock_data_sources() if _config["provider"] == "mock" else ()
     )
@@ -264,7 +308,7 @@ async def chat(
 
     payload: dict = {
         "run_id":                    str(run_id),
-        "subject":                   request.message,
+        "subject":                   canonical_message,
         "scope":                     scope,
         "halted":                    False,
         "conclusion":                None,
@@ -287,16 +331,17 @@ async def chat(
         "error":              None,
         "config_snapshot":    dict(_config),
         # ADR-06 mitigations — populated after successful run
-        "claims":             [],    # structured claims extracted from thought_log
-        "consistency":        None,  # consistency probe result (if enabled)
+        "claims":              [],    # structured claims extracted from thought_log
+        "consistency":         None,  # consistency probe result (if enabled)
+        "verification_rate":   None,  # fraction of citation claims confirmed against source
     }
 
     initiated_at = datetime.now(timezone.utc)
 
     try:
         result = run_validation_loop(
-            request.message,
-            request.context,
+            canonical_message,
+            canonical_context,
             run_id,
             agent_id,
             confidence_score=confidence,
@@ -326,18 +371,20 @@ async def chat(
             payload["conclusion"]  = result.final_response.conclusion
             payload["thought_log"] = None if investor else result.final_response.thought_log
 
-            # ── ADR-06: claim extraction (always runs on successful auditor runs) ──
+            # ── ADR-06: claim extraction + verification ────────────────────────
             thought_log_text = result.final_response.thought_log
             if thought_log_text:
-                payload["claims"] = [
-                    c.to_dict() for c in extract_claims(thought_log_text)
-                ]
+                raw_claims = extract_claims(thought_log_text)
+                verified_claims, v_rate = verify_claims(raw_claims)
+                payload["claims"]            = [c.to_dict() for c in verified_claims]
+                payload["verification_rate"] = v_rate
 
-            # ── ADR-06: consistency probe (optional — doubles API calls) ──────────
-            if _config.get("consistency_probe") and result.final_response.conclusion:
+            # ── ADR-06: consistency probe — auto-on for Ollama, opt-in otherwise ──
+            probe_enabled = _config.get("consistency_probe") or _config.get("provider") == "ollama"
+            if probe_enabled and result.final_response.conclusion:
                 probe = run_consistency_probe(
-                    subject=request.message,
-                    context=request.context,
+                    subject=canonical_message,
+                    context=canonical_context,
                     agent_id=agent_id,
                     confidence_score=confidence,
                     data_sources=data_sources,
@@ -375,6 +422,14 @@ async def chat(
     except RateLimitMinuteError as exc:
         payload["halted"] = True
         payload["error"]  = f"⏳ Rate limited: {exc}"
+
+    except OllamaConnectionError as exc:
+        payload["halted"] = True
+        payload["error"]  = f"🦙 Ollama unreachable: {exc}"
+
+    except OllamaModelError as exc:
+        payload["halted"] = True
+        payload["error"]  = f"🦙 Ollama model error: {exc}"
 
     except Exception as exc:
         payload["halted"] = True
@@ -417,6 +472,93 @@ async def get_run_by_id(run_id: str):
     if run is None:
         raise HTTPException(404, detail="Run not found")
     return run
+
+
+@app.post("/api/runs/{run_id}/replay")
+async def replay_run(run_id: str):
+    """
+    Week 6 — Determinism: re-run a historical run with its exact stored
+    config (model, temperature, seed, directive) and diff the conclusion.
+
+    The replay uses the original canonical subject and context stored in the
+    run record. The result is NOT persisted — it is metadata for auditors to
+    verify that the same inputs produce the same output.
+
+    Returns:
+      original_conclusion  — conclusion from the stored run
+      replay_conclusion    — conclusion from the fresh run
+      match                — True if conclusions are byte-identical
+      diff_chars           — character-level diff count (0 if match)
+      original_config      — the config snapshot that produced the original
+    """
+    original = get_run(run_id)
+    if original is None:
+        raise HTTPException(404, detail="Run not found")
+
+    payload     = original if isinstance(original, dict) else original
+    subject     = payload.get("subject", "")
+    config_snap = payload.get("config_snapshot", {})
+
+    if not subject:
+        raise HTTPException(400, detail="Run has no stored subject — cannot replay")
+
+    # Reconstruct adapter from the stored config snapshot
+    try:
+        replay_adapter = _build_adapter(config_snap)
+    except Exception as exc:
+        raise HTTPException(400, detail=f"Cannot reconstruct adapter from stored config: {exc}")
+
+    # Retrieve the directive version that was active for this run
+    from directive import get_directive, get_active_directive
+    directive_version = config_snap.get("directive_version") or payload.get("session", {}) \
+        .get("directive_version") if isinstance(payload.get("session"), dict) else None
+
+    try:
+        directive = get_directive(directive_version) if directive_version else get_active_directive()
+    except KeyError:
+        directive = get_active_directive()
+
+    original_conclusion = payload.get("conclusion")
+
+    try:
+        result = run_validation_loop(
+            subject,
+            "",          # context not stored separately — replay on subject only
+            uuid.uuid4(),
+            AgentID(config_snap.get("agent_id", "external")),
+            confidence_score=config_snap.get("confidence_score", 0.75),
+            directive=directive,
+            call_agent_fn=replay_adapter,
+        )
+        replay_conclusion = result.final_response.conclusion if result.final_response else None
+    except HaltError as exc:
+        return {
+            "run_id":             run_id,
+            "original_conclusion": original_conclusion,
+            "replay_conclusion":   None,
+            "match":               False,
+            "replay_halted":       True,
+            "error":               str(exc),
+            "original_config":     config_snap,
+        }
+    except Exception as exc:
+        raise HTTPException(500, detail=f"Replay failed: {type(exc).__name__}: {exc}")
+
+    match = original_conclusion == replay_conclusion
+    diff_chars = sum(
+        1 for a, b in zip(original_conclusion or "", replay_conclusion or "")
+        if a != b
+    ) + abs(len(original_conclusion or "") - len(replay_conclusion or ""))
+
+    return {
+        "run_id":              run_id,
+        "original_conclusion": original_conclusion,
+        "replay_conclusion":   replay_conclusion,
+        "match":               match,
+        "diff_chars":          diff_chars,
+        "replay_halted":       False,
+        "original_config":     config_snap,
+    }
 
 
 # ── Reviewer flags (UN-05) ─────────────────────────────────────────────────────

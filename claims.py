@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from typing import Literal
+from typing import Literal, Optional
 
 ClaimType = Literal["citation", "quantitative", "hedge", "causal"]
 
@@ -62,9 +62,9 @@ class ExtractedClaim:
     claim_type:   ClaimType
     text:         str            # the specific claim or value
     context:      str            # surrounding sentence for readability
-    source_label: str | None = None
-    source_url:   str | None = None
-    verified:     bool       = False   # placeholder for future URL verification
+    source_label: str | None  = None
+    source_url:   str | None  = None
+    verified:     bool | None = None   # True=confirmed, False=not found, None=unattainable/unchecked
 
     def to_dict(self) -> dict:
         d: dict = {

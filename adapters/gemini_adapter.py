@@ -87,9 +87,16 @@ def _trim_context(context: str) -> str:
 _last_call_ts: float = 0.0
 
 
-def make_gemini_adapter(model: str = "gemini-2.5-flash", temperature: float = 0.7):
+def make_gemini_adapter(
+    model: str = "gemini-2.5-flash",
+    temperature: float = 0.0,
+    seed: int | None = None,
+):
     """
     Returns a call_agent_fn compatible with run_validation_loop.
+
+    temperature=0.0 + fixed seed → deterministic output within a model version.
+    seed=None disables the determinism hint (Gemini default sampling).
 
     Raises:
         EnvironmentError       — GEMINI_API_KEY not set
@@ -128,14 +135,21 @@ def make_gemini_adapter(model: str = "gemini-2.5-flash", temperature: float = 0.
         for attempt in range(MAX_RETRIES):
             try:
                 _last_call_ts = time.monotonic()
+                gen_config = types.GenerateContentConfig(
+                    system_instruction=directive.text,
+                    temperature=temperature,
+                    max_output_tokens=8192,
+                )
+                # Seed is a determinism hint — pass only when explicitly set.
+                # Gemini honours seed + temperature=0 for reproducible output
+                # within the same model version. Not guaranteed across versions.
+                if seed is not None:
+                    gen_config.seed = seed
+
                 response = client.models.generate_content(
                     model=model,
                     contents=prompt,
-                    config=types.GenerateContentConfig(
-                        system_instruction=directive.text,
-                        temperature=temperature,
-                        max_output_tokens=8192,
-                    ),
+                    config=gen_config,
                 )
                 return _parse_response(response.text)
 

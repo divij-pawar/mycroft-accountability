@@ -36,6 +36,10 @@
 
   const cfgProvider    = $('cfgProvider');
   const geminiFields   = $('geminiFields');
+  const ollamaFields   = $('ollamaFields');
+  const cfgOllamaModel = $('cfgOllamaModel');
+  const cfgSeed        = $('cfgSeed');
+  const cfgSeedLabel   = $('cfgSeedLabel');
   const cfgModel       = $('cfgModel');
   const cfgTemp        = $('cfgTemp');
   const cfgTempLabel   = $('cfgTempLabel');
@@ -141,8 +145,10 @@
     const cfg = await fetch('/api/config').then(r => r.json());
     cfgProvider.value        = cfg.provider       || 'mock';
     cfgModel.value           = cfg.model          || 'gemini-2.5-flash';
-    cfgTemp.value            = cfg.temperature    ?? 0.7;
-    cfgTempLabel.textContent = cfg.temperature    ?? 0.7;
+    cfgTemp.value            = cfg.temperature    ?? 0.0;
+    cfgTempLabel.textContent = cfg.temperature    ?? 0.0;
+    if (cfgOllamaModel) cfgOllamaModel.value = cfg.ollama_model || 'llama3.2';
+    if (cfgSeed) { cfgSeed.value = cfg.seed ?? 42; cfgSeedLabel.textContent = cfg.seed ?? 42; }
     cfgAgentId.value         = cfg.agent_id       || 'external';
     cfgFailureMode.value     = cfg.failure_mode   || 'none';
     cfgConf.value            = cfg.confidence_score ?? 0.75;
@@ -150,6 +156,7 @@
     confClassHint.textContent = confHint(cfg.confidence_score ?? 0.75);
     failureHint.textContent   = failureHintText(cfg.failure_mode || 'none');
     geminiFields.style.display = cfg.provider === 'gemini' ? '' : 'none';
+    if (ollamaFields) ollamaFields.style.display = cfg.provider === 'ollama' ? '' : 'none';
     cfgConsistencyProbe.checked = cfg.consistency_probe ?? false;
   }
 
@@ -178,9 +185,16 @@
 
   cfgProvider.addEventListener('change', () => {
     geminiFields.style.display = cfgProvider.value === 'gemini' ? '' : 'none';
+    if (ollamaFields) ollamaFields.style.display = cfgProvider.value === 'ollama' ? '' : 'none';
     pushConfig({ provider: cfgProvider.value });
   });
   cfgModel.addEventListener('change', () => pushConfig({ model: cfgModel.value }));
+  if (cfgOllamaModel) cfgOllamaModel.addEventListener('change', () => pushConfig({ ollama_model: cfgOllamaModel.value }));
+  if (cfgSeed) cfgSeed.addEventListener('input', () => {
+    const v = parseInt(cfgSeed.value, 10);
+    cfgSeedLabel.textContent = v;
+    pushConfig({ seed: v });
+  });
   cfgTemp.addEventListener('input', () => {
     const v = parseFloat(cfgTemp.value);
     cfgTempLabel.textContent = v;
@@ -316,16 +330,26 @@
   const CLAIM_ICONS = { citation: '🔗', quantitative: '📊', hedge: '⚠', causal: '→' };
   const CLAIM_CLS   = { citation: 'claim-citation', quantitative: 'claim-quant', hedge: 'claim-hedge', causal: 'claim-causal' };
 
-  function claimsHtml(claims) {
+  function verifiedBadge(v) {
+    if (v === true)  return '<span class="badge badge-success" title="Source confirmed">✓</span>';
+    if (v === false) return '<span class="badge badge-halt"    title="Source checked, not found">✗</span>';
+    return '';
+  }
+
+  function claimsHtml(claims, verificationRate) {
     if (!claims || claims.length === 0) return '';
     const pills = claims.map(c => {
       const icon = CLAIM_ICONS[c.claim_type] || '·';
       const cls  = CLAIM_CLS[c.claim_type]   || '';
       const tip  = esc(c.context || c.text);
-      return `<span class="claim-pill ${cls}" title="${tip}">${icon} ${esc(c.text.slice(0, 40))}${c.text.length > 40 ? '…' : ''}</span>`;
+      const vb   = (c.claim_type === 'citation') ? verifiedBadge(c.verified) : '';
+      return `<span class="claim-pill ${cls}" title="${tip}">${icon} ${esc(c.text.slice(0, 40))}${c.text.length > 40 ? '…' : ''}${vb}</span>`;
     }).join('');
+    const vRateHtml = (verificationRate != null)
+      ? ` <span class="badge-neutral" title="Citation verification rate">${Math.round(verificationRate * 100)}% verified</span>`
+      : '';
     return `<details class="msg-claims">
-      <summary>Claims <span class="badge-neutral">${claims.length}</span> <span class="claims-hint">ADR-06 — unverified</span></summary>
+      <summary>Claims <span class="badge-neutral">${claims.length}</span>${vRateHtml} <span class="claims-hint">ADR-06</span></summary>
       <div class="claims-pills">${pills}</div>
     </details>`;
   }
@@ -377,7 +401,7 @@
 
     body += confLineHtml(data);
     body += consistencyHtml(data.consistency);
-    body += claimsHtml(data.claims);
+    body += claimsHtml(data.claims, data.verification_rate);
     body += sourcesHtml(data.data_sources);
 
     if (data.run_id) {
@@ -711,9 +735,13 @@
     if (run.consistency) {
       const c   = run.consistency;
       const cls = { HIGH: 'badge-success', MEDIUM: 'badge-warning', LOW: 'badge-halt' }[c.agreement] || 'badge-neutral';
+      const flagRow = c.number_divergence_flag
+        ? detailRow('Number divergence', `<span class="badge badge-halt">FLAGGED — value appears in one run only</span>`)
+        : detailRow('Number divergence', `<span class="badge-neutral">none</span>`);
       let cHtml = [
         detailRow('Agreement', `<span class="badge ${cls}">${esc(c.agreement)}</span>`),
         detailRow('Score',     `<span class="badge-neutral">${esc(String(c.score))}</span>`),
+        flagRow,
         detailRow('Word overlap',   `<span class="badge-neutral">${esc(String(c.word_overlap))}</span>`),
         detailRow('Number overlap', `<span class="badge-neutral">${esc(String(c.number_overlap))}</span>`),
       ].join('');
@@ -734,22 +762,27 @@
 
     // ── Claims (ADR-06) ──
     if (run.claims && run.claims.length) {
+      const vRateLabel = (run.verification_rate != null)
+        ? ` — <span class="badge-neutral">${Math.round(run.verification_rate * 100)}% citations verified</span>` : '';
       const claimRows = run.claims.map(c => {
         const icon = { citation: '🔗', quantitative: '📊', hedge: '⚠', causal: '→' }[c.claim_type] || '·';
         const cls  = { citation: 'claim-citation', quantitative: 'claim-quant', hedge: 'claim-hedge', causal: 'claim-causal' }[c.claim_type] || '';
-        const verBadge = c.verified
-          ? `<span class="badge badge-success">verified</span>`
-          : `<span class="badge-neutral">unverified</span>`;
+        let vBadge = '';
+        if (c.claim_type === 'citation') {
+          if (c.verified === true)       vBadge = `<span class="badge badge-success">verified</span>`;
+          else if (c.verified === false) vBadge = `<span class="badge badge-halt">not found</span>`;
+          else                           vBadge = `<span class="badge-neutral">unattainable</span>`;
+        }
         const urlLink = c.source_url && c.source_url !== 'N/A'
           ? ` <a class="claim-url" href="${esc(c.source_url)}" target="_blank" rel="noopener">${esc(c.source_url.slice(0, 50))}…</a>` : '';
         return `<div class="detail-claim">
           <span class="claim-pill ${cls}">${icon} ${esc(c.claim_type)}</span>
           <span class="detail-claim-text">${esc(c.text)}</span>
-          ${verBadge}${urlLink}
+          ${vBadge}${urlLink}
           <div class="detail-claim-context">${esc(c.context)}</div>
         </div>`;
       }).join('');
-      html += detailSection(`Claims — ${run.claims.length} extracted`, claimRows);
+      html += detailSection(`Claims — ${run.claims.length} extracted${vRateLabel}`, claimRows);
     }
 
     // ── Reviewer Flags (UN-05) ──

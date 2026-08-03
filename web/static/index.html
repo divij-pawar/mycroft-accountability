@@ -48,7 +48,33 @@
         <select class="field-select" id="cfgProvider">
           <option value="mock">Mock (no API needed)</option>
           <option value="gemini">Gemini</option>
+          <option value="ollama">Ollama (local)</option>
         </select>
+      </div>
+
+      <div id="ollamaFields" class="field-group hidden">
+        <label class="field-label">Ollama Model</label>
+        <select class="field-select" id="cfgOllamaModel">
+          <optgroup label="Qwen">
+            <option value="qwen3:4b">qwen3:4b</option>
+            <option value="qwen2.5:3b">qwen2.5:3b</option>
+            <option value="qwen3:1.7b">qwen3:1.7b</option>
+          </optgroup>
+          <optgroup label="Llama">
+            <option value="llama3.2">llama3.2</option>
+            <option value="llama3.1">llama3.1</option>
+          </optgroup>
+          <optgroup label="Other">
+            <option value="mistral">mistral</option>
+            <option value="phi3">phi3</option>
+            <option value="gemma2">gemma2</option>
+          </optgroup>
+        </select>
+        <label class="field-label mt">Seed
+          <span class="badge-neutral" id="cfgSeedLabel">42</span>
+        </label>
+        <input class="field-range" id="cfgSeed" type="range" min="0" max="999" step="1" value="42" />
+        <p class="field-hint">Ollama + seed + temp=0 → deterministic output within a model version.</p>
       </div>
 
       <div id="geminiFields" class="field-group">

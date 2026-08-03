@@ -65,29 +65,31 @@ _NUMBER_RE = re.compile(
 
 @dataclass
 class ConsistencyResult:
-    score:             float                  # 0.0 – 1.0
-    agreement:         ConsistencyAgreement
-    probe_conclusion:  str | None             # second run's conclusion
-    primary_numbers:   list[str]
-    probe_numbers:     list[str]
-    divergent_numbers: list[str]              # present in one but not both
-    word_overlap:      float
-    number_overlap:    float
-    probe_halted:      bool       = False
-    probe_error:       str | None = None
+    score:                  float                  # 0.0 – 1.0
+    agreement:              ConsistencyAgreement
+    probe_conclusion:       str | None             # second run's conclusion
+    primary_numbers:        list[str]
+    probe_numbers:          list[str]
+    divergent_numbers:      list[str]              # present in one but not both
+    word_overlap:           float
+    number_overlap:         float
+    probe_halted:           bool       = False
+    probe_error:            str | None = None
+    number_divergence_flag: bool       = False     # hard flag: any number appears in one run only
 
     def to_dict(self) -> dict:
         return {
-            "score":             self.score,
-            "agreement":         self.agreement,
-            "probe_conclusion":  self.probe_conclusion,
-            "primary_numbers":   self.primary_numbers,
-            "probe_numbers":     self.probe_numbers,
-            "divergent_numbers": self.divergent_numbers,
-            "word_overlap":      self.word_overlap,
-            "number_overlap":    self.number_overlap,
-            "probe_halted":      self.probe_halted,
-            "probe_error":       self.probe_error,
+            "score":                  self.score,
+            "agreement":              self.agreement,
+            "probe_conclusion":       self.probe_conclusion,
+            "primary_numbers":        self.primary_numbers,
+            "probe_numbers":          self.probe_numbers,
+            "divergent_numbers":      self.divergent_numbers,
+            "word_overlap":           self.word_overlap,
+            "number_overlap":         self.number_overlap,
+            "probe_halted":           self.probe_halted,
+            "probe_error":            self.probe_error,
+            "number_divergence_flag": self.number_divergence_flag,
         }
 
 
@@ -198,4 +200,5 @@ def run_consistency_probe(
         divergent_numbers=divergent,
         word_overlap=word_overlap,
         number_overlap=number_overlap,
+        number_divergence_flag=len(divergent) > 0,
     )
