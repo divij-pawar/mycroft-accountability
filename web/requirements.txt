@@ -4,3 +4,8 @@ google-genai>=2.4.0
 python-multipart>=0.0.9
 python-dotenv>=1.0.0
 PyJWT>=2.8.0
+
+# Deliberate exception to stdlib-only: real (self-hosted) LangFuse tracing
+# for the financial-grader test harness. See financial_grader.py / observability.py.
+# v3+ only — top-level `observe`/`get_client` API (v2's `langfuse.decorators` is different).
+langfuse>=3.0.0
