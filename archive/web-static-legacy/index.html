@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Accountability Layer — Test Interface</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="topbar-left">
+      <span class="logo">⬡</span>
+      <span class="topbar-title">Accountability Layer</span>
+      <span class="topbar-sub">Test Interface</span>
+    </div>
+    <div class="topbar-right">
+      <span class="prototype-pill" id="prototypePill" title="Loading deployment status…">PROTOTYPE</span>
+      <span class="status-dot" id="statusDot"></span>
+      <span class="status-label" id="statusLabel">Connecting…</span>
+      <button class="btn-ghost warn" id="btnLedger">
+        ⚠ Honest Ledger <span class="badge-neutral" id="ledgerCount">–</span>
+      </button>
+      <button class="btn-ghost" id="btnDirective">View Directive</button>
+      <button class="btn-ghost danger" id="btnClear">Clear Runs</button>
+    </div>
+  </header>
+
+  <main class="layout">
+
+    <!-- ── CONFIG PANEL ───────────────────────────────── -->
+    <aside class="panel config-panel">
+      <h2 class="panel-title">Configuration</h2>
+
+      <!-- SEC-01 Scope Toggle -->
+      <div class="field-group">
+        <label class="field-label">View Scope
+          <span class="field-hint-inline">(SEC-01)</span>
+        </label>
+        <div class="scope-toggle">
+          <button class="scope-btn active" data-scope="auditor" id="scopeAuditor">Auditor</button>
+          <button class="scope-btn" data-scope="investor" id="scopeInvestor">Investor</button>
+        </div>
+        <p class="field-hint" id="scopeHint">Full record — thought_log visible.</p>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- No Provider / Model selector here on purpose: LangChain is the one
+           agent framework this subsystem is built on (adapters/langchain_adapter.py),
+           and which LLM it drives (model name, family, API keys) is
+           configured via environment variables (LANGCHAIN_MODEL,
+           GEMINI_API_KEY, TAVILY_API_KEY — see .env.example), not this UI.
+           This panel stays scoped to verification-layer concerns. -->
+
+      <!-- Seed / Temperature — kept here deliberately: audit/reproducibility
+           evidence (ADR-04), recorded per-run, not "which LLM" configuration. -->
+      <div class="field-group">
+        <label class="field-label">Seed
+          <span class="badge-neutral" id="cfgSeedLabel">42</span>
+        </label>
+        <input class="field-range" id="cfgSeed" type="range" min="0" max="999" step="1" value="42" />
+        <p class="field-hint">Seed + temp=0 → deterministic output within a model version (Ollama-family models only — Gemini has no seed parameter).</p>
+
+        <label class="field-label mt">Temperature
+          <span class="badge-neutral" id="cfgTempLabel">0.0</span>
+        </label>
+        <input class="field-range" id="cfgTemp" type="range" min="0" max="1" step="0.05" value="0.0" />
+      </div>
+
+      <!-- Agent -->
+      <div class="field-group">
+        <label class="field-label">Agent ID</label>
+        <select class="field-select" id="cfgAgentId">
+          <option value="external">external</option>
+          <option value="financial">financial</option>
+          <option value="patent">patent</option>
+          <option value="earnings">earnings</option>
+          <option value="competitive">competitive</option>
+          <option value="AAN">AAN</option>
+        </select>
+      </div>
+
+      <div class="divider"></div>
+      <h3 class="section-title">Guardrail Testing</h3>
+
+      <!-- Confidence — ADR-08 knob -->
+      <div class="field-group">
+        <label class="field-label">Confidence Score
+          <span class="badge-neutral" id="cfgConfLabel">0.75</span>
+        </label>
+        <input class="field-range" id="cfgConf" type="range" min="0" max="1" step="0.05" value="0.75" />
+        <p class="field-hint" id="confClassHint">STANDARD — score ≥ 0.4</p>
+      </div>
+
+      <!-- Consistency probe — ADR-06 mitigation -->
+      <div class="field-group">
+        <label class="field-label toggle-label">
+          <input type="checkbox" id="cfgConsistencyProbe" class="toggle-checkbox" />
+          Consistency Probe
+          <span class="field-hint-inline">(ADR-06)</span>
+        </label>
+        <p class="field-hint">Runs query twice and scores conclusion agreement. Doubles API calls.</p>
+      </div>
+
+      <div class="divider"></div>
+      <h3 class="section-title">Active Directive</h3>
+      <div class="directive-badge" id="directiveBadge">v1.0.0</div>
+    </aside>
+
+    <!-- ── MAIN PANEL: chat / cross-agent compare ─────── -->
+    <section class="panel chat-panel">
+      <div class="mode-tabs">
+        <button class="mode-tab active" data-mode="chat" id="modeChat">Chat
+          <span class="mode-tab-sub">one agent</span>
+        </button>
+        <button class="mode-tab" data-mode="compare" id="modeCompare">Cross-Agent Compare
+          <span class="mode-tab-sub">two agents, one subject</span>
+        </button>
+      </div>
+
+      <!-- ── COMPARE VIEW ─────────────────────────────── -->
+      <div id="compareView" class="compare-view hidden">
+
+        <div class="compare-caveat" id="compareCaveat">
+          Loading known limitations…
+        </div>
+
+        <!-- Mode toggle: ticker (financial, EDGAR-backed, two deliberately
+             asymmetric lenses) vs. subject (generic, any domain — both agents
+             get the same subject+context, added for non-financial verification). -->
+        <div class="scope-toggle" style="margin-bottom:8px">
+          <button class="scope-btn active" data-cmp-mode="ticker" id="cmpModeTicker">Financial (ticker)</button>
+          <button class="scope-btn" data-cmp-mode="subject" id="cmpModeSubject">Generic (any subject)</button>
+        </div>
+
+        <div class="compare-input-row" id="cmpTickerRow">
+          <input class="compare-ticker" id="compareTicker" type="text"
+                 placeholder="Ticker (e.g. AAPL)" maxlength="10" />
+          <button class="btn-send" id="btnCompare">
+            <span id="compareLabel">Run Comparison</span>
+            <span id="compareSpinner" class="spinner hidden"></span>
+          </button>
+        </div>
+
+        <div class="compare-input-row hidden" id="cmpSubjectRow" style="flex-direction:column; align-items:stretch; gap:6px">
+          <input class="compare-ticker" id="compareSubject" type="text"
+                 placeholder="Subject (e.g. Was Mad Max made in 2015?)" style="width:100%" />
+          <textarea class="field-select" id="compareGenericContext" rows="3" style="width:100%"
+                    placeholder="Context both agents will see (e.g. a URL to check: https://...)"></textarea>
+          <button class="btn-send" id="btnCompareGeneric">
+            <span id="compareGenericLabel">Run Comparison</span>
+            <span id="compareGenericSpinner" class="spinner hidden"></span>
+          </button>
+        </div>
+
+        <!-- Per-producer override: without this both sides run the same model, so
+             the only asymmetry is the data slice. Blank = use the shared provider. -->
+        <div class="override-row">
+          <div class="override-side">
+            <label class="field-label">Producer A model
+              <span class="field-hint-inline">optional</span>
+            </label>
+            <select class="field-select" id="cmpModelA">
+              <option value="">— use shared model —</option>
+              <optgroup label="Ollama-family">
+                <option value="qwen2.5:7b">qwen2.5:7b</option>
+                <option value="llama3.2">llama3.2</option>
+                <option value="mistral">mistral</option>
+              </optgroup>
+              <optgroup label="Gemini-family">
+                <option value="gemini-2.5-flash">gemini-2.5-flash</option>
+                <option value="gemini-2.5-flash-lite">gemini-2.5-flash-lite</option>
+                <option value="gemini-2.5-pro">gemini-2.5-pro</option>
+              </optgroup>
+            </select>
+          </div>
+          <div class="override-side">
+            <label class="field-label">Producer B model
+              <span class="field-hint-inline">optional</span>
+            </label>
+            <select class="field-select" id="cmpModelB">
+              <option value="">— use shared model —</option>
+              <optgroup label="Ollama-family">
+                <option value="qwen2.5:7b">qwen2.5:7b</option>
+                <option value="llama3.2">llama3.2</option>
+                <option value="mistral">mistral</option>
+              </optgroup>
+              <optgroup label="Gemini-family">
+                <option value="gemini-2.5-flash">gemini-2.5-flash</option>
+                <option value="gemini-2.5-flash-lite">gemini-2.5-flash-lite</option>
+                <option value="gemini-2.5-pro">gemini-2.5-pro</option>
+              </optgroup>
+            </select>
+          </div>
+        </div>
+        <p class="field-hint">
+          One live SEC EDGAR fetch, two lenses. Producer A reads Assets/Revenues/NetIncomeLoss;
+          Producer B reads EPS/OperatingIncome. Both run through the same retry-then-halt loop
+          under one shared run_id.
+        </p>
+
+        <div class="compare-results" id="compareResults">
+          <div class="chat-empty">
+            Enter a ticker to run Producer A against Producer B.<br/>
+            Nothing here decides which agent is right — it only reports whether they disagree.
+          </div>
+        </div>
+      </div>
+
+      <!-- ── CHAT VIEW ────────────────────────────────── -->
+      <div class="chat-messages" id="chatMessages">
+        <div class="chat-empty">
+          Send a message to start a run.<br/>
+          The accountability layer wraps every response.
+        </div>
+      </div>
+
+      <div class="chat-input-area" id="chatInputArea">
+        <div class="context-row">
+          <button class="btn-ghost small" id="btnToggleContext">+ Add context</button>
+        </div>
+        <textarea class="context-input hidden" id="contextInput"
+                  placeholder="Optional context for the agent…" rows="2"></textarea>
+        <div class="chat-input-row">
+          <textarea class="message-input" id="messageInput"
+                    placeholder="Ask the agent something…" rows="2"></textarea>
+          <button class="btn-send" id="btnSend">
+            <span id="sendLabel">Send</span>
+            <span id="sendSpinner" class="spinner hidden"></span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── AUDIT TRAIL ────────────────────────────────── -->
+    <aside class="panel audit-panel">
+      <div class="audit-tabs">
+        <button class="audit-tab active" data-tab="runs" id="tabRuns">Runs
+          <span class="badge-neutral" id="runCount">0</span>
+        </button>
+        <button class="audit-tab" data-tab="sessions" id="tabSessions">Sessions
+          <span class="badge-neutral" id="sessionCount">0</span>
+        </button>
+        <button class="audit-tab" data-tab="flagged" id="tabFlagged">Flagged
+          <span class="badge-neutral" id="flaggedCount">0</span>
+        </button>
+      </div>
+
+      <div id="auditRuns" class="audit-list">
+        <div class="audit-empty">No runs yet.</div>
+      </div>
+      <div id="auditSessions" class="audit-list hidden">
+        <div class="audit-empty">No sessions yet.</div>
+      </div>
+      <div id="auditFlagged" class="audit-list hidden">
+        <div class="audit-empty">No flagged contradictions yet.</div>
+      </div>
+    </aside>
+
+  </main>
+
+  <!-- ── DIRECTIVE MODAL ──────────────────────────────── -->
+  <div class="modal-overlay hidden" id="directiveModal">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-title">Active Directive</span>
+        <span class="badge-neutral" id="modalDirectiveVersion"></span>
+        <button class="modal-close" id="btnCloseDirective">✕</button>
+      </div>
+      <pre class="modal-body" id="modalDirectiveText"></pre>
+    </div>
+  </div>
+
+  <!-- ── HONEST LEDGER MODAL ──────────────────────────── -->
+  <div class="modal-overlay hidden" id="ledgerModal">
+    <div class="modal modal-wide">
+      <div class="modal-header">
+        <span class="modal-title">Honest Ledger</span>
+        <span class="badge-neutral" id="ledgerModalSub">what is tested, and what is broken</span>
+        <button class="modal-close" id="btnCloseLedger">✕</button>
+      </div>
+      <div class="modal-body modal-body-rich" id="ledgerBody">
+        <div class="detail-loading">Loading…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── DETAIL MODAL (run / session) ─────────────────── -->
+  <div class="modal-overlay hidden" id="detailModal">
+    <div class="modal modal-wide">
+      <div class="modal-header">
+        <span class="modal-title" id="detailModalTitle">Record</span>
+        <span class="badge-neutral" id="detailModalId"></span>
+        <button class="modal-close" id="btnCloseDetail">✕</button>
+      </div>
+      <pre class="modal-body" id="detailModalJson"></pre>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
+  <script src="/static/app.js"></script>
+</body>
+</html>
