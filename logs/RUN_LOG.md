@@ -4324,3 +4324,38 @@ date, recipe, inputs, commands, outputs, result, open issues.
   - **Chat runs get no assessment extraction.**
   - **Ollama's hangs** and the missing model-call timeout: a separate task is flagged.
   - Still uncommitted: everything since `c53746a`, now including a file move.
+
+## 2026-09-27 -- Committing the work since c53746a, and a checkout-only test failure
+
+- **Recipe:** none; repository hygiene. Requested: commit the uncommitted work in logical
+  chunks.
+- **Commits (local, not pushed):**
+  - `db54d62`: layered packages;
+  - `7f7e4fe`: the validation layer;
+  - `46098c5`: web routes;
+  - `6853fa0`: the React app;
+  - `73aaaa4`: the cutover and archive of the classic UI;
+  - `dbf724a`: docs and this log.
+  - Shared files (e.g. `web/server.py`) carry their final content, so a commit before the last
+    one is not guaranteed to pass on its own. Only the final tree was tested.
+- **Left out:** the unstaged deletion of `accountability-layer-audit.md`. It was not part of
+  this work, and earlier entries say the file stays.
+- **Found on a clean checkout of HEAD** (a scratch worktree):
+  - The Python suite passed, 453/453.
+  - `npm run verify` failed, 110/111: `live.test.tsx` "delivers the same events however the
+    bytes are split".
+  - **Cause:** `core.autocrlf=true` checks the SSE fixture
+    `web/frontend/tests/fixtures/stream_compare_aapl_2026-09-24.txt` out with CRLF, and the
+    stream parser splits events on `\n\n` only.
+  - The main working tree passed only because its copy was never re-checked-out.
+- **Fix:** a new `verification-layer/.gitattributes` marks `web/frontend/tests/fixtures/**` and
+  `tests/fixtures/**` as `-text`, so fixtures are checked out byte-exact. The index already held
+  LF, so nothing was re-staged.
+  - **Re-checked:** a fresh checkout of the fixture is LF; `npm run verify` gives 111/111 and a
+    clean build.
+- **Open issue:** the parser (`web/frontend/src/api/stream.ts`) doesn't accept CRLF or CR line
+  endings, which the SSE spec allows. Our server sends LF, so this isn't hit today, but an
+  intermediary that rewrites line endings would break live runs. Not changed here.
+- **Correction to the entry above:** the docs-and-log commit was reworded after that entry was
+  written (its message named a file whose name the commit-message rule excludes). It is now
+  `99aec80`, not `dbf724a`; its tree is unchanged.

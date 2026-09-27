@@ -1,0 +1,4 @@
+# Test fixtures are byte-exact captures of what the server sends (LF line endings).
+# core.autocrlf would rewrite them as CRLF on checkout and break the SSE parser test.
+web/frontend/tests/fixtures/** -text
+tests/fixtures/** -text
