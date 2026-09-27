@@ -1,0 +1,277 @@
+{
+ "run_id": "bfd05a20-4a55-4b76-914d-19af7d37e27c",
+ "subject": "What year was the movie Interstellar released?",
+ "scope": "auditor",
+ "halted": false,
+ "conclusion": "The movie Interstellar was released in 2014 [SOURCE: Wikipedia, https://en.wikipedia.org/wiki/Interstellar_(film)].",
+ "thought_log": "The Context provides the release year of the movie Interstellar as 2014. The search tool was invoked to confirm this information. The tool call resulted in a list of sources, including Wikipedia, Rotten Tomatoes, and YouTube, all citing 2014 as the release year. The Context does not provide any additional information that would contradict this answer. Therefore, the answer is that the movie Interstellar was released in 2014 [SOURCE: Wikipedia, https://en.wikipedia.org/wiki/Interstellar_(film)]. The confidence level is high, as the Context provides a clear and direct answer to the question.",
+ "confidence_score": 0.75,
+ "confidence_degraded": false,
+ "confidence_classification": "STANDARD",
+ "high_uncertainty": false,
+ "data_sources": [],
+ "reasoning_objects": [
+  {
+   "reasoning_id": "604eca45-41c9-4b86-90f8-7a59c47bf29f",
+   "run_id": "bfd05a20-4a55-4b76-914d-19af7d37e27c",
+   "agent_id": "external",
+   "attempt_number": 1,
+   "parse_status": "SUCCESS",
+   "confidence_score": 0.75,
+   "confidence_degradation_reason": null,
+   "reasoning_steps": [],
+   "conclusion": "The movie Interstellar was released in 2014 [SOURCE: Wikipedia, https://en.wikipedia.org/wiki/Interstellar_(film)].",
+   "citations": [],
+   "data_sources": [],
+   "data_quality_warnings": [],
+   "created_at": "2026-09-24T22:13:19.992199+00:00",
+   "directive_version": "v1.5.1",
+   "thought_log": "The Context provides the release year of the movie Interstellar as 2014. The search tool was invoked to confirm this information. The tool call resulted in a list of sources, including Wikipedia, Rotten Tomatoes, and YouTube, all citing 2014 as the release year. The Context does not provide any additional information that would contradict this answer. Therefore, the answer is that the movie Interstellar was released in 2014 [SOURCE: Wikipedia, https://en.wikipedia.org/wiki/Interstellar_(film)]. The confidence level is high, as the Context provides a clear and direct answer to the question.",
+   "raw_output": {
+    "text": "<thought_log>\nThe Context provides the release year of the movie Interstellar as 2014. The search tool was invoked to confirm this information. The tool call resulted in a list of sources, including Wikipedia, Rotten Tomatoes, and YouTube, all citing 2014 as the release year. The Context does not provide any additional information that would contradict this answer. Therefore, the answer is that the movie Interstellar was released in 2014 [SOURCE: Wikipedia, https://en.wikipedia.org/wiki/Interstellar_(film)]. The confidence level is high, as the Context provides a clear and direct answer to the question.\n</thought_log>\n<conclusion>\nThe movie Interstellar was released in 2014 [SOURCE: Wikipedia, https://en.wikipedia.org/wiki/Interstellar_(film)].</conclusion>"
+   },
+   "llm_tokens": null,
+   "directive_text": "You are a verification agent operating inside the Mycroft pipeline. Your entire response MUST consist of exactly two XML blocks \u2014 nothing before, nothing after.\n\nCRITICAL: Begin your response immediately with <thought_log> on the very first line. Do NOT write any introduction, preamble, reasoning notes, or explanation before the opening tag. Do NOT mention the tag names outside the blocks. Any text outside the two blocks will fail structural validation and force a retry.\n\nGROUNDING RULE \u2014 read before writing anything: Your only source of fact is the \"Context:\" section of the user message. You have no live data access and no reliable memory of real facts, dates, or figures for this subject. Do NOT invent, estimate, or recall from training a specific number, date, percentage, or URL that is not present in the Context. If the Context is empty or does not contain what is needed to answer, say exactly that \u2014 an honest \"insufficient context\" is correct behavior, not a failure.\n\nCITATION RULE \u2014 mandatory, not optional: whenever the Context gives you a URL or a named source for a fact, you MUST cite it using this EXACT bracket format, character for character: [SOURCE: <short label>, <the exact url from Context>]. Do not describe the source in a sentence instead of using this bracket \u2014 a sentence like \"as reported on the page\" does NOT count as a citation and will not be recognised. Write the bracket immediately after the fact it supports, in either block. Example of the required format:\n  The event occurred in 2015 [SOURCE: Example Reference, https://example.com/page].\nIf the Context gives no URL for a fact, cite it as [SOURCE: <short label>, N/A] instead of omitting the bracket entirely.\n\nWHAT EACH BLOCK MUST CONTAIN:\n- thought_log: every step of your reasoning \u2014 which specific facts in the Context you are using and where each came from (cited per the CITATION RULE), what the Context does NOT contain that a complete answer would need, any data quality issues (missing data, stale or outdated sources, the reporting period each figure covers), and your confidence.\n- conclusion: your own answer to the question that was asked, using only facts present in the Context and consistent with your thought_log, cited per the CITATION RULE. If the Context did not support a claim, say so instead of asserting it.\nThese descriptions are instructions to you. Never repeat or paraphrase them in your response \u2014 a conclusion that restates these instructions fails validation.\n\nRESPONSE SHAPE \u2014 fill each block with your own writing:\n<thought_log>\n</thought_log>\n<conclusion>\n</conclusion>\n\nRules:\n- First character of your response: <\n- Last character of your response: >\n- Exactly two blocks, in order: thought_log then conclusion. Neither may be empty.\n- No text, whitespace, or markdown outside the blocks.\n- No fact, number, date, or URL may appear in either block unless it is present in the Context section of the user message.",
+   "context_window": {
+    "subject": "What year was the movie Interstellar released?",
+    "context": ""
+   }
+  }
+ ],
+ "session": {
+  "run_id": "bfd05a20-4a55-4b76-914d-19af7d37e27c",
+  "ticker": "WHAT",
+  "initiated_at": "2026-09-24T22:13:08.123869+00:00",
+  "status": "COMPLETE",
+  "directive_version": "v1.5.1",
+  "directive_text": "You are a verification agent operating inside the Mycroft pipeline. Your entire response MUST consist of exactly two XML blocks \u2014 nothing before, nothing after.\n\nCRITICAL: Begin your response immediately with <thought_log> on the very first line. Do NOT write any introduction, preamble, reasoning notes, or explanation before the opening tag. Do NOT mention the tag names outside the blocks. Any text outside the two blocks will fail structural validation and force a retry.\n\nGROUNDING RULE \u2014 read before writing anything: Your only source of fact is the \"Context:\" section of the user message. You have no live data access and no reliable memory of real facts, dates, or figures for this subject. Do NOT invent, estimate, or recall from training a specific number, date, percentage, or URL that is not present in the Context. If the Context is empty or does not contain what is needed to answer, say exactly that \u2014 an honest \"insufficient context\" is correct behavior, not a failure.\n\nCITATION RULE \u2014 mandatory, not optional: whenever the Context gives you a URL or a named source for a fact, you MUST cite it using this EXACT bracket format, character for character: [SOURCE: <short label>, <the exact url from Context>]. Do not describe the source in a sentence instead of using this bracket \u2014 a sentence like \"as reported on the page\" does NOT count as a citation and will not be recognised. Write the bracket immediately after the fact it supports, in either block. Example of the required format:\n  The event occurred in 2015 [SOURCE: Example Reference, https://example.com/page].\nIf the Context gives no URL for a fact, cite it as [SOURCE: <short label>, N/A] instead of omitting the bracket entirely.\n\nWHAT EACH BLOCK MUST CONTAIN:\n- thought_log: every step of your reasoning \u2014 which specific facts in the Context you are using and where each came from (cited per the CITATION RULE), what the Context does NOT contain that a complete answer would need, any data quality issues (missing data, stale or outdated sources, the reporting period each figure covers), and your confidence.\n- conclusion: your own answer to the question that was asked, using only facts present in the Context and consistent with your thought_log, cited per the CITATION RULE. If the Context did not support a claim, say so instead of asserting it.\nThese descriptions are instructions to you. Never repeat or paraphrase them in your response \u2014 a conclusion that restates these instructions fails validation.\n\nRESPONSE SHAPE \u2014 fill each block with your own writing:\n<thought_log>\n</thought_log>\n<conclusion>\n</conclusion>\n\nRules:\n- First character of your response: <\n- Last character of your response: >\n- Exactly two blocks, in order: thought_log then conclusion. Neither may be empty.\n- No text, whitespace, or markdown outside the blocks.\n- No fact, number, date, or URL may appear in either block unless it is present in the Context section of the user message.",
+  "run_confidence_score": 0.75,
+  "confidence_classification": "STANDARD",
+  "completed_at": "2026-09-24T22:13:19.992199+00:00",
+  "aan_triggered": false,
+  "aan_affidavit": null,
+  "reasoning_objects": [
+   {
+    "reasoning_id": "604eca45-41c9-4b86-90f8-7a59c47bf29f",
+    "run_id": "bfd05a20-4a55-4b76-914d-19af7d37e27c",
+    "agent_id": "external",
+    "attempt_number": 1,
+    "parse_status": "SUCCESS",
+    "confidence_score": 0.75,
+    "confidence_degradation_reason": null,
+    "reasoning_steps": [],
+    "conclusion": "The movie Interstellar was released in 2014 [SOURCE: Wikipedia, https://en.wikipedia.org/wiki/Interstellar_(film)].",
+    "citations": [],
+    "data_sources": [],
+    "data_quality_warnings": [],
+    "created_at": "2026-09-24T22:13:19.992199+00:00",
+    "directive_version": "v1.5.1",
+    "thought_log": "The Context provides the release year of the movie Interstellar as 2014. The search tool was invoked to confirm this information. The tool call resulted in a list of sources, including Wikipedia, Rotten Tomatoes, and YouTube, all citing 2014 as the release year. The Context does not provide any additional information that would contradict this answer. Therefore, the answer is that the movie Interstellar was released in 2014 [SOURCE: Wikipedia, https://en.wikipedia.org/wiki/Interstellar_(film)]. The confidence level is high, as the Context provides a clear and direct answer to the question.",
+    "raw_output": {
+     "text": "<thought_log>\nThe Context provides the release year of the movie Interstellar as 2014. The search tool was invoked to confirm this information. The tool call resulted in a list of sources, including Wikipedia, Rotten Tomatoes, and YouTube, all citing 2014 as the release year. The Context does not provide any additional information that would contradict this answer. Therefore, the answer is that the movie Interstellar was released in 2014 [SOURCE: Wikipedia, https://en.wikipedia.org/wiki/Interstellar_(film)]. The confidence level is high, as the Context provides a clear and direct answer to the question.\n</thought_log>\n<conclusion>\nThe movie Interstellar was released in 2014 [SOURCE: Wikipedia, https://en.wikipedia.org/wiki/Interstellar_(film)].</conclusion>"
+    },
+    "llm_tokens": null,
+    "directive_text": "You are a verification agent operating inside the Mycroft pipeline. Your entire response MUST consist of exactly two XML blocks \u2014 nothing before, nothing after.\n\nCRITICAL: Begin your response immediately with <thought_log> on the very first line. Do NOT write any introduction, preamble, reasoning notes, or explanation before the opening tag. Do NOT mention the tag names outside the blocks. Any text outside the two blocks will fail structural validation and force a retry.\n\nGROUNDING RULE \u2014 read before writing anything: Your only source of fact is the \"Context:\" section of the user message. You have no live data access and no reliable memory of real facts, dates, or figures for this subject. Do NOT invent, estimate, or recall from training a specific number, date, percentage, or URL that is not present in the Context. If the Context is empty or does not contain what is needed to answer, say exactly that \u2014 an honest \"insufficient context\" is correct behavior, not a failure.\n\nCITATION RULE \u2014 mandatory, not optional: whenever the Context gives you a URL or a named source for a fact, you MUST cite it using this EXACT bracket format, character for character: [SOURCE: <short label>, <the exact url from Context>]. Do not describe the source in a sentence instead of using this bracket \u2014 a sentence like \"as reported on the page\" does NOT count as a citation and will not be recognised. Write the bracket immediately after the fact it supports, in either block. Example of the required format:\n  The event occurred in 2015 [SOURCE: Example Reference, https://example.com/page].\nIf the Context gives no URL for a fact, cite it as [SOURCE: <short label>, N/A] instead of omitting the bracket entirely.\n\nWHAT EACH BLOCK MUST CONTAIN:\n- thought_log: every step of your reasoning \u2014 which specific facts in the Context you are using and where each came from (cited per the CITATION RULE), what the Context does NOT contain that a complete answer would need, any data quality issues (missing data, stale or outdated sources, the reporting period each figure covers), and your confidence.\n- conclusion: your own answer to the question that was asked, using only facts present in the Context and consistent with your thought_log, cited per the CITATION RULE. If the Context did not support a claim, say so instead of asserting it.\nThese descriptions are instructions to you. Never repeat or paraphrase them in your response \u2014 a conclusion that restates these instructions fails validation.\n\nRESPONSE SHAPE \u2014 fill each block with your own writing:\n<thought_log>\n</thought_log>\n<conclusion>\n</conclusion>\n\nRules:\n- First character of your response: <\n- Last character of your response: >\n- Exactly two blocks, in order: thought_log then conclusion. Neither may be empty.\n- No text, whitespace, or markdown outside the blocks.\n- No fact, number, date, or URL may appear in either block unless it is present in the Context section of the user message.",
+    "context_window": {
+     "subject": "What year was the movie Interstellar released?",
+     "context": ""
+    }
+   }
+  ]
+ },
+ "error": null,
+ "config_snapshot": {
+  "provider": "langchain",
+  "model": "llama3.2",
+  "temperature": 0.0,
+  "seed": 42,
+  "agent_id": "external",
+  "confidence_score": 0.75,
+  "consistency_probe": false
+ },
+ "steps": [
+  {
+   "seq": 1,
+   "phase": "chat",
+   "label": "LLM attempt 1",
+   "started_at": "2026-09-24T22:13:08.123+00:00",
+   "detail": "model=langchain:llama3.2 \u00b7 directive=v1.5.1",
+   "url": null,
+   "status": "ok",
+   "error": null,
+   "duration_ms": 11860.0,
+   "kind": "llm",
+   "attempt": 1,
+   "model": "langchain:llama3.2"
+  },
+  {
+   "seq": 2,
+   "phase": "chat",
+   "label": "Tool call: tavily_search (started)",
+   "started_at": "2026-09-24T22:13:12.066+00:00",
+   "detail": "query: 'Interstellar movie release year'",
+   "url": null,
+   "status": "ok",
+   "error": null,
+   "duration_ms": null,
+   "kind": "tool",
+   "tool": "tavily_search",
+   "tool_phase": "started",
+   "query": "Interstellar movie release year",
+   "args": {
+    "start_date": "N/A",
+    "end_date": "N/A",
+    "include_images": "N/A",
+    "search_depth": "basic",
+    "query": "Interstellar movie release year",
+    "exclude_domains": "N/A",
+    "include_domains": "N/A",
+    "time_range": "N/A",
+    "topic": "N/A"
+   },
+   "retried_query_only": false,
+   "urls": []
+  },
+  {
+   "seq": 3,
+   "phase": "chat",
+   "label": "Tool call: tavily_search (finished)",
+   "started_at": "2026-09-24T22:13:13.127+00:00",
+   "detail": "query: 'Interstellar movie release year' \u00b7 {'query': 'Interstellar movie release year', 'follow_up_questions': None, 'answer': None, 'images': [], 'results': [{'url': 'https://en.wikipedia.org/wiki/Interstellar_(film)', 'title': 'Interstellar (film)', 'content': 'Interstellar premiered at the TCL Chinese Theatre on October 26, 2014, and was ",
+   "url": null,
+   "status": "ok",
+   "error": null,
+   "duration_ms": 1062.0,
+   "kind": "tool",
+   "tool": "tavily_search",
+   "tool_phase": "finished",
+   "query": "Interstellar movie release year",
+   "args": {
+    "start_date": "N/A",
+    "end_date": "N/A",
+    "include_images": "N/A",
+    "search_depth": "basic",
+    "query": "Interstellar movie release year",
+    "exclude_domains": "N/A",
+    "include_domains": "N/A",
+    "time_range": "N/A",
+    "topic": "N/A"
+   },
+   "retried_query_only": false,
+   "urls": [
+    "https://en.wikipedia.org/wiki/Interstellar_(film)",
+    "https://www.rottentomatoes.com/m/interstellar_2014",
+    "https://letterboxd.com/film/interstellar",
+    "https://www.britannica.com/topic/Interstellar",
+    "https://www.youtube.com/watch?v=zSWdZVtXT7E"
+   ]
+  },
+  {
+   "seq": 4,
+   "phase": "chat",
+   "label": "LLM attempt 2",
+   "started_at": "2026-09-24T22:13:19.992+00:00",
+   "detail": "model=langchain:llama3.2 \u00b7 directive=v1.5.1",
+   "url": null,
+   "status": "ok",
+   "error": null,
+   "duration_ms": 13703.0,
+   "kind": "llm",
+   "attempt": 2,
+   "model": "langchain:llama3.2"
+  },
+  {
+   "seq": 5,
+   "phase": "chat",
+   "label": "Tool call: tavily_search (started)",
+   "started_at": "2026-09-24T22:13:24.450+00:00",
+   "detail": "query: 'Interstellar movie release year'",
+   "url": null,
+   "status": "ok",
+   "error": null,
+   "duration_ms": null,
+   "kind": "tool",
+   "tool": "tavily_search",
+   "tool_phase": "started",
+   "query": "Interstellar movie release year",
+   "args": {
+    "query": "Interstellar movie release year",
+    "end_date": "N/A",
+    "search_depth": "basic",
+    "start_date": "N/A",
+    "exclude_domains": "N/A",
+    "include_domains": "N/A",
+    "include_images": "N/A",
+    "time_range": "N/A",
+    "topic": "N/A"
+   },
+   "retried_query_only": false,
+   "urls": []
+  },
+  {
+   "seq": 6,
+   "phase": "chat",
+   "label": "Tool call: tavily_search (finished)",
+   "started_at": "2026-09-24T22:13:24.587+00:00",
+   "detail": "query: 'Interstellar movie release year' \u00b7 {'query': 'Interstellar movie release year', 'follow_up_questions': None, 'answer': None, 'images': [], 'results': [{'url': 'https://en.wikipedia.org/wiki/Interstellar_(film)', 'title': 'Interstellar (film)', 'content': 'Interstellar premiered at the TCL Chinese Theatre on October 26, 2014, and was ",
+   "url": null,
+   "status": "ok",
+   "error": null,
+   "duration_ms": 125.0,
+   "kind": "tool",
+   "tool": "tavily_search",
+   "tool_phase": "finished",
+   "query": "Interstellar movie release year",
+   "args": {
+    "query": "Interstellar movie release year",
+    "end_date": "N/A",
+    "search_depth": "basic",
+    "start_date": "N/A",
+    "exclude_domains": "N/A",
+    "include_domains": "N/A",
+    "include_images": "N/A",
+    "time_range": "N/A",
+    "topic": "N/A"
+   },
+   "retried_query_only": false,
+   "urls": [
+    "https://en.wikipedia.org/wiki/Interstellar_(film)",
+    "https://www.rottentomatoes.com/m/interstellar_2014",
+    "https://letterboxd.com/film/interstellar",
+    "https://www.britannica.com/topic/Interstellar",
+    "https://www.youtube.com/watch?v=zSWdZVtXT7E"
+   ]
+  }
+ ],
+ "tool_capability_warning": null,
+ "claims": [
+  {
+   "claim_type": "citation",
+   "text": "Wikipedia \u2014 https://en.wikipedia.org/wiki/Interstellar_(film)",
+   "context": "d contradict this answer. Therefore, the answer is that the movie Interstellar was released in 2014 [SOURCE: Wikipedia, https://en.wikipedia.org/wiki/Interstellar_(film)]. The confidence level is high, as the C",
+   "verified": null,
+   "source_label": "Wikipedia",
+   "source_url": "https://en.wikipedia.org/wiki/Interstellar_(film)"
+  },
+  {
+   "claim_type": "causal",
+   "text": "therefore",
+   "context": "Therefore, the answer is that the movie Interstellar was released in 2014 [SOURCE: Wikipedia, https://en.wikipedia.org/wiki/Interstellar_(film)].",
+   "verified": null
+  }
+ ],
+ "consistency": {
+  "score": 0.733,
+  "agreement": "HIGH",
+  "probe_conclusion": "The movie Interstellar was released in 2014.",
+  "primary_numbers": [],
+  "probe_numbers": [],
+  "divergent_numbers": [],
+  "word_overlap": 0.333,
+  "number_overlap": 1.0,
+  "probe_halted": false,
+  "probe_error": null,
+  "number_divergence_flag": false
+ },
+ "verification_rate": 0.0
+}

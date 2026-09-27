@@ -1,0 +1,202 @@
+{
+ "run_id": "08a89517-d488-421b-9cbc-6c1a8d8c0e9a",
+ "subject": "TSLA",
+ "scope": "investor",
+ "halted": false,
+ "conclusion": "Mock response for: TSLA\n  Recovered on retry with corrective directive.",
+ "thought_log": null,
+ "confidence_score": 0.65,
+ "confidence_degraded": true,
+ "confidence_classification": "STANDARD",
+ "high_uncertainty": false,
+ "data_sources": [
+  {
+   "source": "Mock Calendar API",
+   "status": "simulated",
+   "url": "http://calendar.local/api/v1",
+   "provenance_note": "Simulated \u2014 no live calendar connected"
+  },
+  {
+   "source": "Contact Directory",
+   "status": "cached",
+   "url": "http://contacts.local/api/v1",
+   "provenance_note": null
+  }
+ ],
+ "reasoning_objects": [
+  {
+   "reasoning_id": "2ddbac76-8631-49ee-a6b6-fc5a48ab004a",
+   "run_id": "08a89517-d488-421b-9cbc-6c1a8d8c0e9a",
+   "agent_id": "external",
+   "attempt_number": 1,
+   "parse_status": "PARSE_FAILURE",
+   "confidence_score": 0.65,
+   "confidence_degradation_reason": null,
+   "reasoning_steps": [],
+   "conclusion": null,
+   "citations": [],
+   "data_sources": [
+    {
+     "source": "Mock Calendar API",
+     "url": "http://calendar.local/api/v1",
+     "fetched_at": null,
+     "status": "simulated",
+     "provenance_note": "Simulated \u2014 no live calendar connected"
+    },
+    {
+     "source": "Contact Directory",
+     "url": "http://contacts.local/api/v1",
+     "fetched_at": null,
+     "status": "cached",
+     "provenance_note": null
+    }
+   ],
+   "data_quality_warnings": [],
+   "created_at": "2026-09-22T23:04:28.595263+00:00",
+   "directive_version": "v1.1.0"
+  },
+  {
+   "reasoning_id": "2b2198a2-302e-40aa-a4c3-309395f3a41a",
+   "run_id": "08a89517-d488-421b-9cbc-6c1a8d8c0e9a",
+   "agent_id": "external",
+   "attempt_number": 2,
+   "parse_status": "SUCCESS",
+   "confidence_score": 0.65,
+   "confidence_degradation_reason": null,
+   "reasoning_steps": [],
+   "conclusion": "Mock response for: TSLA\n  Recovered on retry with corrective directive.",
+   "citations": [],
+   "data_sources": [
+    {
+     "source": "Mock Calendar API",
+     "url": "http://calendar.local/api/v1",
+     "fetched_at": null,
+     "status": "simulated",
+     "provenance_note": "Simulated \u2014 no live calendar connected"
+    },
+    {
+     "source": "Contact Directory",
+     "url": "http://contacts.local/api/v1",
+     "fetched_at": null,
+     "status": "cached",
+     "provenance_note": null
+    }
+   ],
+   "data_quality_warnings": [],
+   "created_at": "2026-09-22T23:04:28.595481+00:00",
+   "directive_version": "corrective"
+  }
+ ],
+ "session": {
+  "run_id": "08a89517-d488-421b-9cbc-6c1a8d8c0e9a",
+  "ticker": "TSLA",
+  "initiated_at": "2026-09-22T23:04:28.594884+00:00",
+  "status": "COMPLETE",
+  "directive_version": "v1.1.0",
+  "directive_text": "You are a financial analysis agent operating inside the Mycroft pipeline. Your entire response MUST consist of exactly two XML blocks \u2014 nothing before, nothing after.\n\nCRITICAL: Begin your response immediately with <thought_log> on the very first line. Do NOT write any introduction, preamble, reasoning notes, or explanation before the opening tag. Do NOT mention the tag names outside the blocks. Any text outside the two blocks will fail structural validation and force a retry.\n\nBlock 1 \u2014 internal reasoning (write everything you know and considered here):\n<thought_log>\n  Document every step: which data sources you consulted and why, data quality issues (missing data, stale filings, simulated values), intermediate conclusions you revised, and any uncertainty. Be explicit about confidence.\n</thought_log>\n\nBlock 2 \u2014 final output:\n<conclusion>\n  Your final analysis, consistent with your thought_log. Cite all sources as [SOURCE: <label>, <url or N/A>].\n</conclusion>\n\nRules:\n- First character of your response: <\n- Last character of your response: >\n- Exactly two blocks, in order: thought_log then conclusion.\n- No text, whitespace, or markdown outside the blocks.",
+  "run_confidence_score": 0.65,
+  "confidence_classification": "STANDARD",
+  "completed_at": "2026-09-22T23:04:28.595494+00:00",
+  "aan_triggered": false,
+  "aan_affidavit": null,
+  "reasoning_objects": [
+   {
+    "reasoning_id": "2ddbac76-8631-49ee-a6b6-fc5a48ab004a",
+    "run_id": "08a89517-d488-421b-9cbc-6c1a8d8c0e9a",
+    "agent_id": "external",
+    "attempt_number": 1,
+    "parse_status": "PARSE_FAILURE",
+    "confidence_score": 0.65,
+    "confidence_degradation_reason": null,
+    "reasoning_steps": [],
+    "conclusion": null,
+    "citations": [],
+    "data_sources": [
+     {
+      "source": "Mock Calendar API",
+      "url": "http://calendar.local/api/v1",
+      "fetched_at": null,
+      "status": "simulated",
+      "provenance_note": "Simulated \u2014 no live calendar connected"
+     },
+     {
+      "source": "Contact Directory",
+      "url": "http://contacts.local/api/v1",
+      "fetched_at": null,
+      "status": "cached",
+      "provenance_note": null
+     }
+    ],
+    "data_quality_warnings": [],
+    "created_at": "2026-09-22T23:04:28.595263+00:00",
+    "directive_version": "v1.1.0",
+    "thought_log": null,
+    "raw_output": {
+     "text": "Sure! Here is my analysis of your request. I considered several factors and think the answer is probably yes, though it depends on the context. Let me know if you need more detail."
+    },
+    "llm_tokens": null,
+    "directive_text": "You are a financial analysis agent operating inside the Mycroft pipeline. Your entire response MUST consist of exactly two XML blocks \u2014 nothing before, nothing after.\n\nCRITICAL: Begin your response immediately with <thought_log> on the very first line. Do NOT write any introduction, preamble, reasoning notes, or explanation before the opening tag. Do NOT mention the tag names outside the blocks. Any text outside the two blocks will fail structural validation and force a retry.\n\nBlock 1 \u2014 internal reasoning (write everything you know and considered here):\n<thought_log>\n  Document every step: which data sources you consulted and why, data quality issues (missing data, stale filings, simulated values), intermediate conclusions you revised, and any uncertainty. Be explicit about confidence.\n</thought_log>\n\nBlock 2 \u2014 final output:\n<conclusion>\n  Your final analysis, consistent with your thought_log. Cite all sources as [SOURCE: <label>, <url or N/A>].\n</conclusion>\n\nRules:\n- First character of your response: <\n- Last character of your response: >\n- Exactly two blocks, in order: thought_log then conclusion.\n- No text, whitespace, or markdown outside the blocks.",
+    "context_window": {
+     "subject": "TSLA",
+     "context": ""
+    }
+   },
+   {
+    "reasoning_id": "2b2198a2-302e-40aa-a4c3-309395f3a41a",
+    "run_id": "08a89517-d488-421b-9cbc-6c1a8d8c0e9a",
+    "agent_id": "external",
+    "attempt_number": 2,
+    "parse_status": "SUCCESS",
+    "confidence_score": 0.65,
+    "confidence_degradation_reason": null,
+    "reasoning_steps": [],
+    "conclusion": "Mock response for: TSLA\n  Recovered on retry with corrective directive.",
+    "citations": [],
+    "data_sources": [
+     {
+      "source": "Mock Calendar API",
+      "url": "http://calendar.local/api/v1",
+      "fetched_at": null,
+      "status": "simulated",
+      "provenance_note": "Simulated \u2014 no live calendar connected"
+     },
+     {
+      "source": "Contact Directory",
+      "url": "http://contacts.local/api/v1",
+      "fetched_at": null,
+      "status": "cached",
+      "provenance_note": null
+     }
+    ],
+    "data_quality_warnings": [],
+    "created_at": "2026-09-22T23:04:28.595481+00:00",
+    "directive_version": "corrective",
+    "thought_log": "Subject: TSLA\n  Context: none provided\n  Recovered on retry with corrective directive.\n  Reasoning: evaluated all available inputs and reached a conclusion.",
+    "raw_output": {
+     "text": "<thought_log>\n  Subject: TSLA\n  Context: none provided\n  Recovered on retry with corrective directive.\n  Reasoning: evaluated all available inputs and reached a conclusion.\n</thought_log>\n<conclusion>\n  Mock response for: TSLA\n  Recovered on retry with corrective directive.\n</conclusion>"
+    },
+    "llm_tokens": null,
+    "directive_text": "Your previous response failed structural validation. You must provide your internal reasoning in a <thought_log> block and your final output in a <conclusion> block. Adhere to the schema exactly.",
+    "context_window": {
+     "subject": "TSLA",
+     "context": ""
+    }
+   }
+  ]
+ },
+ "error": null,
+ "config_snapshot": {
+  "provider": "langchain",
+  "model": "gemini-2.5-flash",
+  "temperature": 0.0,
+  "seed": 42,
+  "ollama_model": "llama3.2",
+  "agent_id": "external",
+  "failure_mode": "retry_success",
+  "confidence_score": 0.75,
+  "consistency_probe": false
+ },
+ "claims": [],
+ "consistency": null,
+ "verification_rate": 0.0
+}

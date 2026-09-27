@@ -1,0 +1,285 @@
+{
+ "run_id": "ec1a3b44-8145-4d44-b8a2-7c7707deffcd",
+ "subject": "In what year was the first Pokemon game released in North America?",
+ "scope": "auditor",
+ "halted": false,
+ "reasoning_objects": [
+  {
+   "reasoning_id": "f73a819d-33f5-47ff-b15b-60b85e0b75fa",
+   "run_id": "ec1a3b44-8145-4d44-b8a2-7c7707deffcd",
+   "agent_id": "generic_a",
+   "attempt_number": 1,
+   "parse_status": "SUCCESS",
+   "confidence_score": 0.7,
+   "confidence_degradation_reason": null,
+   "data_sources": [],
+   "data_quality_warnings": [],
+   "created_at": "2026-09-25T16:46:29.036939+00:00",
+   "directive_version": "v1.5.2"
+  },
+  {
+   "reasoning_id": "f6b70668-bdd6-4887-b624-bb9cbb7770a1",
+   "run_id": "ec1a3b44-8145-4d44-b8a2-7c7707deffcd",
+   "agent_id": "generic_b",
+   "attempt_number": 1,
+   "parse_status": "SUCCESS",
+   "confidence_score": 0.7,
+   "confidence_degradation_reason": null,
+   "data_sources": [],
+   "data_quality_warnings": [],
+   "created_at": "2026-09-25T16:46:10.265682+00:00",
+   "directive_version": "v1.5.2"
+  }
+ ],
+ "session": {
+  "run_id": "ec1a3b44-8145-4d44-b8a2-7c7707deffcd",
+  "ticker": "IN",
+  "initiated_at": "2026-09-25T16:46:29.038564+00:00",
+  "status": "COMPLETE",
+  "directive_version": "v1.5.2",
+  "run_confidence_score": null,
+  "confidence_classification": null,
+  "completed_at": "2026-09-25T16:46:29.038564+00:00",
+  "aan_triggered": false,
+  "aan_affidavit": null,
+  "reasoning_objects": [
+   {
+    "reasoning_id": "f73a819d-33f5-47ff-b15b-60b85e0b75fa",
+    "run_id": "ec1a3b44-8145-4d44-b8a2-7c7707deffcd",
+    "agent_id": "generic_a",
+    "attempt_number": 1,
+    "parse_status": "SUCCESS",
+    "confidence_score": 0.7,
+    "confidence_degradation_reason": null,
+    "data_sources": [],
+    "data_quality_warnings": [],
+    "created_at": "2026-09-25T16:46:29.036939+00:00",
+    "directive_version": "v1.5.2"
+   },
+   {
+    "reasoning_id": "f6b70668-bdd6-4887-b624-bb9cbb7770a1",
+    "run_id": "ec1a3b44-8145-4d44-b8a2-7c7707deffcd",
+    "agent_id": "generic_b",
+    "attempt_number": 1,
+    "parse_status": "SUCCESS",
+    "confidence_score": 0.7,
+    "confidence_degradation_reason": null,
+    "data_sources": [],
+    "data_quality_warnings": [],
+    "created_at": "2026-09-25T16:46:10.265682+00:00",
+    "directive_version": "v1.5.2"
+   }
+  ]
+ },
+ "cross_agent_comparison": {
+  "run_id": "ec1a3b44-8145-4d44-b8a2-7c7707deffcd",
+  "subject": "In what year was the first Pokemon game released in North America?",
+  "agent_a_id": "generic_a",
+  "agent_b_id": "generic_b",
+  "status": "COMPARED",
+  "agent_a_conclusion": null,
+  "agent_b_conclusion": null,
+  "agent_a_numbers": [],
+  "agent_b_numbers": [],
+  "divergent_numbers": [],
+  "contradiction_flag": true,
+  "word_overlap": 0.316,
+  "number_overlap": 1.0,
+  "score": 0.726,
+  "agreement": "HIGH",
+  "compared_at": "2026-09-25T16:46:29.038037+00:00",
+  "metric_comparisons": [
+   {
+    "metric": "release_year",
+    "label": "Release year",
+    "family": "year",
+    "status": "MISMATCH",
+    "value_a": null,
+    "value_b": null,
+    "raw_a": null,
+    "raw_b": null,
+    "period_a": null,
+    "period_b": null,
+    "variance_pct": null,
+    "note": null,
+    "flags": true,
+    "withheld": true
+   }
+  ],
+  "contradiction_rule": "canonical_facts"
+ },
+ "ticker": null,
+ "producers": {
+  "a": {
+   "agent_id": "generic_a",
+   "role": "AGENT A",
+   "model": "langchain:llama3.2",
+   "concepts": [],
+   "overridden": true
+  },
+  "b": {
+   "agent_id": "generic_b",
+   "role": "AGENT B",
+   "model": "langchain:qwen2.5:7b",
+   "concepts": [],
+   "overridden": true
+  },
+  "same_model": false
+ },
+ "contexts": {
+  "a": "",
+  "b": ""
+ },
+ "facts": {
+  "a": [],
+  "b": []
+ },
+ "claims": {
+  "a": [],
+  "b": []
+ },
+ "verification_rate": {
+  "a": 0.0,
+  "b": 0.0
+ },
+ "steps": [
+  {
+   "seq": 1,
+   "phase": "shared",
+   "label": "shared context",
+   "started_at": "2026-09-25T16:45:51.357+00:00",
+   "detail": "both agents receive the identical subject and context — no per-agent data slice in generic mode",
+   "url": null,
+   "status": "ok",
+   "error": null,
+   "duration_ms": null
+  },
+  {
+   "seq": 2,
+   "phase": "agent_a",
+   "label": "LLM attempt 1",
+   "started_at": "2026-09-25T16:45:51.357+00:00",
+   "detail": "model=langchain:llama3.2 · directive=v1.5.2",
+   "url": null,
+   "status": "ok",
+   "error": null,
+   "duration_ms": 37687.0,
+   "kind": "llm",
+   "attempt": 1,
+   "model": "langchain:llama3.2"
+  },
+  {
+   "seq": 3,
+   "phase": "agent_b",
+   "label": "LLM attempt 1",
+   "started_at": "2026-09-25T16:45:51.359+00:00",
+   "detail": "model=langchain:qwen2.5:7b · directive=v1.5.2",
+   "url": null,
+   "status": "ok",
+   "error": null,
+   "duration_ms": 18906.0,
+   "kind": "llm",
+   "attempt": 1,
+   "model": "langchain:qwen2.5:7b"
+  },
+  {
+   "seq": 4,
+   "phase": "agent_a",
+   "label": "Tool call: tavily_search (started)",
+   "started_at": "2026-09-25T16:46:20.694+00:00",
+   "detail": "query: 'first Pokemon game released in North America release year'",
+   "url": null,
+   "status": "ok",
+   "error": null,
+   "duration_ms": null,
+   "kind": "tool",
+   "tool": "tavily_search",
+   "tool_phase": "started",
+   "query": "first Pokemon game released in North America release year",
+   "args": {
+    "time_range": "N/A",
+    "topic": "general",
+    "query": "first Pokemon game released in North America release year",
+    "include_domains": [
+     "nintendo.com"
+    ],
+    "include_images": "false",
+    "start_date": "N/A",
+    "end_date": "N/A"
+   },
+   "retried_query_only": false,
+   "urls": [],
+   "result_withheld": true
+  },
+  {
+   "seq": 5,
+   "phase": "agent_a",
+   "label": "Tool call: tavily_search (finished)",
+   "started_at": "2026-09-25T16:46:23.288+00:00",
+   "detail": "query: 'first Pokemon game released in North America release year'",
+   "url": null,
+   "status": "ok",
+   "error": null,
+   "duration_ms": 2593.0,
+   "kind": "tool",
+   "tool": "tavily_search",
+   "tool_phase": "finished",
+   "query": "first Pokemon game released in North America release year",
+   "args": {
+    "time_range": "N/A",
+    "topic": "general",
+    "query": "first Pokemon game released in North America release year",
+    "include_domains": [
+     "nintendo.com"
+    ],
+    "include_images": "false",
+    "start_date": "N/A",
+    "end_date": "N/A"
+   },
+   "retried_query_only": false,
+   "urls": [
+    "https://press.nintendo.com/CompanyHistory",
+    "https://www.nintendo.com/us/about",
+    "https://www.nintendo.com/en-gb/Hardware/Nintendo-History/Nintendo-History-625945.html",
+    "https://careers.nintendo.com/our-history",
+    "https://www.nintendo.com/au/news-and-articles/ask-the-developer-vol-17-gamechat-part-1"
+   ],
+   "result_withheld": true
+  },
+  {
+   "seq": 6,
+   "phase": "compare",
+   "label": "compare conclusions",
+   "started_at": "2026-09-25T16:46:29.038+00:00",
+   "detail": "numeric divergence only · status=COMPARED · contradiction_rule=canonical_facts",
+   "url": null,
+   "status": "ok",
+   "error": null,
+   "duration_ms": null,
+   "kind": "compare"
+  }
+ ],
+ "gate_policy": "v1",
+ "gate": {
+  "policy": "v1",
+  "identity_note": "decided_by is the name the reviewer typed; it is recorded as entered and not authenticated.",
+  "status": "AWAITING_DECISION",
+  "items": [
+   {
+    "metric": "release_year",
+    "kind": "figure",
+    "label": "Release year",
+    "status": "MISMATCH",
+    "metrics": [
+     "release_year"
+    ],
+    "decision_id": null
+   }
+  ],
+  "pending": [
+   "release_year"
+  ],
+  "decisions": []
+ },
+ "withheld_pending_review": "Pending human review: the agents disagree on a figure and no reviewer has decided yet."
+}

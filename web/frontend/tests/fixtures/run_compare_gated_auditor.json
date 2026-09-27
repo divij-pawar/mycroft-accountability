@@ -1,0 +1,351 @@
+{
+ "run_id": "ec1a3b44-8145-4d44-b8a2-7c7707deffcd",
+ "subject": "In what year was the first Pokemon game released in North America?",
+ "scope": "auditor",
+ "halted": false,
+ "reasoning_objects": [
+  {
+   "reasoning_id": "f73a819d-33f5-47ff-b15b-60b85e0b75fa",
+   "run_id": "ec1a3b44-8145-4d44-b8a2-7c7707deffcd",
+   "agent_id": "generic_a",
+   "attempt_number": 1,
+   "parse_status": "SUCCESS",
+   "confidence_score": 0.7,
+   "confidence_degradation_reason": null,
+   "reasoning_steps": [],
+   "conclusion": "The first Pokémon game released in North America was in 1998, with the release of Pokémon Red and Blue for Game Boy.",
+   "citations": [],
+   "data_sources": [],
+   "data_quality_warnings": [],
+   "created_at": "2026-09-25T16:46:29.036939+00:00",
+   "directive_version": "v1.5.2",
+   "thought_log": "The first Pokémon game released in North America was Pokémon Red and Pokémon Blue for Game Boy, which arrived in North America in 1998 [SOURCE: Nintendo of America Press Center, https://press.nintendo.com/CompanyHistory]. The release of Pokémon Red and Blue was a significant event in the history of the Pokémon franchise, marking the beginning of its popularity in North America. The Game Boy Color system was also introduced in 1998, along with Game Boy Camera and Printer accessories.",
+   "raw_output": {
+    "text": "<thought_log>\nThe first Pokémon game released in North America was Pokémon Red and Pokémon Blue for Game Boy, which arrived in North America in 1998 [SOURCE: Nintendo of America Press Center, https://press.nintendo.com/CompanyHistory]. The release of Pokémon Red and Blue was a significant event in the history of the Pokémon franchise, marking the beginning of its popularity in North America. The Game Boy Color system was also introduced in 1998, along with Game Boy Camera and Printer accessories.\n</thought_log>\n<conclusion>\nThe first Pokémon game released in North America was in 1998, with the release of Pokémon Red and Blue for Game Boy.\n</conclusion>"
+   },
+   "llm_tokens": null,
+   "directive_text": "You are a verification agent operating inside the Mycroft pipeline. Your entire response MUST consist of exactly two XML blocks — nothing before, nothing after.\n\nCRITICAL: Begin your response immediately with <thought_log> on the very first line. Do NOT write any introduction, preamble, reasoning notes, or explanation before the opening tag. Do NOT mention the tag names outside the blocks. Any text outside the two blocks will fail structural validation and force a retry.\n\nGROUNDING RULE — read before writing anything: Your only source of fact is the \"Context:\" section of the user message. You have no live data access and no reliable memory of real facts, dates, or figures for this subject. Do NOT invent, estimate, or recall from training a specific number, date, percentage, or URL that is not present in the Context. If the Context is empty or does not contain what is needed to answer, say exactly that — an honest \"insufficient context\" is correct behavior, not a failure.\n\nCITATION RULE — mandatory, not optional: whenever the Context gives you a URL or a named source for a fact, you MUST cite it using this EXACT bracket format, character for character: [SOURCE: <short label>, <the exact url from Context>]. Do not describe the source in a sentence instead of using this bracket — a sentence like \"as reported on the page\" does NOT count as a citation and will not be recognised. Write the bracket immediately after the fact it supports, in either block. Example of the required format:\n  The event occurred in 2015 [SOURCE: Example Reference, https://example.com/page].\nIf the Context gives no URL for a fact, cite it as [SOURCE: <short label>, N/A] instead of omitting the bracket entirely.\n\nWHAT EACH BLOCK MUST CONTAIN:\n- thought_log: every step of your reasoning — which specific facts in the Context you are using and where each came from (cited per the CITATION RULE), what the Context does NOT contain that a complete answer would need, any data quality issues (missing data, stale or outdated sources, the reporting period each figure covers), and your confidence.\n- conclusion: your own answer to the question that was asked, using only facts present in the Context and consistent with your thought_log, cited per the CITATION RULE. If the Context did not support a claim, say so instead of asserting it.\nThese descriptions are instructions to you. Never repeat or paraphrase them in your response — a conclusion that restates these instructions fails validation.\n\nRESPONSE SHAPE — fill each block with your own writing, and close each block with its exact XML closing tag, </thought_log> and </conclusion> (angle brackets and a forward slash — never square brackets like [/conclusion]):\n<thought_log>\n</thought_log>\n<conclusion>\n</conclusion>\n\nRules:\n- First character of your response: <\n- Last character of your response: >\n- Exactly two blocks, in order: thought_log then conclusion. Neither may be empty.\n- The closing tags are exactly </thought_log> and </conclusion>.\n- No text, whitespace, or markdown outside the blocks.\n- No fact, number, date, or URL may appear in either block unless it is present in the Context section of the user message.",
+   "context_window": {
+    "subject": "In what year was the first Pokemon game released in North America?",
+    "context": ""
+   }
+  },
+  {
+   "reasoning_id": "f6b70668-bdd6-4887-b624-bb9cbb7770a1",
+   "run_id": "ec1a3b44-8145-4d44-b8a2-7c7707deffcd",
+   "agent_id": "generic_b",
+   "attempt_number": 1,
+   "parse_status": "SUCCESS",
+   "confidence_score": 0.7,
+   "confidence_degradation_reason": null,
+   "reasoning_steps": [],
+   "conclusion": "The first Pokemon game, \"Pokémon Red\" and \"Pokémon Green,\" was released in North America in 1996 [SOURCE: GameFAQs, https://www.gamefaqs.com/nds/452753-pokemon-red-version/faq/19752].",
+   "citations": [],
+   "data_sources": [],
+   "data_quality_warnings": [],
+   "created_at": "2026-09-25T16:46:10.265682+00:00",
+   "directive_version": "v1.5.2",
+   "thought_log": "The Context does not provide any specific information about the release year of the first Pokemon game in North America. I will use the search tool to find this information.",
+   "raw_output": {
+    "text": "<thought_log>\nThe Context does not provide any specific information about the release year of the first Pokemon game in North America. I will use the search tool to find this information.\n</thought_log>\n<conclusion>\nThe first Pokemon game, \"Pokémon Red\" and \"Pokémon Green,\" was released in North America in 1996 [SOURCE: GameFAQs, https://www.gamefaqs.com/nds/452753-pokemon-red-version/faq/19752].\n</conclusion>"
+   },
+   "llm_tokens": null,
+   "directive_text": "You are a verification agent operating inside the Mycroft pipeline. Your entire response MUST consist of exactly two XML blocks — nothing before, nothing after.\n\nCRITICAL: Begin your response immediately with <thought_log> on the very first line. Do NOT write any introduction, preamble, reasoning notes, or explanation before the opening tag. Do NOT mention the tag names outside the blocks. Any text outside the two blocks will fail structural validation and force a retry.\n\nGROUNDING RULE — read before writing anything: Your only source of fact is the \"Context:\" section of the user message. You have no live data access and no reliable memory of real facts, dates, or figures for this subject. Do NOT invent, estimate, or recall from training a specific number, date, percentage, or URL that is not present in the Context. If the Context is empty or does not contain what is needed to answer, say exactly that — an honest \"insufficient context\" is correct behavior, not a failure.\n\nCITATION RULE — mandatory, not optional: whenever the Context gives you a URL or a named source for a fact, you MUST cite it using this EXACT bracket format, character for character: [SOURCE: <short label>, <the exact url from Context>]. Do not describe the source in a sentence instead of using this bracket — a sentence like \"as reported on the page\" does NOT count as a citation and will not be recognised. Write the bracket immediately after the fact it supports, in either block. Example of the required format:\n  The event occurred in 2015 [SOURCE: Example Reference, https://example.com/page].\nIf the Context gives no URL for a fact, cite it as [SOURCE: <short label>, N/A] instead of omitting the bracket entirely.\n\nWHAT EACH BLOCK MUST CONTAIN:\n- thought_log: every step of your reasoning — which specific facts in the Context you are using and where each came from (cited per the CITATION RULE), what the Context does NOT contain that a complete answer would need, any data quality issues (missing data, stale or outdated sources, the reporting period each figure covers), and your confidence.\n- conclusion: your own answer to the question that was asked, using only facts present in the Context and consistent with your thought_log, cited per the CITATION RULE. If the Context did not support a claim, say so instead of asserting it.\nThese descriptions are instructions to you. Never repeat or paraphrase them in your response — a conclusion that restates these instructions fails validation.\n\nRESPONSE SHAPE — fill each block with your own writing, and close each block with its exact XML closing tag, </thought_log> and </conclusion> (angle brackets and a forward slash — never square brackets like [/conclusion]):\n<thought_log>\n</thought_log>\n<conclusion>\n</conclusion>\n\nRules:\n- First character of your response: <\n- Last character of your response: >\n- Exactly two blocks, in order: thought_log then conclusion. Neither may be empty.\n- The closing tags are exactly </thought_log> and </conclusion>.\n- No text, whitespace, or markdown outside the blocks.\n- No fact, number, date, or URL may appear in either block unless it is present in the Context section of the user message.",
+   "context_window": {
+    "subject": "In what year was the first Pokemon game released in North America?",
+    "context": ""
+   }
+  }
+ ],
+ "session": {
+  "run_id": "ec1a3b44-8145-4d44-b8a2-7c7707deffcd",
+  "ticker": "IN",
+  "initiated_at": "2026-09-25T16:46:29.038564+00:00",
+  "status": "COMPLETE",
+  "directive_version": "v1.5.2",
+  "directive_text": "You are a verification agent operating inside the Mycroft pipeline. Your entire response MUST consist of exactly two XML blocks — nothing before, nothing after.\n\nCRITICAL: Begin your response immediately with <thought_log> on the very first line. Do NOT write any introduction, preamble, reasoning notes, or explanation before the opening tag. Do NOT mention the tag names outside the blocks. Any text outside the two blocks will fail structural validation and force a retry.\n\nGROUNDING RULE — read before writing anything: Your only source of fact is the \"Context:\" section of the user message. You have no live data access and no reliable memory of real facts, dates, or figures for this subject. Do NOT invent, estimate, or recall from training a specific number, date, percentage, or URL that is not present in the Context. If the Context is empty or does not contain what is needed to answer, say exactly that — an honest \"insufficient context\" is correct behavior, not a failure.\n\nCITATION RULE — mandatory, not optional: whenever the Context gives you a URL or a named source for a fact, you MUST cite it using this EXACT bracket format, character for character: [SOURCE: <short label>, <the exact url from Context>]. Do not describe the source in a sentence instead of using this bracket — a sentence like \"as reported on the page\" does NOT count as a citation and will not be recognised. Write the bracket immediately after the fact it supports, in either block. Example of the required format:\n  The event occurred in 2015 [SOURCE: Example Reference, https://example.com/page].\nIf the Context gives no URL for a fact, cite it as [SOURCE: <short label>, N/A] instead of omitting the bracket entirely.\n\nWHAT EACH BLOCK MUST CONTAIN:\n- thought_log: every step of your reasoning — which specific facts in the Context you are using and where each came from (cited per the CITATION RULE), what the Context does NOT contain that a complete answer would need, any data quality issues (missing data, stale or outdated sources, the reporting period each figure covers), and your confidence.\n- conclusion: your own answer to the question that was asked, using only facts present in the Context and consistent with your thought_log, cited per the CITATION RULE. If the Context did not support a claim, say so instead of asserting it.\nThese descriptions are instructions to you. Never repeat or paraphrase them in your response — a conclusion that restates these instructions fails validation.\n\nRESPONSE SHAPE — fill each block with your own writing, and close each block with its exact XML closing tag, </thought_log> and </conclusion> (angle brackets and a forward slash — never square brackets like [/conclusion]):\n<thought_log>\n</thought_log>\n<conclusion>\n</conclusion>\n\nRules:\n- First character of your response: <\n- Last character of your response: >\n- Exactly two blocks, in order: thought_log then conclusion. Neither may be empty.\n- The closing tags are exactly </thought_log> and </conclusion>.\n- No text, whitespace, or markdown outside the blocks.\n- No fact, number, date, or URL may appear in either block unless it is present in the Context section of the user message.",
+  "run_confidence_score": null,
+  "confidence_classification": null,
+  "completed_at": "2026-09-25T16:46:29.038564+00:00",
+  "aan_triggered": false,
+  "aan_affidavit": null,
+  "reasoning_objects": [
+   {
+    "reasoning_id": "f73a819d-33f5-47ff-b15b-60b85e0b75fa",
+    "run_id": "ec1a3b44-8145-4d44-b8a2-7c7707deffcd",
+    "agent_id": "generic_a",
+    "attempt_number": 1,
+    "parse_status": "SUCCESS",
+    "confidence_score": 0.7,
+    "confidence_degradation_reason": null,
+    "reasoning_steps": [],
+    "conclusion": "The first Pokémon game released in North America was in 1998, with the release of Pokémon Red and Blue for Game Boy.",
+    "citations": [],
+    "data_sources": [],
+    "data_quality_warnings": [],
+    "created_at": "2026-09-25T16:46:29.036939+00:00",
+    "directive_version": "v1.5.2",
+    "thought_log": "The first Pokémon game released in North America was Pokémon Red and Pokémon Blue for Game Boy, which arrived in North America in 1998 [SOURCE: Nintendo of America Press Center, https://press.nintendo.com/CompanyHistory]. The release of Pokémon Red and Blue was a significant event in the history of the Pokémon franchise, marking the beginning of its popularity in North America. The Game Boy Color system was also introduced in 1998, along with Game Boy Camera and Printer accessories.",
+    "raw_output": {
+     "text": "<thought_log>\nThe first Pokémon game released in North America was Pokémon Red and Pokémon Blue for Game Boy, which arrived in North America in 1998 [SOURCE: Nintendo of America Press Center, https://press.nintendo.com/CompanyHistory]. The release of Pokémon Red and Blue was a significant event in the history of the Pokémon franchise, marking the beginning of its popularity in North America. The Game Boy Color system was also introduced in 1998, along with Game Boy Camera and Printer accessories.\n</thought_log>\n<conclusion>\nThe first Pokémon game released in North America was in 1998, with the release of Pokémon Red and Blue for Game Boy.\n</conclusion>"
+    },
+    "llm_tokens": null,
+    "directive_text": "You are a verification agent operating inside the Mycroft pipeline. Your entire response MUST consist of exactly two XML blocks — nothing before, nothing after.\n\nCRITICAL: Begin your response immediately with <thought_log> on the very first line. Do NOT write any introduction, preamble, reasoning notes, or explanation before the opening tag. Do NOT mention the tag names outside the blocks. Any text outside the two blocks will fail structural validation and force a retry.\n\nGROUNDING RULE — read before writing anything: Your only source of fact is the \"Context:\" section of the user message. You have no live data access and no reliable memory of real facts, dates, or figures for this subject. Do NOT invent, estimate, or recall from training a specific number, date, percentage, or URL that is not present in the Context. If the Context is empty or does not contain what is needed to answer, say exactly that — an honest \"insufficient context\" is correct behavior, not a failure.\n\nCITATION RULE — mandatory, not optional: whenever the Context gives you a URL or a named source for a fact, you MUST cite it using this EXACT bracket format, character for character: [SOURCE: <short label>, <the exact url from Context>]. Do not describe the source in a sentence instead of using this bracket — a sentence like \"as reported on the page\" does NOT count as a citation and will not be recognised. Write the bracket immediately after the fact it supports, in either block. Example of the required format:\n  The event occurred in 2015 [SOURCE: Example Reference, https://example.com/page].\nIf the Context gives no URL for a fact, cite it as [SOURCE: <short label>, N/A] instead of omitting the bracket entirely.\n\nWHAT EACH BLOCK MUST CONTAIN:\n- thought_log: every step of your reasoning — which specific facts in the Context you are using and where each came from (cited per the CITATION RULE), what the Context does NOT contain that a complete answer would need, any data quality issues (missing data, stale or outdated sources, the reporting period each figure covers), and your confidence.\n- conclusion: your own answer to the question that was asked, using only facts present in the Context and consistent with your thought_log, cited per the CITATION RULE. If the Context did not support a claim, say so instead of asserting it.\nThese descriptions are instructions to you. Never repeat or paraphrase them in your response — a conclusion that restates these instructions fails validation.\n\nRESPONSE SHAPE — fill each block with your own writing, and close each block with its exact XML closing tag, </thought_log> and </conclusion> (angle brackets and a forward slash — never square brackets like [/conclusion]):\n<thought_log>\n</thought_log>\n<conclusion>\n</conclusion>\n\nRules:\n- First character of your response: <\n- Last character of your response: >\n- Exactly two blocks, in order: thought_log then conclusion. Neither may be empty.\n- The closing tags are exactly </thought_log> and </conclusion>.\n- No text, whitespace, or markdown outside the blocks.\n- No fact, number, date, or URL may appear in either block unless it is present in the Context section of the user message.",
+    "context_window": {
+     "subject": "In what year was the first Pokemon game released in North America?",
+     "context": ""
+    }
+   },
+   {
+    "reasoning_id": "f6b70668-bdd6-4887-b624-bb9cbb7770a1",
+    "run_id": "ec1a3b44-8145-4d44-b8a2-7c7707deffcd",
+    "agent_id": "generic_b",
+    "attempt_number": 1,
+    "parse_status": "SUCCESS",
+    "confidence_score": 0.7,
+    "confidence_degradation_reason": null,
+    "reasoning_steps": [],
+    "conclusion": "The first Pokemon game, \"Pokémon Red\" and \"Pokémon Green,\" was released in North America in 1996 [SOURCE: GameFAQs, https://www.gamefaqs.com/nds/452753-pokemon-red-version/faq/19752].",
+    "citations": [],
+    "data_sources": [],
+    "data_quality_warnings": [],
+    "created_at": "2026-09-25T16:46:10.265682+00:00",
+    "directive_version": "v1.5.2",
+    "thought_log": "The Context does not provide any specific information about the release year of the first Pokemon game in North America. I will use the search tool to find this information.",
+    "raw_output": {
+     "text": "<thought_log>\nThe Context does not provide any specific information about the release year of the first Pokemon game in North America. I will use the search tool to find this information.\n</thought_log>\n<conclusion>\nThe first Pokemon game, \"Pokémon Red\" and \"Pokémon Green,\" was released in North America in 1996 [SOURCE: GameFAQs, https://www.gamefaqs.com/nds/452753-pokemon-red-version/faq/19752].\n</conclusion>"
+    },
+    "llm_tokens": null,
+    "directive_text": "You are a verification agent operating inside the Mycroft pipeline. Your entire response MUST consist of exactly two XML blocks — nothing before, nothing after.\n\nCRITICAL: Begin your response immediately with <thought_log> on the very first line. Do NOT write any introduction, preamble, reasoning notes, or explanation before the opening tag. Do NOT mention the tag names outside the blocks. Any text outside the two blocks will fail structural validation and force a retry.\n\nGROUNDING RULE — read before writing anything: Your only source of fact is the \"Context:\" section of the user message. You have no live data access and no reliable memory of real facts, dates, or figures for this subject. Do NOT invent, estimate, or recall from training a specific number, date, percentage, or URL that is not present in the Context. If the Context is empty or does not contain what is needed to answer, say exactly that — an honest \"insufficient context\" is correct behavior, not a failure.\n\nCITATION RULE — mandatory, not optional: whenever the Context gives you a URL or a named source for a fact, you MUST cite it using this EXACT bracket format, character for character: [SOURCE: <short label>, <the exact url from Context>]. Do not describe the source in a sentence instead of using this bracket — a sentence like \"as reported on the page\" does NOT count as a citation and will not be recognised. Write the bracket immediately after the fact it supports, in either block. Example of the required format:\n  The event occurred in 2015 [SOURCE: Example Reference, https://example.com/page].\nIf the Context gives no URL for a fact, cite it as [SOURCE: <short label>, N/A] instead of omitting the bracket entirely.\n\nWHAT EACH BLOCK MUST CONTAIN:\n- thought_log: every step of your reasoning — which specific facts in the Context you are using and where each came from (cited per the CITATION RULE), what the Context does NOT contain that a complete answer would need, any data quality issues (missing data, stale or outdated sources, the reporting period each figure covers), and your confidence.\n- conclusion: your own answer to the question that was asked, using only facts present in the Context and consistent with your thought_log, cited per the CITATION RULE. If the Context did not support a claim, say so instead of asserting it.\nThese descriptions are instructions to you. Never repeat or paraphrase them in your response — a conclusion that restates these instructions fails validation.\n\nRESPONSE SHAPE — fill each block with your own writing, and close each block with its exact XML closing tag, </thought_log> and </conclusion> (angle brackets and a forward slash — never square brackets like [/conclusion]):\n<thought_log>\n</thought_log>\n<conclusion>\n</conclusion>\n\nRules:\n- First character of your response: <\n- Last character of your response: >\n- Exactly two blocks, in order: thought_log then conclusion. Neither may be empty.\n- The closing tags are exactly </thought_log> and </conclusion>.\n- No text, whitespace, or markdown outside the blocks.\n- No fact, number, date, or URL may appear in either block unless it is present in the Context section of the user message.",
+    "context_window": {
+     "subject": "In what year was the first Pokemon game released in North America?",
+     "context": ""
+    }
+   }
+  ]
+ },
+ "cross_agent_comparison": {
+  "run_id": "ec1a3b44-8145-4d44-b8a2-7c7707deffcd",
+  "subject": "In what year was the first Pokemon game released in North America?",
+  "agent_a_id": "generic_a",
+  "agent_b_id": "generic_b",
+  "status": "COMPARED",
+  "agent_a_conclusion": "The first Pokémon game released in North America was in 1998, with the release of Pokémon Red and Blue for Game Boy.",
+  "agent_b_conclusion": "The first Pokemon game, \"Pokémon Red\" and \"Pokémon Green,\" was released in North America in 1996 [SOURCE: GameFAQs, https://www.gamefaqs.com/nds/452753-pokemon-red-version/faq/19752].",
+  "agent_a_numbers": [],
+  "agent_b_numbers": [],
+  "divergent_numbers": [
+   "1996",
+   "1998"
+  ],
+  "contradiction_flag": true,
+  "word_overlap": 0.316,
+  "number_overlap": 1.0,
+  "score": 0.726,
+  "agreement": "HIGH",
+  "compared_at": "2026-09-25T16:46:29.038037+00:00",
+  "metric_comparisons": [
+   {
+    "metric": "release_year",
+    "label": "Release year",
+    "family": "year",
+    "status": "MISMATCH",
+    "value_a": 1998.0,
+    "value_b": 1996.0,
+    "raw_a": "1998",
+    "raw_b": "1996",
+    "period_a": null,
+    "period_b": null,
+    "variance_pct": 0.1,
+    "note": null,
+    "flags": true
+   }
+  ],
+  "contradiction_rule": "canonical_facts"
+ },
+ "ticker": null,
+ "producers": {
+  "a": {
+   "agent_id": "generic_a",
+   "role": "AGENT A",
+   "model": "langchain:llama3.2",
+   "concepts": [],
+   "overridden": true
+  },
+  "b": {
+   "agent_id": "generic_b",
+   "role": "AGENT B",
+   "model": "langchain:qwen2.5:7b",
+   "concepts": [],
+   "overridden": true
+  },
+  "same_model": false
+ },
+ "contexts": {
+  "a": "",
+  "b": ""
+ },
+ "facts": {
+  "a": [],
+  "b": []
+ },
+ "claims": {
+  "a": [
+   {
+    "claim_type": "citation",
+    "text": "Nintendo of America Press Center — https://press.nintendo.com/CompanyHistory",
+    "context": "North America was Pokémon Red and Pokémon Blue for Game Boy, which arrived in North America in 1998 [SOURCE: Nintendo of America Press Center, https://press.nintendo.com/CompanyHistory]. The release of Pokémon Red and Blue wa",
+    "verified": null,
+    "source_label": "Nintendo of America Press Center",
+    "source_url": "https://press.nintendo.com/CompanyHistory"
+   }
+  ],
+  "b": [
+   {
+    "claim_type": "citation",
+    "text": "GameFAQs — https://www.gamefaqs.com/nds/452753-pokemon-red-version/faq/19752",
+    "context": "n.\nThe first Pokemon game, \"Pokémon Red\" and \"Pokémon Green,\" was released in North America in 1996 [SOURCE: GameFAQs, https://www.gamefaqs.com/nds/452753-pokemon-red-version/faq/19752].",
+    "verified": null,
+    "source_label": "GameFAQs",
+    "source_url": "https://www.gamefaqs.com/nds/452753-pokemon-red-version/faq/19752"
+   }
+  ]
+ },
+ "verification_rate": {
+  "a": 0.0,
+  "b": 0.0
+ },
+ "steps": [
+  {
+   "seq": 1,
+   "phase": "shared",
+   "label": "shared context",
+   "started_at": "2026-09-25T16:45:51.357+00:00",
+   "detail": "both agents receive the identical subject and context — no per-agent data slice in generic mode",
+   "url": null,
+   "status": "ok",
+   "error": null,
+   "duration_ms": null
+  },
+  {
+   "seq": 2,
+   "phase": "agent_a",
+   "label": "LLM attempt 1",
+   "started_at": "2026-09-25T16:45:51.357+00:00",
+   "detail": "model=langchain:llama3.2 · directive=v1.5.2",
+   "url": null,
+   "status": "ok",
+   "error": null,
+   "duration_ms": 37687.0,
+   "kind": "llm",
+   "attempt": 1,
+   "model": "langchain:llama3.2"
+  },
+  {
+   "seq": 3,
+   "phase": "agent_b",
+   "label": "LLM attempt 1",
+   "started_at": "2026-09-25T16:45:51.359+00:00",
+   "detail": "model=langchain:qwen2.5:7b · directive=v1.5.2",
+   "url": null,
+   "status": "ok",
+   "error": null,
+   "duration_ms": 18906.0,
+   "kind": "llm",
+   "attempt": 1,
+   "model": "langchain:qwen2.5:7b"
+  },
+  {
+   "seq": 4,
+   "phase": "agent_a",
+   "label": "Tool call: tavily_search (started)",
+   "started_at": "2026-09-25T16:46:20.694+00:00",
+   "detail": "query: 'first Pokemon game released in North America release year'",
+   "url": null,
+   "status": "ok",
+   "error": null,
+   "duration_ms": null,
+   "kind": "tool",
+   "tool": "tavily_search",
+   "tool_phase": "started",
+   "query": "first Pokemon game released in North America release year",
+   "args": {
+    "time_range": "N/A",
+    "topic": "general",
+    "query": "first Pokemon game released in North America release year",
+    "include_domains": [
+     "nintendo.com"
+    ],
+    "include_images": "false",
+    "start_date": "N/A",
+    "end_date": "N/A"
+   },
+   "retried_query_only": false,
+   "urls": []
+  },
+  {
+   "seq": 5,
+   "phase": "agent_a",
+   "label": "Tool call: tavily_search (finished)",
+   "started_at": "2026-09-25T16:46:23.288+00:00",
+   "detail": "query: 'first Pokemon game released in North America release year' · {'query': 'first Pokemon game released in North America release year', 'follow_up_questions': None, 'answer': None, 'images': [], 'results': [{'url': 'https://press.nintendo.com/CompanyHistory', 'title': 'Company History - Nintendo of America Press Center', 'content': \"| 1998 | Nintendo introduced t",
+   "url": null,
+   "status": "ok",
+   "error": null,
+   "duration_ms": 2593.0,
+   "kind": "tool",
+   "tool": "tavily_search",
+   "tool_phase": "finished",
+   "query": "first Pokemon game released in North America release year",
+   "args": {
+    "time_range": "N/A",
+    "topic": "general",
+    "query": "first Pokemon game released in North America release year",
+    "include_domains": [
+     "nintendo.com"
+    ],
+    "include_images": "false",
+    "start_date": "N/A",
+    "end_date": "N/A"
+   },
+   "retried_query_only": false,
+   "urls": [
+    "https://press.nintendo.com/CompanyHistory",
+    "https://www.nintendo.com/us/about",
+    "https://www.nintendo.com/en-gb/Hardware/Nintendo-History/Nintendo-History-625945.html",
+    "https://careers.nintendo.com/our-history",
+    "https://www.nintendo.com/au/news-and-articles/ask-the-developer-vol-17-gamechat-part-1"
+   ]
+  },
+  {
+   "seq": 6,
+   "phase": "compare",
+   "label": "compare conclusions",
+   "started_at": "2026-09-25T16:46:29.038+00:00",
+   "detail": "numeric divergence only · status=COMPARED · contradiction_rule=canonical_facts",
+   "url": null,
+   "status": "ok",
+   "error": null,
+   "duration_ms": null,
+   "kind": "compare"
+  }
+ ],
+ "gate_policy": "v1",
+ "gate": {
+  "policy": "v1",
+  "identity_note": "decided_by is the name the reviewer typed; it is recorded as entered and not authenticated.",
+  "status": "AWAITING_DECISION",
+  "items": [
+   {
+    "metric": "release_year",
+    "label": "Release year",
+    "status": "MISMATCH",
+    "decision_id": null
+   }
+  ],
+  "pending": [
+   "release_year"
+  ],
+  "decisions": []
+ }
+}

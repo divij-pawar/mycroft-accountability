@@ -1,0 +1,838 @@
+{
+ "run_id": "8ecb0922-da49-4e81-ad9d-c71dbb8bfac1",
+ "subject": "AAPL",
+ "scope": "auditor",
+ "halted": false,
+ "reasoning_objects": [
+  {
+   "reasoning_id": "db042147-1225-4c47-af78-8cf7dc8ab8a4",
+   "run_id": "8ecb0922-da49-4e81-ad9d-c71dbb8bfac1",
+   "agent_id": "financial",
+   "attempt_number": 1,
+   "parse_status": "SUCCESS",
+   "confidence_score": 0.7,
+   "confidence_degradation_reason": null,
+   "data_sources": [
+    {
+     "source": "SEC EDGAR",
+     "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000320193.json",
+     "fetched_at": null,
+     "status": "live",
+     "provenance_note": null
+    }
+   ],
+   "data_quality_warnings": [],
+   "created_at": "2026-09-27T01:57:31.454603+00:00",
+   "directive_version": "v1.5.2"
+  },
+  {
+   "reasoning_id": "becd3116-78a9-44f6-9026-4742636040ae",
+   "run_id": "8ecb0922-da49-4e81-ad9d-c71dbb8bfac1",
+   "agent_id": "earnings",
+   "attempt_number": 1,
+   "parse_status": "SUCCESS",
+   "confidence_score": 0.7,
+   "confidence_degradation_reason": null,
+   "data_sources": [
+    {
+     "source": "SEC EDGAR",
+     "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000320193.json",
+     "fetched_at": null,
+     "status": "live",
+     "provenance_note": null
+    }
+   ],
+   "data_quality_warnings": [],
+   "created_at": "2026-09-27T01:57:27.692609+00:00",
+   "directive_version": "v1.5.2"
+  }
+ ],
+ "session": {
+  "run_id": "8ecb0922-da49-4e81-ad9d-c71dbb8bfac1",
+  "ticker": "AAPL",
+  "initiated_at": "2026-09-27T01:57:33.451009+00:00",
+  "status": "COMPLETE",
+  "directive_version": "v1.5.2",
+  "run_confidence_score": null,
+  "confidence_classification": null,
+  "completed_at": "2026-09-27T01:57:33.451009+00:00",
+  "aan_triggered": false,
+  "aan_affidavit": null,
+  "reasoning_objects": [
+   {
+    "reasoning_id": "db042147-1225-4c47-af78-8cf7dc8ab8a4",
+    "run_id": "8ecb0922-da49-4e81-ad9d-c71dbb8bfac1",
+    "agent_id": "financial",
+    "attempt_number": 1,
+    "parse_status": "SUCCESS",
+    "confidence_score": 0.7,
+    "confidence_degradation_reason": null,
+    "data_sources": [
+     {
+      "source": "SEC EDGAR",
+      "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000320193.json",
+      "fetched_at": null,
+      "status": "live",
+      "provenance_note": null
+     }
+    ],
+    "data_quality_warnings": [],
+    "created_at": "2026-09-27T01:57:31.454603+00:00",
+    "directive_version": "v1.5.2"
+   },
+   {
+    "reasoning_id": "becd3116-78a9-44f6-9026-4742636040ae",
+    "run_id": "8ecb0922-da49-4e81-ad9d-c71dbb8bfac1",
+    "agent_id": "earnings",
+    "attempt_number": 1,
+    "parse_status": "SUCCESS",
+    "confidence_score": 0.7,
+    "confidence_degradation_reason": null,
+    "data_sources": [
+     {
+      "source": "SEC EDGAR",
+      "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000320193.json",
+      "fetched_at": null,
+      "status": "live",
+      "provenance_note": null
+     }
+    ],
+    "data_quality_warnings": [],
+    "created_at": "2026-09-27T01:57:27.692609+00:00",
+    "directive_version": "v1.5.2"
+   }
+  ]
+ },
+ "cross_agent_comparison": {
+  "run_id": "8ecb0922-da49-4e81-ad9d-c71dbb8bfac1",
+  "subject": "AAPL",
+  "agent_a_id": "financial",
+  "agent_b_id": "earnings",
+  "status": "COMPARED",
+  "agent_a_conclusion": null,
+  "agent_b_conclusion": null,
+  "agent_a_numbers": [],
+  "agent_b_numbers": [],
+  "divergent_numbers": [],
+  "contradiction_flag": true,
+  "word_overlap": 0.241,
+  "number_overlap": 0.0,
+  "score": 0.096,
+  "agreement": "LOW",
+  "compared_at": "2026-09-27T01:57:31.466830+00:00",
+  "metric_comparisons": [
+   {
+    "metric": "revenue_change",
+    "label": "Revenue change",
+    "family": "percent_change",
+    "status": "UNCORROBORATED",
+    "value_a": 16.0,
+    "value_b": null,
+    "raw_a": "16%",
+    "raw_b": null,
+    "period_a": "Q3 FY2026",
+    "period_b": null,
+    "variance_pct": null,
+    "note": null,
+    "flags": true
+   },
+   {
+    "metric": "untagged_change",
+    "label": "Unrecognised % change",
+    "family": "percent_change",
+    "status": "UNCORROBORATED",
+    "value_a": 22.0,
+    "value_b": null,
+    "raw_a": "22%",
+    "raw_b": null,
+    "period_a": null,
+    "period_b": null,
+    "variance_pct": null,
+    "note": null,
+    "flags": true
+   },
+   {
+    "metric": "eps",
+    "label": "EPS (basic or diluted not stated)",
+    "family": "per_share",
+    "status": "ONE_SIDED",
+    "value_a": 2.02,
+    "value_b": null,
+    "raw_a": "$2.02",
+    "raw_b": null,
+    "period_a": null,
+    "period_b": null,
+    "variance_pct": null,
+    "note": null,
+    "flags": false
+   },
+   {
+    "metric": "operating_income",
+    "label": "Operating income",
+    "family": "currency",
+    "status": "ONE_SIDED",
+    "value_a": null,
+    "value_b": 35600000000.0,
+    "raw_a": null,
+    "raw_b": "$35.6 billion",
+    "period_a": null,
+    "period_b": "Q3 FY2026",
+    "variance_pct": null,
+    "note": null,
+    "flags": false
+   },
+   {
+    "metric": "revenue",
+    "label": "Revenue",
+    "family": "currency",
+    "status": "ONE_SIDED",
+    "value_a": 109400000000.0,
+    "value_b": null,
+    "raw_a": "$109.4 billion",
+    "raw_b": null,
+    "period_a": "Q3 FY2026",
+    "period_b": null,
+    "variance_pct": null,
+    "note": null,
+    "flags": false
+   },
+   {
+    "metric": "net_income",
+    "label": "Net income",
+    "family": "currency",
+    "status": "MATCH",
+    "value_a": 29790000000.0,
+    "value_b": 29800000000.0,
+    "raw_a": "$29.79 billion",
+    "raw_b": "$29.8 billion",
+    "period_a": null,
+    "period_b": null,
+    "variance_pct": 0.03,
+    "note": "Neither agent stated a period; compared as the run's shared filing period.",
+    "flags": false
+   }
+  ],
+  "contradiction_rule": "concept_aware",
+  "structural_flags": {
+   "policy": "b3-v1",
+   "checks": [
+    {
+     "key": "source:agent_a:net_income",
+     "rule": "matches_source",
+     "kind": "hard",
+     "scope": "agent_a",
+     "outcome": "pass",
+     "plain": "Net income matches the filing value the agent was given",
+     "math": "cited $29.79 billion; given $29.79B (3 months ending 2026-06-27, 10-Q)",
+     "reason": null,
+     "metrics": [
+      "net_income"
+     ],
+     "gates": false,
+     "who": "Agent A"
+    },
+    {
+     "key": "source:agent_a:revenue",
+     "rule": "matches_source",
+     "kind": "hard",
+     "scope": "agent_a",
+     "outcome": "pass",
+     "plain": "Revenue matches the filing value the agent was given",
+     "math": "cited $109.4 billion; given $109.4B (3 months ending 2026-06-27, 10-Q)",
+     "reason": null,
+     "metrics": [
+      "revenue"
+     ],
+     "gates": false,
+     "who": "Agent A"
+    },
+    {
+     "key": "source:agent_b:net_income",
+     "rule": "matches_source",
+     "kind": "hard",
+     "scope": "agent_b",
+     "outcome": "pass",
+     "plain": "Net income matches the filing value the agent was given",
+     "math": "cited $29.8 billion; given $29.79B (3 months ending 2026-06-27, 10-Q)",
+     "reason": null,
+     "metrics": [
+      "net_income"
+     ],
+     "gates": false,
+     "who": "Agent B"
+    },
+    {
+     "key": "source:agent_b:operating_income",
+     "rule": "matches_source",
+     "kind": "hard",
+     "scope": "agent_b",
+     "outcome": "pass",
+     "plain": "Operating income matches the filing value the agent was given",
+     "math": "cited $35.6 billion; given $35.7B (3 months ending 2026-06-27, 10-Q)",
+     "reason": null,
+     "metrics": [
+      "operating_income"
+     ],
+     "gates": false,
+     "who": "Agent B"
+    },
+    {
+     "key": "check:source:balance_sheet_filed",
+     "rule": "balance_sheet_filed",
+     "kind": "hard",
+     "scope": "source",
+     "outcome": "pass",
+     "plain": "Filed assets equal filed liabilities and equity",
+     "math": "assets $383.3B vs liabilities and equity $383.3B (as of 2026-06-27)",
+     "reason": null,
+     "metrics": [
+      "total_assets",
+      "liabilities_and_equity"
+     ],
+     "gates": false,
+     "who": "The filing"
+    },
+    {
+     "key": "check:source:eps_basic_ge_diluted",
+     "rule": "eps_basic_ge_diluted",
+     "kind": "hard",
+     "scope": "source",
+     "outcome": "pass",
+     "plain": "Diluted EPS can't be higher than basic EPS",
+     "math": "basic $2.03 vs diluted $2.02 (2026-03-29 to 2026-06-27)",
+     "reason": null,
+     "metrics": [
+      "eps_basic",
+      "eps_diluted"
+     ],
+     "gates": false,
+     "who": "The filing"
+    },
+    {
+     "key": "check:agent_b:net_le_operating",
+     "rule": "net_le_operating",
+     "kind": "heuristic",
+     "scope": "agent_b",
+     "outcome": "pass",
+     "plain": "Net income is usually no more than operating income",
+     "math": "net income $29.8B vs operating income $35.6B",
+     "reason": null,
+     "metrics": [
+      "net_income",
+      "operating_income"
+     ],
+     "gates": false,
+     "who": "Agent B"
+    },
+    {
+     "key": "check:source:gross_le_revenue",
+     "rule": "gross_le_revenue",
+     "kind": "heuristic",
+     "scope": "source",
+     "outcome": "pass",
+     "plain": "Gross profit is usually no more than revenue",
+     "math": "gross profit $54.77B vs revenue $109.4B (2026-03-29 to 2026-06-27)",
+     "reason": null,
+     "metrics": [
+      "gross_profit",
+      "revenue"
+     ],
+     "gates": false,
+     "who": "The filing"
+    },
+    {
+     "key": "check:source:net_le_operating",
+     "rule": "net_le_operating",
+     "kind": "heuristic",
+     "scope": "source",
+     "outcome": "pass",
+     "plain": "Net income is usually no more than operating income",
+     "math": "net income $29.79B vs operating income $35.7B (2026-03-29 to 2026-06-27)",
+     "reason": null,
+     "metrics": [
+      "net_income",
+      "operating_income"
+     ],
+     "gates": false,
+     "who": "The filing"
+    },
+    {
+     "key": "check:source:operating_le_gross",
+     "rule": "operating_le_gross",
+     "kind": "heuristic",
+     "scope": "source",
+     "outcome": "pass",
+     "plain": "Operating income is usually no more than gross profit",
+     "math": "operating income $35.7B vs gross profit $54.77B (2026-03-29 to 2026-06-27)",
+     "reason": null,
+     "metrics": [
+      "operating_income",
+      "gross_profit"
+     ],
+     "gates": false,
+     "who": "The filing"
+    }
+   ],
+   "gating": []
+  },
+  "synthesis": {
+   "policy": "b5-v1",
+   "primary_conflict_driver": "assumption",
+   "data_conflicts": [],
+   "withheld": true
+  }
+ },
+ "ticker": "AAPL",
+ "producers": {
+  "a": {
+   "agent_id": "financial",
+   "role": "PRODUCER A",
+   "lens": "financial",
+   "model": "langchain:llama3.2",
+   "concepts": [
+    "Assets",
+    "Revenues",
+    "NetIncomeLoss",
+    "EarningsPerShareDiluted"
+   ],
+   "lens_version": "v2",
+   "overridden": false
+  },
+  "b": {
+   "agent_id": "earnings",
+   "role": "PRODUCER B",
+   "lens": "earnings",
+   "model": "langchain:llama3.2",
+   "concepts": [
+    "EarningsPerShareDiluted",
+    "EarningsPerShareBasic",
+    "OperatingIncomeLoss",
+    "NetIncomeLoss"
+   ],
+   "lens_version": "v2",
+   "overridden": false
+  },
+  "pairing": "lenses",
+  "shared_concepts": [
+   "EarningsPerShareDiluted",
+   "NetIncomeLoss"
+  ],
+  "same_model": true
+ },
+ "contexts": {
+  "a": "Ticker: AAPL\nAssets: 383266000000.0 USD (FY2026 Q3, as of 2026-06-27, 10-Q, frame CY2026Q2I, accn 0000320193-26-000020)\nRevenues: 109417000000.0 USD (FY2026 Q3, 3 months ending 2026-06-27, 10-Q, frame CY2026Q2, tag RevenueFromContractWithCustomerExcludingAssessedTax, accn 0000320193-26-000020)\nNetIncomeLoss: 29789000000.0 USD (FY2026 Q3, 3 months ending 2026-06-27, 10-Q, frame CY2026Q2, accn 0000320193-26-000020)\nEarningsPerShareDiluted: 2.02 USD/shares (FY2026 Q3, 3 months ending 2026-06-27, 10-Q, frame CY2026Q2, accn 0000320193-26-000020)",
+  "b": "Ticker: AAPL\nEarnings-quality snapshot:\nEarningsPerShareDiluted: 2.02 USD/shares (FY2026 Q3, 3 months ending 2026-06-27, 10-Q, frame CY2026Q2, accn 0000320193-26-000020)\nEarningsPerShareBasic: 2.03 USD/shares (FY2026 Q3, 3 months ending 2026-06-27, 10-Q, frame CY2026Q2, accn 0000320193-26-000020)\nOperatingIncomeLoss: 35695000000.0 USD (FY2026 Q3, 3 months ending 2026-06-27, 10-Q, frame CY2026Q2, accn 0000320193-26-000020)\nNetIncomeLoss: 29789000000.0 USD (FY2026 Q3, 3 months ending 2026-06-27, 10-Q, frame CY2026Q2, accn 0000320193-26-000020)"
+ },
+ "facts": {
+  "a": [
+   {
+    "concept": "Assets",
+    "tag": "Assets",
+    "value": 383266000000.0,
+    "unit": "USD",
+    "start": null,
+    "end": "2026-06-27",
+    "fy": 2026,
+    "fp": "Q3",
+    "form": "10-Q",
+    "frame": "CY2026Q2I",
+    "accn": "0000320193-26-000020",
+    "filed": "2026-07-31",
+    "period_kind": "instant",
+    "period_label": "as of 2026-06-27",
+    "duration_days": null
+   },
+   {
+    "concept": "Revenues",
+    "tag": "RevenueFromContractWithCustomerExcludingAssessedTax",
+    "value": 109417000000.0,
+    "unit": "USD",
+    "start": "2026-03-29",
+    "end": "2026-06-27",
+    "fy": 2026,
+    "fp": "Q3",
+    "form": "10-Q",
+    "frame": "CY2026Q2",
+    "accn": "0000320193-26-000020",
+    "filed": "2026-07-31",
+    "period_kind": "quarter",
+    "period_label": "3 months ending 2026-06-27",
+    "duration_days": 90
+   },
+   {
+    "concept": "NetIncomeLoss",
+    "tag": "NetIncomeLoss",
+    "value": 29789000000.0,
+    "unit": "USD",
+    "start": "2026-03-29",
+    "end": "2026-06-27",
+    "fy": 2026,
+    "fp": "Q3",
+    "form": "10-Q",
+    "frame": "CY2026Q2",
+    "accn": "0000320193-26-000020",
+    "filed": "2026-07-31",
+    "period_kind": "quarter",
+    "period_label": "3 months ending 2026-06-27",
+    "duration_days": 90
+   },
+   {
+    "concept": "EarningsPerShareDiluted",
+    "tag": "EarningsPerShareDiluted",
+    "value": 2.02,
+    "unit": "USD/shares",
+    "start": "2026-03-29",
+    "end": "2026-06-27",
+    "fy": 2026,
+    "fp": "Q3",
+    "form": "10-Q",
+    "frame": "CY2026Q2",
+    "accn": "0000320193-26-000020",
+    "filed": "2026-07-31",
+    "period_kind": "quarter",
+    "period_label": "3 months ending 2026-06-27",
+    "duration_days": 90
+   }
+  ],
+  "b": [
+   {
+    "concept": "EarningsPerShareDiluted",
+    "tag": "EarningsPerShareDiluted",
+    "value": 2.02,
+    "unit": "USD/shares",
+    "start": "2026-03-29",
+    "end": "2026-06-27",
+    "fy": 2026,
+    "fp": "Q3",
+    "form": "10-Q",
+    "frame": "CY2026Q2",
+    "accn": "0000320193-26-000020",
+    "filed": "2026-07-31",
+    "period_kind": "quarter",
+    "period_label": "3 months ending 2026-06-27",
+    "duration_days": 90
+   },
+   {
+    "concept": "EarningsPerShareBasic",
+    "tag": "EarningsPerShareBasic",
+    "value": 2.03,
+    "unit": "USD/shares",
+    "start": "2026-03-29",
+    "end": "2026-06-27",
+    "fy": 2026,
+    "fp": "Q3",
+    "form": "10-Q",
+    "frame": "CY2026Q2",
+    "accn": "0000320193-26-000020",
+    "filed": "2026-07-31",
+    "period_kind": "quarter",
+    "period_label": "3 months ending 2026-06-27",
+    "duration_days": 90
+   },
+   {
+    "concept": "OperatingIncomeLoss",
+    "tag": "OperatingIncomeLoss",
+    "value": 35695000000.0,
+    "unit": "USD",
+    "start": "2026-03-29",
+    "end": "2026-06-27",
+    "fy": 2026,
+    "fp": "Q3",
+    "form": "10-Q",
+    "frame": "CY2026Q2",
+    "accn": "0000320193-26-000020",
+    "filed": "2026-07-31",
+    "period_kind": "quarter",
+    "period_label": "3 months ending 2026-06-27",
+    "duration_days": 90
+   },
+   {
+    "concept": "NetIncomeLoss",
+    "tag": "NetIncomeLoss",
+    "value": 29789000000.0,
+    "unit": "USD",
+    "start": "2026-03-29",
+    "end": "2026-06-27",
+    "fy": 2026,
+    "fp": "Q3",
+    "form": "10-Q",
+    "frame": "CY2026Q2",
+    "accn": "0000320193-26-000020",
+    "filed": "2026-07-31",
+    "period_kind": "quarter",
+    "period_label": "3 months ending 2026-06-27",
+    "duration_days": 90
+   }
+  ]
+ },
+ "claims": {
+  "a": [],
+  "b": []
+ },
+ "verification_rate": {
+  "a": 1.0,
+  "b": 0.5
+ },
+ "steps": [
+  {
+   "seq": 1,
+   "phase": "shared",
+   "label": "lookup_cik",
+   "started_at": "2026-09-27T01:56:43.825+00:00",
+   "detail": "AAPL -> CIK 0000320193",
+   "url": "https://www.sec.gov/files/company_tickers.json",
+   "status": "ok",
+   "error": null,
+   "duration_ms": 812.0,
+   "kind": "fetch"
+  },
+  {
+   "seq": 2,
+   "phase": "shared",
+   "label": "fetch_company_facts",
+   "started_at": "2026-09-27T01:56:44.631+00:00",
+   "detail": "one payload, reused by BOTH producers",
+   "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000320193.json",
+   "status": "ok",
+   "error": null,
+   "duration_ms": 703.0,
+   "kind": "fetch",
+   "cik": "0000320193"
+  },
+  {
+   "seq": 3,
+   "phase": "shared",
+   "label": "summarize_facts",
+   "started_at": "2026-09-27T01:56:45.342+00:00",
+   "detail": "Producer A lens: Assets, Revenues, NetIncomeLoss, EarningsPerShareDiluted",
+   "url": null,
+   "status": "ok",
+   "error": null,
+   "duration_ms": 0.0,
+   "slot": "a"
+  },
+  {
+   "seq": 4,
+   "phase": "shared",
+   "label": "summarize_earnings_facts",
+   "started_at": "2026-09-27T01:56:45.343+00:00",
+   "detail": "Producer B lens: EarningsPerShareDiluted, EarningsPerShareBasic, OperatingIncomeLoss, NetIncomeLoss",
+   "url": null,
+   "status": "ok",
+   "error": null,
+   "duration_ms": 16.0,
+   "slot": "b"
+  },
+  {
+   "seq": 5,
+   "phase": "agent_a",
+   "label": "LLM attempt 1",
+   "started_at": "2026-09-27T01:56:45.374+00:00",
+   "detail": "model=langchain:llama3.2 · directive=v1.5.2",
+   "url": null,
+   "status": "ok",
+   "error": null,
+   "duration_ms": 38796.0,
+   "kind": "llm",
+   "attempt": 1,
+   "model": "langchain:llama3.2"
+  },
+  {
+   "seq": 6,
+   "phase": "agent_b",
+   "label": "LLM attempt 1",
+   "started_at": "2026-09-27T01:56:45.375+00:00",
+   "detail": "model=langchain:llama3.2 · directive=v1.5.2",
+   "url": null,
+   "status": "ok",
+   "error": null,
+   "duration_ms": 28250.0,
+   "kind": "llm",
+   "attempt": 1,
+   "model": "langchain:llama3.2"
+  },
+  {
+   "seq": 7,
+   "phase": "agent_b",
+   "label": "Tool call: tavily_search (started)",
+   "started_at": "2026-09-27T01:56:57.255+00:00",
+   "detail": "query: 'AAPL earnings 2026 Q3'",
+   "url": null,
+   "status": "ok",
+   "error": null,
+   "duration_ms": null,
+   "kind": "tool",
+   "tool": "tavily_search",
+   "tool_phase": "started",
+   "query": "AAPL earnings 2026 Q3",
+   "args": {
+    "include_domains": "None",
+    "search_depth": "basic",
+    "query": "AAPL earnings 2026 Q3",
+    "include_images": "false",
+    "start_date": "2026-06-27",
+    "end_date": "2026-06-27",
+    "exclude_domains": "None"
+   },
+   "retried_query_only": false,
+   "urls": [],
+   "result_withheld": true
+  },
+  {
+   "seq": 8,
+   "phase": "agent_b",
+   "label": "Tool call: tavily_search (finished)",
+   "started_at": "2026-09-27T01:56:59.565+00:00",
+   "detail": "query: 'AAPL earnings 2026 Q3'",
+   "url": null,
+   "status": "ok",
+   "error": null,
+   "duration_ms": 2313.0,
+   "kind": "tool",
+   "tool": "tavily_search",
+   "tool_phase": "finished",
+   "query": "AAPL earnings 2026 Q3",
+   "args": {
+    "include_domains": "None",
+    "search_depth": "basic",
+    "query": "AAPL earnings 2026 Q3",
+    "include_images": "false",
+    "start_date": "2026-06-27",
+    "end_date": "2026-06-27",
+    "exclude_domains": "None"
+   },
+   "retried_query_only": true,
+   "urls": [
+    "https://www.fool.com/earnings/call-transcripts/2026/08/07/apple-aapl-q3-2026-earnings-call-transcript",
+    "https://www.financecalendar.com/event/aapl-earnings-july-2026",
+    "https://www.spglobal.com/market-intelligence/en/news-insights/research/2026/07/apple-earnings-preview-q3-2026",
+    "https://www.cnbc.com/2026/07/30/apple-earnings-live-updates.html",
+    "https://www.macstories.net/news/apple-reports-q3-2026-earnings"
+   ],
+   "result_withheld": true
+  },
+  {
+   "seq": 9,
+   "phase": "agent_a",
+   "label": "Tool call: tavily_search (started)",
+   "started_at": "2026-09-27T01:56:59.891+00:00",
+   "detail": "query: 'AAPL financial report 2026 Q3'",
+   "url": null,
+   "status": "ok",
+   "error": null,
+   "duration_ms": null,
+   "kind": "tool",
+   "tool": "tavily_search",
+   "tool_phase": "started",
+   "query": "AAPL financial report 2026 Q3",
+   "args": {
+    "query": "AAPL financial report 2026 Q3",
+    "start_date": "2026-06-27",
+    "end_date": "2026-06-27",
+    "include_domains": [
+     "apple.com"
+    ],
+    "include_images": "false",
+    "search_depth": "advanced"
+   },
+   "retried_query_only": false,
+   "urls": [],
+   "result_withheld": true
+  },
+  {
+   "seq": 10,
+   "phase": "agent_a",
+   "label": "Tool call: tavily_search (finished)",
+   "started_at": "2026-09-27T01:57:01.095+00:00",
+   "detail": "query: 'AAPL financial report 2026 Q3'",
+   "url": null,
+   "status": "ok",
+   "error": null,
+   "duration_ms": 1203.0,
+   "kind": "tool",
+   "tool": "tavily_search",
+   "tool_phase": "finished",
+   "query": "AAPL financial report 2026 Q3",
+   "args": {
+    "query": "AAPL financial report 2026 Q3",
+    "start_date": "2026-06-27",
+    "end_date": "2026-06-27",
+    "include_domains": [
+     "apple.com"
+    ],
+    "include_images": "false",
+    "search_depth": "advanced"
+   },
+   "retried_query_only": true,
+   "urls": [
+    "https://www.financecalendar.com/event/aapl-earnings-july-2026",
+    "https://www.cnbc.com/2026/07/30/apple-earnings-live-updates.html",
+    "https://finance.yahoo.com/quote/AAPL/earnings/AAPL-Q3-2026-earnings_call-658553.html",
+    "https://www.spglobal.com/market-intelligence/en/news-insights/research/2026/07/apple-earnings-preview-q3-2026",
+    "https://appletreats.substack.com/p/apple-reports-2026-q3-financial-results"
+   ],
+   "result_withheld": true
+  },
+  {
+   "seq": 11,
+   "phase": "agent_b",
+   "label": "Assessment extraction",
+   "started_at": "2026-09-27T01:57:13.625+00:00",
+   "detail": "model=langchain:llama3.2 · prompt=assess-extract-v1",
+   "url": null,
+   "status": "ok",
+   "error": null,
+   "duration_ms": 14078.0,
+   "kind": "extract",
+   "model": "langchain:llama3.2"
+  },
+  {
+   "seq": 12,
+   "phase": "agent_a",
+   "label": "Assessment extraction",
+   "started_at": "2026-09-27T01:57:24.168+00:00",
+   "detail": "model=langchain:llama3.2 · prompt=assess-extract-v1",
+   "url": null,
+   "status": "ok",
+   "error": null,
+   "duration_ms": 7282.0,
+   "kind": "extract",
+   "model": "langchain:llama3.2"
+  },
+  {
+   "seq": 13,
+   "phase": "compare",
+   "label": "compare conclusions",
+   "started_at": "2026-09-27T01:57:31.466+00:00",
+   "detail": "numeric divergence only · status=COMPARED · contradiction_rule=concept_aware",
+   "url": null,
+   "status": "ok",
+   "error": null,
+   "duration_ms": null,
+   "kind": "compare"
+  }
+ ],
+ "gate_policy": "v3",
+ "gate": {
+  "policy": "v3",
+  "identity_note": "decided_by is the name the reviewer typed; it is recorded as entered and not authenticated.",
+  "status": "AWAITING_DECISION",
+  "items": [
+   {
+    "metric": "grade",
+    "kind": "grade",
+    "status": "NO_CONSENSUS",
+    "metrics": [],
+    "label": "The agents' grades differ: set the grade",
+    "driver": "assumption",
+    "decision_id": null
+   }
+  ],
+  "pending": [
+   "grade"
+  ],
+  "decisions": [],
+  "decided_grade": null
+ },
+ "withheld_pending_review": "Pending human review: the agents disagree on a figure and no reviewer has decided yet."
+}
