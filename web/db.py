@@ -10,6 +10,9 @@ Design decisions:
 - 90-day TTL: purge_old_runs() deletes rows older than RETENTION_DAYS; called
   automatically on startup and on every write.
 - reviewer_flags is a separate table; RunRecord rows are never mutated.
+- gate_decisions (BG) is append-only too: the human decisions that clear a gated
+  compare run. A run's gate state is computed at read time from its rows plus these
+  decisions (validation/gate.py), so the run record itself never changes.
 """
 
 from __future__ import annotations
@@ -85,6 +88,39 @@ CREATE TABLE IF NOT EXISTS reviewer_flags (
 );
 
 CREATE INDEX IF NOT EXISTS idx_flags_run_id ON reviewer_flags(run_id);
+
+-- BG: a named human's decision on a gated compare run (validation/gate.py).
+-- Append-only like runs: a later decision on the same figure supersedes an
+-- earlier one, and both rows stay. The CHECKs repeat gate.py's minimums so a
+-- write that skips the route's validation still can't store an empty decision.
+CREATE TABLE IF NOT EXISTS gate_decisions (
+    decision_id  TEXT PRIMARY KEY,
+    run_id       TEXT NOT NULL,
+    decided_by   TEXT NOT NULL CHECK(length(trim(decided_by)) >= 2),
+    decision     TEXT NOT NULL CHECK(decision IN
+                     ('accept_a','accept_b','both_wrong','not_a_conflict','override_value',
+                      'confirmed_error','set_grade')),
+    final_value  REAL,
+    final_grade  TEXT,
+    rationale    TEXT NOT NULL CHECK(length(trim(rationale)) >= 20),
+    cited_items  TEXT NOT NULL,
+    decided_at   TEXT NOT NULL,
+    FOREIGN KEY (run_id) REFERENCES runs(run_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_decisions_run_id ON gate_decisions(run_id);
+
+CREATE TRIGGER IF NOT EXISTS gate_decisions_no_update
+BEFORE UPDATE ON gate_decisions
+BEGIN
+    SELECT RAISE(ABORT, 'gate_decisions is append-only: updates are forbidden');
+END;
+
+CREATE TRIGGER IF NOT EXISTS gate_decisions_no_delete
+BEFORE DELETE ON gate_decisions
+BEGIN
+    SELECT RAISE(ABORT, 'gate_decisions is append-only: deletes are forbidden');
+END;
 """
 
 
@@ -103,6 +139,46 @@ def init_db() -> None:
     """Create tables and indexes if they don't exist. Safe to call on every startup."""
     with _connect() as conn:
         conn.executescript(_SCHEMA_SQL)
+        _migrate_gate_decisions(conn)
+
+
+def _migrate_gate_decisions(conn: sqlite3.Connection) -> None:
+    """
+    B3 (2026-09-25) added the decision 'confirmed_error'. A gate_decisions table
+    created before that (BG, earlier the same day) carries a CHECK that refuses it,
+    and SQLite can't alter a CHECK in place, so the table is rebuilt: renamed, the
+    new one created from _SCHEMA_SQL, every row copied verbatim, the old one
+    dropped. No decision is changed or lost; the append-only triggers are
+    recreated with the new table. Runs once — a table that already accepts the new
+    value is left alone.
+    """
+    row = conn.execute(
+        "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'gate_decisions'"
+    ).fetchone()
+    # B5 added 'set_grade' and the final_grade column; a table missing either is rebuilt.
+    if row is None or ("set_grade" in row["sql"] and "final_grade" in row["sql"]):
+        return
+    before = conn.execute("SELECT COUNT(*) FROM gate_decisions").fetchone()[0]
+    conn.executescript(
+        "BEGIN;"
+        "DROP TRIGGER IF EXISTS gate_decisions_no_update;"
+        "DROP TRIGGER IF EXISTS gate_decisions_no_delete;"
+        "DROP INDEX IF EXISTS idx_decisions_run_id;"
+        "ALTER TABLE gate_decisions RENAME TO gate_decisions_pre_b3;"
+        "COMMIT;"
+    )
+    conn.executescript(_SCHEMA_SQL)
+    conn.execute(
+        "INSERT INTO gate_decisions (decision_id, run_id, decided_by, decision, final_value,"
+        " rationale, cited_items, decided_at)"
+        " SELECT decision_id, run_id, decided_by, decision, final_value, rationale, cited_items,"
+        " decided_at FROM gate_decisions_pre_b3 ORDER BY rowid"
+    )  # final_grade is new, so NULL for every copied row
+    after = conn.execute("SELECT COUNT(*) FROM gate_decisions").fetchone()[0]
+    if after != before:
+        raise RuntimeError(f"gate_decisions migration copied {after} of {before} rows; not dropping the original")
+    conn.execute("DROP TABLE gate_decisions_pre_b3")
+    conn.commit()
 
 
 # ── TTL purge ──────────────────────────────────────────────────────────────────
@@ -131,7 +207,13 @@ def purge_old_runs(retention_days: int = RETENTION_DAYS) -> int:
                 return 0
 
             placeholders = ",".join("?" * len(expired_ids))
-            # Delete child rows first (FK constraint)
+            # Delete child rows first (FK constraint). gate_decisions is append-only
+            # too, so its no-delete trigger is lifted for the purge and put back below.
+            conn.execute("DROP TRIGGER IF EXISTS gate_decisions_no_delete")
+            conn.execute(
+                f"DELETE FROM gate_decisions WHERE run_id IN ({placeholders})",
+                expired_ids,
+            )
             conn.execute(
                 f"DELETE FROM reviewer_flags WHERE run_id IN ({placeholders})",
                 expired_ids,
@@ -147,17 +229,12 @@ def purge_old_runs(retention_days: int = RETENTION_DAYS) -> int:
                 expired_ids,
             )
             conn.commit()
-            # Recreate the trigger
-            conn.executescript(
-                "CREATE TRIGGER IF NOT EXISTS runs_no_delete\n"
-                "BEFORE DELETE ON runs\n"
-                "BEGIN\n"
-                "    SELECT RAISE(ABORT, 'runs table is append-only: deletes are forbidden');\n"
-                "END;"
-            )
+            # Recreate both no-delete triggers (the schema is all IF NOT EXISTS)
+            conn.executescript(_SCHEMA_SQL)
             return len(expired_ids)
         except Exception:
             conn.rollback()
+            conn.executescript(_SCHEMA_SQL)  # never leave a no-delete trigger dropped
             raise
 
 
@@ -297,6 +374,57 @@ def get_flags(run_id: str) -> list[dict]:
     return [dict(r) for r in rows]
 
 
+# ── Gate decisions (BG) ────────────────────────────────────────────────────────
+
+def insert_decision(run_id: str, fields: dict) -> dict:
+    """Append one decision. `fields` must already have passed gate.validate_decision."""
+    decision_id = str(uuid.uuid4())
+    # Microseconds: two decisions in the same second must still order correctly.
+    decided_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+    with _connect() as conn:
+        conn.execute(
+            "INSERT INTO gate_decisions (decision_id, run_id, decided_by, decision, final_value, final_grade,"
+            " rationale, cited_items, decided_at) VALUES (?,?,?,?,?,?,?,?,?)",
+            (decision_id, run_id, fields["decided_by"], fields["decision"], fields.get("final_value"),
+             fields.get("final_grade"), fields["rationale"], json.dumps(fields["cited_items"]), decided_at),
+        )
+    return {"decision_id": decision_id, "run_id": run_id, "decided_at": decided_at, **fields}
+
+
+def _decision_row(r: sqlite3.Row) -> dict:
+    d = dict(r)
+    d["cited_items"] = json.loads(d["cited_items"])
+    return d
+
+
+def get_decisions(run_id: str) -> list[dict]:
+    """Oldest first, in insertion order — the order gate_state() replays them in."""
+    with _connect() as conn:
+        rows = conn.execute(
+            "SELECT decision_id, run_id, decided_by, decision, final_value, final_grade, rationale, cited_items,"
+            " decided_at FROM gate_decisions WHERE run_id = ? ORDER BY rowid ASC",
+            (run_id,),
+        ).fetchall()
+    return [_decision_row(r) for r in rows]
+
+
+def get_decisions_for(run_ids: list[str]) -> dict[str, list[dict]]:
+    """get_decisions for many runs in one query (the History list)."""
+    out: dict[str, list[dict]] = {rid: [] for rid in run_ids}
+    if not run_ids:
+        return out
+    placeholders = ",".join("?" * len(run_ids))
+    with _connect() as conn:
+        rows = conn.execute(
+            "SELECT decision_id, run_id, decided_by, decision, final_value, final_grade, rationale, cited_items,"
+            f" decided_at FROM gate_decisions WHERE run_id IN ({placeholders}) ORDER BY rowid ASC",
+            run_ids,
+        ).fetchall()
+    for r in rows:
+        out[r["run_id"]].append(_decision_row(r))
+    return out
+
+
 # ── Admin / test helpers ───────────────────────────────────────────────────────
 
 def clear_all() -> None:
@@ -306,6 +434,8 @@ def clear_all() -> None:
     """
     with _connect() as conn:
         conn.executescript(
+            "DROP TABLE IF EXISTS gate_decisions;"
+            "DROP TABLE IF EXISTS gate_decisions_pre_b3;"
             "DROP TABLE IF EXISTS reviewer_flags;"
             "DROP TABLE IF EXISTS sessions;"
             "DROP TABLE IF EXISTS runs;"

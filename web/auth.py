@@ -115,3 +115,18 @@ def require_scope(
             detail=f"Token carries unknown scope {scope!r}. Must be 'auditor' or 'investor'.",
         )
     return scope  # type: ignore[return-value]
+
+
+def optional_scope(
+    credentials: HTTPAuthorizationCredentials | None = Depends(_bearer_scheme),
+) -> ScopeT | None:
+    """
+    Like require_scope, but a request with no token is allowed and yields None.
+
+    For the read routes, which have never required a token (the legacy UI reads
+    runs without one). The caller decides what None means; web/server.py falls back
+    to the scope the run was stored under. A token that IS sent must be valid.
+    """
+    if credentials is None:
+        return None
+    return require_scope(credentials)
