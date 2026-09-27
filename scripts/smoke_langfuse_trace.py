@@ -2,24 +2,34 @@
 """
 Test script: verify LangFuse integration end-to-end.
 
-This runs a real EDGAR fetch + mock LLM through the financial grader,
-generating a full trace (tool call + LLM call spans) that should appear
+This runs a real EDGAR fetch + a real LangChain/Ollama LLM call through the financial
+grader, generating a full trace (tool call + LLM call spans) that should appear
 in the LangFuse dashboard at http://localhost:3000.
 
+Requires a locally running Ollama with the model pulled (default: llama3.2).
+No scripted fallback — if Ollama is unreachable this fails loudly.
+
 Usage:
-  python test_langfuse_integration.py
+  python scripts/smoke_langfuse_trace.py
 
 Then check http://localhost:3000 → Traces → find one named "analyze_ticker".
 """
 
 import os
-import sys
 import uuid
-import time
+import sys
+from pathlib import Path
 
-from adapters.mock_adapter import make_mock_adapter
-from financial_grader import analyze_ticker, lookup_cik
-from schemas import AgentID, ParseStatus
+# Entry-point scripts live in scripts/, one level below the subsystem root; put that
+# root on sys.path so `core.*`, `producers.*` etc. resolve whether this file is run as
+# `python scripts/<name>.py` or `python -m scripts.<name>`.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from adapters.langchain_adapter import make_langchain_adapter
+from dotenv import find_dotenv, load_dotenv
+load_dotenv(find_dotenv(usecwd=True) or find_dotenv())
+from datasources.edgar import lookup_cik
+from producers.financial import analyze_ticker
 
 def main():
     print("LangFuse Integration Test")
@@ -62,7 +72,7 @@ def main():
         result = analyze_ticker(
             "AAPL",
             cik,
-            make_mock_adapter("none"),
+            make_langchain_adapter(),
             run_id=run_id,
         )
 

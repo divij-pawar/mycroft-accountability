@@ -13,11 +13,23 @@ pydantic>=2.0.0          # imported directly (web/server.py:34), not just via fa
 PyJWT>=2.8.0             # scope tokens (web/auth.py)
 python-dotenv>=1.0.0     # .env loading (web/server.py)
 
-# ── Optional LLM providers ────────────────────────────────────────────────────
-# Gemini is imported lazily inside the adapter (adapters/gemini_adapter.py:109),
-# so this is only needed if you actually select the gemini provider.
-# Ollama needs no package at all — it goes over stdlib urllib.
-google-genai>=2.4.0
+# ── LangChain — the one agent framework (adapters/langchain_adapter.py) ───────
+# Deliberate exception to stdlib-only (see CLAUDE.md): always makes a real
+# call, no scripted mode — see tests/support.py for the test-only fake used
+# instead by the automated suite. Drives either model family through one
+# adapter: a model name containing "gemini" selects langchain-google-genai;
+# anything else selects langchain-ollama. Both lazy-imported, so only the
+# family actually used needs to be installed/working at runtime.
+langchain-core>=0.3.0
+langchain-ollama>=0.2.0
+langchain-google-genai>=2.0.0
+
+# The agent's tool (use_tools=True, the default): Tavily search, a search API
+# built for LLM agents. Needs TAVILY_API_KEY (see .env.example) — the tool
+# still binds without one, but a search call will fail loudly rather than
+# silently. Replaced an earlier MCP fetch-a-known-URL tool — see
+# logs/RUN_LOG.md.
+langchain-tavily>=0.1.0
 
 # ── Optional observability ────────────────────────────────────────────────────
 # Deliberate exception to stdlib-only: real (self-hosted) LangFuse tracing for

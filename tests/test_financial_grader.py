@@ -2,23 +2,18 @@
 Financial grader tests — Week 9/10 analyst skeleton.
 No network: fetch_fn/call_agent_fn are always injected fakes.
 LangFuse tracing itself is not asserted on here (the SDK degrades
-gracefully without configured credentials — see observability.py);
+gracefully without configured credentials — see pipeline/observability.py);
 this only verifies the accountability-mesh behavior is unchanged.
 """
 
 import unittest
 import uuid
 
-from adapters.mock_adapter import make_mock_adapter
-from financial_grader import (
-    EdgarFetchError,
-    analyze_ticker,
-    fetch_company_facts,
-    lookup_cik,
-    summarize_facts,
-)
-from middleware import HaltError, ValidationLoopResult
-from schemas import AgentID, ParseStatus
+from tests.support import make_scripted_adapter
+from datasources.edgar import EdgarFetchError, fetch_company_facts, lookup_cik
+from producers.financial import analyze_ticker, summarize_facts
+from pipeline.middleware import HaltError, ValidationLoopResult
+from core.schemas import AgentID, ParseStatus
 
 _TICKER_MAP = {
     "0000320193": {"cik_str": 320193, "ticker": "AAPL", "title": "Apple Inc."},
@@ -108,7 +103,7 @@ class TestAnalyzeTicker(unittest.TestCase):
         result = analyze_ticker(
             "AAPL",
             "0000320193",
-            make_mock_adapter("none"),
+            make_scripted_adapter("none"),
             run_id=self.run_id,
             fetch_fn=_fake_facts_fetch,
         )
@@ -118,7 +113,7 @@ class TestAnalyzeTicker(unittest.TestCase):
         result = analyze_ticker(
             "AAPL",
             "0000320193",
-            make_mock_adapter("none"),
+            make_scripted_adapter("none"),
             run_id=self.run_id,
             fetch_fn=_fake_facts_fetch,
         )
@@ -133,7 +128,7 @@ class TestAnalyzeTicker(unittest.TestCase):
         result = analyze_ticker(
             "AAPL",
             "0000320193",
-            make_mock_adapter("none"),
+            make_scripted_adapter("none"),
             run_id=self.run_id,
             fetch_fn=_fake_facts_fetch,
         )
@@ -143,7 +138,7 @@ class TestAnalyzeTicker(unittest.TestCase):
         result = analyze_ticker(
             "AAPL",
             "0000320193",
-            make_mock_adapter("retry_success"),
+            make_scripted_adapter("retry_success"),
             run_id=self.run_id,
             fetch_fn=_fake_facts_fetch,
         )
@@ -155,7 +150,7 @@ class TestAnalyzeTicker(unittest.TestCase):
             analyze_ticker(
                 "AAPL",
                 "0000320193",
-                make_mock_adapter("halt"),
+                make_scripted_adapter("halt"),
                 run_id=self.run_id,
                 fetch_fn=_fake_facts_fetch,
             )
@@ -169,7 +164,7 @@ class TestAnalyzeTicker(unittest.TestCase):
             analyze_ticker(
                 "AAPL",
                 "0000320193",
-                make_mock_adapter("none"),
+                make_scripted_adapter("none"),
                 run_id=self.run_id,
                 fetch_fn=_broken_fetch,
             )

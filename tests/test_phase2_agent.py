@@ -8,15 +8,15 @@ import unittest
 import uuid
 from unittest.mock import MagicMock
 
-from parser import AgentResponse, StructuralParseError, _parse_response
-from directive import get_active_directive
-from middleware import (
+from core.parsing import AgentResponse, StructuralParseError, _parse_response
+from core.directive import get_active_directive
+from pipeline.middleware import (
     CORRECTIVE_DIRECTIVE_TEXT,
     HaltError,
     ValidationLoopResult,
     run_validation_loop,
 )
-from schemas import AgentID, ParseStatus
+from core.schemas import AgentID, ParseStatus
 
 
 # ─────────────────────────────────────────────
@@ -167,6 +167,14 @@ class TestValidationLoop(unittest.TestCase):
         result = run_validation_loop("AAPL", "ctx", self.run_id, AgentID.FINANCIAL, call_agent_fn=call_fn)
         self.assertEqual(result.reasoning_objects[0].conclusion, "Strong buy.")
 
+    def test_happy_path_context_window_and_directive_recorded(self):
+        call_fn = MagicMock(return_value=_make_response())
+        result = run_validation_loop("AAPL", "my context", self.run_id, AgentID.FINANCIAL, call_agent_fn=call_fn)
+        obj = result.reasoning_objects[0]
+        self.assertEqual(obj.context_window, {"subject": "AAPL", "context": "my context"})
+        self.assertEqual(obj.directive_version, get_active_directive().version)
+        self.assertEqual(obj.directive_text, get_active_directive().text)
+
     # ── Fail then retry success ───────────────
 
     def test_fail_retry_success_two_objects(self):
@@ -192,6 +200,23 @@ class TestValidationLoop(unittest.TestCase):
         call_fn = MagicMock(side_effect=[_make_parse_failure(), _make_response()])
         result = run_validation_loop("AAPL", "ctx", self.run_id, AgentID.FINANCIAL, call_agent_fn=call_fn)
         self.assertIsNotNone(result.final_response)
+
+    def test_retry_attempt_records_the_corrective_directive_not_the_original(self):
+        """
+        The whole point of recording directive_text per-attempt: attempt 2's
+        prompt is genuinely different from attempt 1's (ADR-07's corrective
+        directive), and RunSession.directive_text alone can't show that — it
+        only ever names the session-level active directive.
+        """
+        call_fn = MagicMock(side_effect=[_make_parse_failure(), _make_response()])
+        result = run_validation_loop("AAPL", "ctx", self.run_id, AgentID.FINANCIAL, call_agent_fn=call_fn)
+        obj1, obj2 = result.reasoning_objects
+        self.assertEqual(obj1.directive_version, get_active_directive().version)
+        self.assertEqual(obj2.directive_version, "corrective")
+        self.assertNotEqual(obj1.directive_text, obj2.directive_text)
+        self.assertIn(CORRECTIVE_DIRECTIVE_TEXT, obj2.directive_text)
+        # Same subject/context on both attempts — only the directive changed.
+        self.assertEqual(obj1.context_window, obj2.context_window)
 
     # ── Fail then retry fail → HALT ───────────
 

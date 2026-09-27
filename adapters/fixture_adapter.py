@@ -1,12 +1,18 @@
 """
 Fixture adapter — deterministic stand-in agent, no LLM required.
 
-Sibling of mock_adapter.py, different purpose:
-  mock_adapter    — tests the ADR-07 guardrail itself (parse failure, retry, halt).
+Sibling of tests/support.py's make_scripted_adapter, different purpose:
+  tests/support.py — tests the ADR-07 guardrail itself (parse failure, retry, halt).
                     You do not control what it concludes.
   fixture_adapter — tests logic that consumes a conclusion (e.g. cross-agent
                     comparison). You choose the conclusion text up front, so the
                     correct answer is known before the test runs.
+
+Test-only, like tests/support.py: never registered in adapters/registry.py, never
+selectable as a runtime provider. Kept in adapters/ rather than moved to tests/
+because it satisfies the same AgentAdapter contract every real adapter does and
+existed here before tests/support.py did; not touched further to limit the size
+of this change.
 
 Satisfies the same adapter contract as every other adapter here:
     (subject: str, context: str, directive: DirectiveVersion) -> AgentResponse
@@ -18,10 +24,10 @@ live model response that happened to pass validation.
 
 from __future__ import annotations
 
-from typing import Callable
 
-from parser import AgentResponse, _parse_response
-from directive import DirectiveVersion
+from core.contracts import AgentAdapter
+from core.parsing import AgentResponse, _parse_response
+from core.directive import DirectiveVersion
 
 _TEMPLATE = (
     "<thought_log>\n"
@@ -46,7 +52,7 @@ _FORBIDDEN = ("</thought_log>", "</conclusion>", "<thought_log>", "<conclusion>"
 def make_fixture_adapter(
     conclusion: str,
     thought_log: str | None = None,
-) -> Callable[[str, str, DirectiveVersion], AgentResponse]:
+) -> AgentAdapter:
     """
     Build an adapter that always returns `conclusion`, regardless of input.
 

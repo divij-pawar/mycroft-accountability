@@ -21,8 +21,9 @@ import os
 import re
 import time
 import random
-from parser import AgentResponse, _parse_response
-from directive import DirectiveVersion
+from core.contracts import AgentAdapter
+from core.parsing import AgentResponse, _parse_response
+from core.directive import DirectiveVersion
 
 
 # ── Retry config ────────────────────────────────────────────────────────────────
@@ -91,7 +92,7 @@ def make_gemini_adapter(
     model: str = "gemini-2.5-flash",
     temperature: float = 0.0,
     seed: int | None = None,
-):
+) -> AgentAdapter:
     """
     Returns a call_agent_fn compatible with run_validation_loop.
 

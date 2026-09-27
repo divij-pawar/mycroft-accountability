@@ -25,8 +25,9 @@ import json
 import os
 import urllib.error
 import urllib.request
-from parser import AgentResponse, _parse_response
-from directive import DirectiveVersion
+from core.contracts import AgentAdapter
+from core.parsing import AgentResponse, _parse_response
+from core.directive import DirectiveVersion
 
 
 OLLAMA_HOST        = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
@@ -49,7 +50,7 @@ def make_ollama_adapter(
     model: str = "llama3.2",
     temperature: float = 0.0,
     seed: int = 42,
-):
+) -> AgentAdapter:
     """
     Returns a call_agent_fn compatible with run_validation_loop.
 

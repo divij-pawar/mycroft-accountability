@@ -31,6 +31,17 @@ class AgentID(str, Enum):
     COMPETITIVE = "competitive"
     AAN         = "AAN"
     EXTERNAL    = "external"   # any third-party or provider-agnostic agent (e.g. OpenClaw)
+    # Domain-agnostic Cross-Agent Validation (/api/compare's subject+context path,
+    # not the ticker/EDGAR path): two distinct IDs, not EXTERNAL reused twice,
+    # because code that looks up "the ReasoningObject for agent X" (e.g.
+    # web/server.py's per-producer claim extraction) needs agent_a and agent_b
+    # to be distinguishable from each other.
+    GENERIC_A   = "generic_a"
+    GENERIC_B   = "generic_b"
+    # B4: the bull/bear pairing — the same filing figures, argued from opposite
+    # sides (producers/bull.py, producers/bear.py).
+    BULL        = "bull"
+    BEAR        = "bear"
 
 
 class ParseStatus(str, Enum):
@@ -149,6 +160,33 @@ class ReasoningObject:
     data_quality_warnings: tuple[str, ...] = field(default_factory=tuple)
     created_at: datetime = field(default_factory=_now_utc)
 
+    # Which directive (system prompt) was actually active for THIS attempt —
+    # attempt 2 after a parse failure uses pipeline.middleware's corrective
+    # directive, not the one named on the RunSession, so recording it only at
+    # the session level (as RunSession.directive_text already does) loses that
+    # distinction. version is public metadata; text is INTERNAL TIER — SEC-01,
+    # same reasoning as thought_log: it is part of how the agent was instructed.
+    directive_version: str | None = None
+    directive_text: str | None = None       # INTERNAL TIER ONLY — SEC-01
+    # The user-supplied inputs assembled into this attempt's prompt (ticker/
+    # subject + free-text context). NOT the literal bytes sent to the model —
+    # each adapter may truncate or reformat before transmission (e.g.
+    # ollama_adapter.py's CONTEXT_CHAR_LIMIT); this is the input side of the
+    # context window, not a wire capture. INTERNAL TIER ONLY — SEC-01.
+    context_window: dict[str, str] | None = None
+    # B4: the agent's structured <assessment> (directive v1.6.0+), validated by
+    # core/assessment.py — only the fields that passed are kept; the block's raw
+    # text stays in raw_output. status: valid / partial / invalid_fields /
+    # invalid_json / unclosed / empty / absent, or None when the directive didn't
+    # ask for one. A grade is the model's judgment (P8). INTERNAL TIER ONLY — SEC-01.
+    assessment: dict[str, Any] | None = None
+    assessment_status: str | None = None
+    assessment_issues: tuple[str, ...] = field(default_factory=tuple)
+    # Where the assessment came from: "directive" (the agent's own <assessment> block,
+    # v1.6.0+) or the extraction prompt's version (option 1: a separate call that read
+    # the finished answer). INTERNAL TIER ONLY — SEC-01.
+    assessment_source: str | None = None
+
     def __post_init__(self):
         self._validate()
 
@@ -216,12 +254,19 @@ class ReasoningObject:
             ],
             "data_quality_warnings": list(self.data_quality_warnings),
             "created_at": self.created_at.isoformat(),
+            "directive_version": self.directive_version,
         }
         # Auditor scope only
         if not investor_scope:
             d["thought_log"] = self.thought_log
             d["raw_output"] = self.raw_output
             d["llm_tokens"] = self.llm_tokens
+            d["directive_text"] = self.directive_text
+            d["context_window"] = self.context_window
+            d["assessment"] = self.assessment
+            d["assessment_status"] = self.assessment_status
+            d["assessment_issues"] = list(self.assessment_issues)
+            d["assessment_source"] = self.assessment_source
         return d
 
     def to_json(self, *, investor_scope: bool = False) -> str:
