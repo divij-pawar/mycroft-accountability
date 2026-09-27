@@ -17,8 +17,8 @@ accountability mechanism (which records what one agent did) and Cross-Agent Vali
 
 | Snickerdoodle principle | How this code implements it |
 |---|---|
-| **P3 — Provenance or it isn't evidence** | Every agent attempt produces a `ReasoningObject` (`schemas.py`) carrying run_id, agent_id, attempt number, directive version, raw output, and outcome. Runs persist to an append-only SQLite store with `RAISE(ABORT)` triggers against `UPDATE`/`DELETE` (`web/db.py`). |
-| **P4 — Gates are hard stops** | `run_validation_loop` (`middleware.py`) parses the agent's response structurally; on failure it retries **once** with a corrective directive, and on second failure raises `HaltError`. It does not degrade, summarize, or pass through. |
+| **P3 — Provenance or it isn't evidence** | Every agent attempt produces a `ReasoningObject` (`core/schemas.py`) carrying run_id, agent_id, attempt number, directive version, raw output, and outcome. Runs persist to an append-only SQLite store with `RAISE(ABORT)` triggers against `UPDATE`/`DELETE` (`web/db.py`). |
+| **P4 — Gates are hard stops** | `run_validation_loop` (`pipeline/middleware.py`) parses the agent's response structurally; on failure it retries **once** with a corrective directive, and on second failure raises `HaltError`. It does not degrade, summarize, or pass through. |
 | **P5 — Two customers, twice** | `to_dict(investor_scope=True)` structurally *omits* `thought_log` / `raw_output` / `llm_tokens` rather than nulling them — the auditor reads the reasoning, the investor reads the conclusion. |
 | **P8 — Trust is earned** | Confidence is recorded and classified against a threshold; determinism claims are hedged in the adapters rather than asserted (`gemini_adapter.py`, `ollama_adapter.py` both state that seed reproducibility holds only within a fixed model version and quantization). |
 
@@ -27,10 +27,13 @@ accountability mechanism (which records what one agent did) and Cross-Agent Vali
 **Research prototype. Localhost only. Do not expose to a network.**
 
 The core engine (parser, validation loop, schemas, cross-agent comparison) is well-built and
-well-tested: **129 tests, all passing**, stdlib `unittest` only. The web/auth layer is not.
-[`accountability-layer-audit.md`](accountability-layer-audit.md) is a full technical
-audit of commit `fe45eb4` and records **four CRITICAL findings**, all reachable over
-HTTP with no credentials:
+well-tested: **242 tests, all passing** (as of 2026-09-11), stdlib `unittest` only. The
+web/auth layer is not — `GET /api/self-report` discovers the live count rather than
+restating this number, so trust that over this paragraph.
+A full technical audit of commit `fe45eb4` records **four CRITICAL findings**, all
+reachable over HTTP with no credentials. That audit now lives in the author's
+gitignored working folder and is not distributed with the repo, so its findings are
+restated here rather than linked:
 
 1. Investor redaction is bypassed at storage time by `RunSession.to_dict()`.
 2. Fourteen of sixteen API routes have no authentication at all.
@@ -43,20 +46,75 @@ a verdict. Nothing here is attested, and no recipe in `recipes/` should claim
 
 ## Layout
 
+Organised as inward-pointing layers: each one may import from the layers above it in
+this table and never from the layers below. `core/` imports nothing internal at all,
+which is what makes it safe for every other layer to depend on.
+
+### `core/` — abstractions and domain types (no internal dependencies)
+
 | Path | What it is |
 |---|---|
-| `parser.py` | Structural parsing of `<thought_log>` / `<conclusion>`; raises `StructuralParseError`. The best-tested module here. |
-| `middleware.py` | The retry-then-halt validation loop (ADR-07). |
-| `schemas.py` | `ReasoningObject` / `RunSession` + their validation rules and tiered serialization. |
-| `directive.py` | Versioned system directives; the corrective directive used on retry. |
-| `claims.py`, `verification.py`, `consistency.py` | Claim extraction, claim verification, and consistency probing across repeated runs. |
-| `cross_validation.py` | **Cross-Agent Validation** — runs two agents on one subject, flags numeric contradictions between their conclusions, and persists both agents' records under one shared `run_id`. Reuses `consistency.py`'s scoring unmodified. |
-| `adapters/fixture_adapter.py` | Deterministic stand-in agent with a caller-chosen conclusion, for testing logic that consumes a conclusion. |
-| `financial_grader.py`, `observability.py` | EDGAR-backed financial grader **skeleton** + LangFuse tracing. Not wired into the web app. |
-| `adapters/` | `gemini_adapter.py`, `ollama_adapter.py`, `mock_adapter.py` — one contract: `(subject, context, directive) -> AgentResponse`. |
-| `web/` | FastAPI server, JWT auth, SQLite store, and the browser UI (`web/static/`). |
-| `tests/` | 129 stdlib `unittest` tests. |
-| `index.html` | Index for the Week 1–3 walkthrough artifacts in `docs/` (gitignored, present on disk only). |
+| `core/contracts.py` | The two contracts everything else is written against, as `Protocol`s: `AgentAdapter` (`(subject, context, directive) -> AgentResponse`) and `JsonFetcher` (`url -> dict`). Both used to exist only as prose in a comment. |
+| `core/parsing.py` | Structural parsing of `<thought_log>` / `<conclusion>`; raises `StructuralParseError`. The best-tested module here. (Was `parser.py`, which shadowed a stdlib module name.) |
+| `core/schemas.py` | `ReasoningObject` / `RunSession` + their validation rules and tiered serialization. |
+| `core/directive.py` | Versioned system directives; the corrective directive used on retry. |
+| `core/numeric.py` | The one definition of "a number": the quantitative-token regex and magnitude suffixes. Previously three verbatim copies across `claims`/`consistency`/`verification`, each carrying a comment asking the reader to keep it in sync by hand. |
+
+### `adapters/` — one provider each, all satisfying `AgentAdapter`
+
+| Path | What it is |
+|---|---|
+| `adapters/registry.py` | Provider name to factory, label and model-key. Adding a provider is one entry here; nothing in `web/` or `scripts/` branches on the provider set. |
+| `adapters/gemini_adapter.py`, `ollama_adapter.py` | Live Gemini and local Ollama, each over their native SDK/protocol. |
+| `adapters/langchain_adapter.py` | Live Ollama via LangChain's `ChatOllama`, or — when `failure_mode` is set — a scripted, network-free double (LangChain's own `GenericFakeChatModel`) whose `FAILURE_MODES` drive ADR-07's retry/halt paths in tests. Replaced `mock_adapter.py` (archived at `archive/adapters/mock_adapter.py`, not deleted, per this repo's never-delete rule). Deliberate exception to stdlib-only: adds `langchain-core` and `langchain-ollama`. |
+| `adapters/fixture_adapter.py` | Deterministic stand-in with a caller-chosen conclusion, for testing logic that consumes a conclusion. Not the only Producer B path anymore; see `producers/earnings.py`. |
+
+### `pipeline/` — execution machinery
+
+| Path | What it is |
+|---|---|
+| `pipeline/middleware.py` | The retry-then-halt validation loop (ADR-07). |
+| `pipeline/observability.py` | LangFuse tracing wrapper around adapters, used by every producer. |
+
+### `datasources/` — the only network egress (P2)
+
+| Path | What it is |
+|---|---|
+| `datasources/edgar.py` | SEC EDGAR read client: `lookup_cik`, `fetch_company_facts`, `latest_value`. Every fetch is injectable, which is why the suite is network-free without patching module globals. |
+
+### `producers/` — the agents whose disagreement is measured
+
+| Path | What it is |
+|---|---|
+| `producers/lens.py` | `ConceptLens` (a producer's whole identity: concepts, `AgentID`, header, trace name) and `run_lens`, the single runner all producers share. A third producer is a `ConceptLens` value, not a new module. |
+| `producers/financial.py` | Producer A — balance-sheet and top-line concepts. |
+| `producers/earnings.py` | Producer B — a *different* slice of the same companyfacts payload (per-share/operating-income), giving Cross-Agent Validation a second real, independently-reasoned agent instead of only the fixture. |
+
+### `validation/` — the verification stack
+
+| Path | What it is |
+|---|---|
+| `validation/claims.py`, `validation/verification.py`, `validation/consistency.py` | Claim extraction, claim verification against source, and consistency probing across repeated runs of one agent. Used by both `/api/chat` (since Week 7) and, as of 2026-09-11, `/api/compare` — per-producer, independently. |
+| `validation/cross_validation.py` | **Cross-Agent Validation** — runs two agents on one subject, flags numeric contradictions between their conclusions, and persists both agents' records under one shared `run_id`. Reuses `validation/consistency.py`'s scoring unmodified. `contradiction_rule` picks between the legacy `"symmetric_difference"` rule (default, every existing test unchanged) and `"concept_aware"` (`validation/concept_linkage.py`, what `/api/compare` uses in production). |
+| `validation/concept_linkage.py` | Tags each extracted number with the known lens concept nearest it, so a number that can never be corroborated by the other producer (disjoint concept vocabularies, by construction) is excluded from comparison instead of auto-flagged. **Wired in as of 2026-09-11**: `run_cross_agent_validation`'s `contradiction_rule="concept_aware"` (the mode `/api/compare` and `scripts/run_cross_agent_live.py` now both use) delegates here. Measured against `tests/fixtures/cross_agent_real_runs_corpus.json`: kills 15 of 16 disjoint-concept false positives, preserves the one confirmed true positive, introduces none. See `tests/test_concept_linkage.py` and the module docstring for what it still can't do (a bare ratio/percentage is syntactically identical whether it's a legitimate derived metric or a fabrication) — the legacy `"symmetric_difference"` rule remains the default for backward compatibility. |
+
+### `web/`, `scripts/`, `tests/`, `docs/`
+
+| Path | What it is |
+|---|---|
+| `web/` | FastAPI server, JWT auth, SQLite store, step tracing, and the browser UI (`web/frontend/`, React; served at `/` since 2026-09-27 — the classic `web/static/` UI is archived in `archive/web-static-legacy/`). |
+| `web/self_report.py` | The subsystem's own honest ledger: known issues and live-model-test results, each with a source reference and an OPEN/RESOLVED/BY_DESIGN/UNVERIFIED status. Served at `GET /api/self-report` and shown in the UI. Automated test counts are discovered live rather than hard-coded, so they cannot drift from the suite. |
+| `scripts/run_cross_agent_live.py` | Manual script (not part of the automated suite) that runs Cross-Agent Validation with two real LLM calls — `producers/financial.py` vs. `producers/earnings.py` — instead of a fixture Producer B. Requires `GEMINI_API_KEY`. |
+| `scripts/run_overlap_concept_live.py` | Manual script: unlike the one above, both sides read the **identical** context (Producer A's own concept set), so any divergence can only come from how each model reasoned over the same evidence — the live test nothing in the corpus had ever run. Defaults to two local Ollama models. See its docstring and `logs/RUN_LOG.md`'s 2026-09-11 entry for what four real runs found. |
+| `scripts/smoke_langfuse_trace.py` | Manual LangFuse end-to-end trace check. Was named `test_langfuse_integration.py`, where it read as part of the automated suite while actually making a live EDGAR fetch. |
+| `scripts/start-server.sh` | Convenience launcher; resolves its own directory and activates `env/` only if one exists. |
+| `tests/` | Stdlib `unittest` only — no pytest, no network, no live model. |
+| `docs/SYSTEM_DESIGN.md` | Detailed system workflow, data model, and design-decision rationale for both the accountability layer and Cross-Agent Validation, with an embedded honest-status snapshot. Start here for the full picture; this README stays the quick-reference layout. |
+| `docs/DATA_CONTRACT.md` | The store's data contract. |
+| `docs/index.html` | Index for the Week 1-3 walkthrough decks in `docs/` (the decks themselves are gitignored local artifacts). |
+
+Nothing sits loose at the root except `README.md`, `CLAUDE.md`, `requirements.txt`,
+`.env.example` and `.gitignore` — the files tooling expects to find there.
 
 ## Install
 
@@ -81,7 +139,7 @@ cd verification-layer && python -m venv env
 python -m pip install -r requirements.txt
 ```
 
-**3.** Run the test suite — 129 tests, no credentials or network needed, since the
+**3.** Run the test suite — no credentials or network needed, since the
 mock and fixture adapters cover every path:
 
 ```bash
@@ -94,9 +152,9 @@ cd verification-layer && python -m unittest discover -s tests
 cd verification-layer && python -m uvicorn web.server:app --reload --port 8000
 ```
 
-`start-server.sh` does the same thing but is POSIX-only — it hardcodes
-`source env/bin/activate` under `#!/bin/bash`, so it does not run on Windows. Use the
-`uvicorn` command above on any OS.
+`scripts/start-server.sh` does the same thing from any working directory, and activates
+`env/` only if that virtualenv exists. It still needs a POSIX shell (`#!/bin/bash`), so on
+Windows use the `uvicorn` command above or run it under Git Bash.
 
 Copy `.env.example` to `.env` for real Gemini calls or LangFuse tracing; both degrade
 gracefully when unset. `.env` is gitignored here and at the Mycroft root — never commit it.
@@ -104,7 +162,7 @@ gracefully when unset. `.env` is gitignored here and at the Mycroft root — nev
 ## Self-contained by design
 
 Every file this subsystem needs lives in this directory. It has its own
-[`.gitignore`](.gitignore), [`DATA_CONTRACT.md`](DATA_CONTRACT.md), and
+[`.gitignore`](.gitignore), [`docs/DATA_CONTRACT.md`](docs/DATA_CONTRACT.md), and
 [`logs/RUN_LOG.md`](logs/RUN_LOG.md), and it modifies **no file outside this folder** —
 not the repo-root manifests, not `scripts/`, not the shared run log. That keeps the merge
 surface at zero against the other contributors' branches (the shared `logs/RUN_LOG.md`
@@ -125,5 +183,5 @@ machine: **6,241 files, 10m45s** — it looks hung, but it is only extremely slo
 pass). Either run conformance before creating the venv, or point it at specific files:
 
 ```bash
-node scripts/conformance.mjs verification-layer/cross_validation.py
+node scripts/conformance.mjs verification-layer/validation/cross_validation.py
 ```
