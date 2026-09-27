@@ -1,0 +1,1181 @@
+{
+  "_meta": {
+    "purpose": "Every real (non-mock) cross-agent comparison run persisted to web/data/accountability.db as of 2026-09-07, extracted so the 'disjoint-concepts over-flagging' finding is a versioned artifact instead of something re-derived by hand from sqlite each time.",
+    "source_db": "verification-layer/web/data/accountability.db (gitignored, not itself checked in)",
+    "extracted_on": "2026-09-07",
+    "extracted_by": "Claude (Sonnet 5), this session -- NOT reviewed by a human yet",
+    "labeling_caveat": "The 'label' and 'label_basis' fields on every entry are AI-assigned categorical judgments made by reading each conclusion's text, not verified ground truth. Per SNICKERDOODLE P8, treat these as judgments pending a human's review, not as an attested finding. A human should spot-check at least the 'disjoint_concepts' and 'genuine_conflict' labels before this corpus is cited as evidence in a gate decision.",
+    "replay_methodology": "'replay_today' fields are NOT hand-computed -- each entry's stored agent_a_conclusion/agent_b_conclusion strings were replayed verbatim through the real run_cross_agent_validation() using adapters.fixture_adapter.make_fixture_adapter (no live model call), with concepts_expected_to_overlap=False -- the same default web/server.py's /api/compare route uses. This measures what today's code actually does with historical conclusions, rather than asserting it.",
+    "label_vocabulary": {
+      "genuine_conflict": "Both sides cite different values for the same underlying concept -- the case this tool is meant to catch.",
+      "disjoint_concepts": "Flagged (historically and/or today) but the two sides' numbers belong to non-overlapping concept sets -- the documented false-positive shape.",
+      "no_numbers_either_side": "Neither side cited a number; correctly unflagged.",
+      "halted": "One or both producers failed ADR-07 structural validation twice; no comparison was possible.",
+      "mock_smoke_test": "mock_adapter's scripted text, not a real grader conclusion -- kept for completeness, excluded from the substantive finding."
+    },
+    "label_counts": {
+      "disjoint_concepts": 16,
+      "no_numbers_either_side": 2,
+      "mock_smoke_test": 11,
+      "halted": 2
+    },
+    "headline_finding": "Of 31 stored runs, 0 are labeled genuine_conflict and 16 are labeled disjoint_concepts. No stored run shows two agents citing different values for the same concept.",
+    "replay_vs_stored_disagreements": "6 entries' contradiction_flag differs between the stored (historical) record and today's replay -- see notes.today_flag_differs_from_stored on each. All differences are stored=True -> today=False, caused by the concepts_expected_to_overlap=False fix requiring both sides non-empty; none flip the other direction.",
+    "lens_version_note": "Added 2026-09-25 (B2). Every entry was produced by lens v1, the deliberately disjoint Producer A (Assets/Revenues/NetIncomeLoss) vs Producer B (EarningsPerShareDiluted/EarningsPerShareBasic/OperatingIncomeLoss) pairing; mock_smoke_test entries are tagged v1 too, as the pairing in force when they ran. Lens v2 (both producers also read NetIncomeLoss and EarningsPerShareDiluted) postdates this corpus, so tests replaying it use concept_aware with no shared concepts — the v1 behaviour."
+  },
+  "runs": [
+    {
+      "run_id": "f4a4c782-65ae-4c11-8ccb-75b0b7305e94",
+      "subject": "AAPL",
+      "compared_at": "2026-08-29T06:23:25.812056+00:00",
+      "agent_a_id": "financial",
+      "agent_b_id": "earnings",
+      "agent_a_conclusion": "Apple Inc. (AAPL) shows strong financial health with assets of $383.266 billion, revenues of $265.595 billion, and a net income of $101.46 billion. The debt-to-equity ratio of 0.34 indicates moderate financial leverage. The company is well-capitalized and demonstrates robust sales performance. [SOURCE: SEC Filings, https://www.sec.gov/]",
+      "agent_b_conclusion": "Apple Inc. (AAPL) demonstrates strong earnings quality with consistent EPS figures and substantial operating income. [SOURCE: SEC Filings, https://www.sec.gov/edgar/searchedgar/companysearch.html]",
+      "stored_status": "COMPARED",
+      "stored_contradiction_flag": true,
+      "stored_agent_a_numbers": [
+        "$383.266 billion",
+        "$265.595 billion",
+        "$101.46 billion"
+      ],
+      "stored_agent_b_numbers": [],
+      "stored_divergent_numbers": [
+        "$101.46 billion",
+        "$265.595 billion",
+        "$383.266 billion"
+      ],
+      "label": "disjoint_concepts",
+      "label_basis": "The historically-named case (RUN_LOG/self_report 'fabrication-not-caught'): A asserts a debt-to-equity ratio of 0.34 that Assets/Revenues/NetIncomeLoss cannot support; B cites no numbers at all. Under today's widened regex, '0.34' IS now extracted (it was not, at capture time, before the 2026-08-29 regex fix) -- but because B's side is empty, today's concepts_expected_to_overlap=False rule now suppresses the flag entirely. The one case that most concretely proved this tool's value would not fire today.",
+      "notes": {
+        "historic_fabrication_case": true,
+        "today_flag_differs_from_stored": true,
+        "regex_fix_makes_number_visible_but_asymmetry_fix_hides_the_flag": true
+      },
+      "replay_today": {
+        "status": "COMPARED",
+        "contradiction_flag": false,
+        "agent_a_numbers": [
+          "$383.266 billion",
+          "$265.595 billion",
+          "$101.46 billion",
+          "0.34"
+        ],
+        "agent_b_numbers": [],
+        "divergent_numbers": [
+          "$101.46 billion",
+          "$265.595 billion",
+          "$383.266 billion",
+          "0.34"
+        ]
+      },
+      "lens_version": "v1"
+    },
+    {
+      "run_id": "9d39c90a-4160-481c-aae4-4933b2d4f118",
+      "subject": "MSFT",
+      "compared_at": "2026-08-29T06:34:02.601461+00:00",
+      "agent_a_id": "financial",
+      "agent_b_id": "earnings",
+      "agent_a_conclusion": "Microsoft Corporation exhibits strong financial performance with substantial assets and net income. Revenues are robust, indicating sustained growth. [SOURCE: SEC Filings, https://www.sec.gov/]",
+      "agent_b_conclusion": "Microsoft Corporation's financial health appears strong, with robust operating income and high earnings per share. The slight difference between diluted and basic EPS is within expected range for large-cap tech firms. [SOURCE: Q, https://www.sec.gov/Archives/edgar/data/789019/000156459023000066/d789019df10q2023.htm]",
+      "stored_status": "COMPARED",
+      "stored_contradiction_flag": false,
+      "stored_agent_a_numbers": [],
+      "stored_agent_b_numbers": [],
+      "stored_divergent_numbers": [],
+      "label": "no_numbers_either_side",
+      "label_basis": "Duplicate rerun of 230fc665 -- same conclusions, both empty.",
+      "notes": {
+        "duplicate_of": "230fc665-52b7-46d1-9ee0-18cef97ca660"
+      },
+      "replay_today": {
+        "status": "COMPARED",
+        "contradiction_flag": false,
+        "agent_a_numbers": [],
+        "agent_b_numbers": [],
+        "divergent_numbers": []
+      },
+      "lens_version": "v1"
+    },
+    {
+      "run_id": "2c3c4f23-33d0-4b4b-bb93-b1f53b2eecef",
+      "subject": "GOOGL",
+      "compared_at": "2026-08-29T06:34:23.329187+00:00",
+      "agent_a_id": "financial",
+      "agent_b_id": "earnings",
+      "agent_a_conclusion": "Google LLC (GOOGL) has a strong financial position with assets of $921,983,000,000.00 and net income of $174,771,000,000.00, indicating a Return on Assets (ROA) of 18.85%. ROE cannot be calculated without equity data. [SOURCE: SEC Filings, https://www.sec.gov/]",
+      "agent_b_conclusion": "GOOGL's earnings quality appears strong with a robust Operating Income of $80.46 billion. The slight difference between Basic and Diluted EPS (14.41 vs 14.24) is within typical ranges, suggesting no major issues. Further analysis of the reconciliation between Basic and Diluted EPS is recommended [SOURCE: SEC EDGAR, https://www.sec.gov/].",
+      "stored_status": "COMPARED",
+      "stored_contradiction_flag": true,
+      "stored_agent_a_numbers": [
+        "$921,983,000,000.00",
+        "$174,771,000,000.00",
+        "18.85%"
+      ],
+      "stored_agent_b_numbers": [
+        "$80.46 billion"
+      ],
+      "stored_divergent_numbers": [
+        "$174,771,000,000.00",
+        "$80.46 billion",
+        "$921,983,000,000.00",
+        "18.85%"
+      ],
+      "label": "disjoint_concepts",
+      "label_basis": "Same A conclusion as 0f729a69; B's conclusion here omits the 14.41/14.24 EPS pair it cites in the later rerun, capturing only the operating-income figure.",
+      "notes": {
+        "duplicate_of": "0f729a69-e1e5-46b4-aa40-3fc8bfbe7aa3"
+      },
+      "replay_today": {
+        "status": "COMPARED",
+        "contradiction_flag": true,
+        "agent_a_numbers": [
+          "$921,983,000,000.00",
+          "$174,771,000,000.00",
+          "18.85%"
+        ],
+        "agent_b_numbers": [
+          "$80.46 billion",
+          "14.41",
+          "14.24"
+        ],
+        "divergent_numbers": [
+          "$174,771,000,000.00",
+          "$80.46 billion",
+          "$921,983,000,000.00",
+          "14.24",
+          "14.41",
+          "18.85%"
+        ]
+      },
+      "lens_version": "v1"
+    },
+    {
+      "run_id": "2db3762c-77fa-45cc-b49d-642eec97de3a",
+      "subject": "JPM",
+      "compared_at": "2026-08-29T06:34:41.704732+00:00",
+      "agent_a_id": "financial",
+      "agent_b_id": "earnings",
+      "agent_a_conclusion": "JPM demonstrates strong financial health with a Return on Assets (ROA) of 7.52%. Revenues and net income are robust, indicating effective asset utilization and profitability. [SOURCE: Annual Report, https://www.jpmorgan.com/annual-report]",
+      "agent_b_conclusion": "JPM's earnings quality appears strong with consistent EPS figures. However, the lack of reported OperatingIncomeLoss is noteworthy and may indicate a need for further investigation. [SOURCE: 10-Q Filing, https://www.sec.gov/Archives/edgar/data/789019/000119312523026262/d336668dex10q.htm]",
+      "stored_status": "COMPARED",
+      "stored_contradiction_flag": true,
+      "stored_agent_a_numbers": [
+        "7.52%"
+      ],
+      "stored_agent_b_numbers": [],
+      "stored_divergent_numbers": [
+        "7.52%"
+      ],
+      "label": "disjoint_concepts",
+      "label_basis": "Same conclusions as ba546346 -- an earlier rerun of the same ticker/prompt pair.",
+      "notes": {
+        "today_flag_differs_from_stored": true,
+        "duplicate_of": "ba546346-7a88-4e65-b511-fd571b056b04"
+      },
+      "replay_today": {
+        "status": "COMPARED",
+        "contradiction_flag": false,
+        "agent_a_numbers": [
+          "7.52%"
+        ],
+        "agent_b_numbers": [],
+        "divergent_numbers": [
+          "7.52%"
+        ]
+      },
+      "lens_version": "v1"
+    },
+    {
+      "run_id": "fe9ea6ee-74dc-417e-8c7f-3e9efed1232e",
+      "subject": "TSLA",
+      "compared_at": "2026-08-29T06:35:04.124424+00:00",
+      "agent_a_id": "financial",
+      "agent_b_id": "earnings",
+      "agent_a_conclusion": "Tesla, Inc. reported assets of $148.52 billion, revenues of $50.62 billion, and a net loss of $1.59 billion for the fiscal year. The high asset figure relative to revenues suggests significant investments or liabilities. The net loss indicates operational challenges or one-time expenses. [SOURCE: Q4 2022 10-Q, https://www.sec.gov/Archives/edgar/data/789019/000119312523012502/d422668d10q.htm]",
+      "agent_b_conclusion": "Tesla Inc. (TSLA) reported an Earnings Per Share Diluted of $0.45 and Earnings Per Share Basic of $0.49, with an Operating Income of $1.339 billion. The positive operating income suggests robust operational performance. However, the difference between diluted and basic EPS indicates potential complexities in earnings quality, which should be further investigated. [SOURCE: 10-Q Filing, N/A]",
+      "stored_status": "COMPARED",
+      "stored_contradiction_flag": true,
+      "stored_agent_a_numbers": [
+        "$148.52 billion",
+        "$50.62 billion",
+        "$1.59 billion"
+      ],
+      "stored_agent_b_numbers": [
+        "$0.45",
+        "$0.49",
+        "$1.339 billion"
+      ],
+      "stored_divergent_numbers": [
+        "$0.45",
+        "$0.49",
+        "$1.339 billion",
+        "$1.59 billion",
+        "$148.52 billion",
+        "$50.62 billion"
+      ],
+      "label": "disjoint_concepts",
+      "label_basis": "Same conclusions as 20efc5ef -- an earlier rerun of the same ticker/prompt pair from the n=5 batch, later repeated in the n=12 batch.",
+      "notes": {
+        "duplicate_of": "20efc5ef-758e-457f-9e54-41a746f3ffa2"
+      },
+      "replay_today": {
+        "status": "COMPARED",
+        "contradiction_flag": true,
+        "agent_a_numbers": [
+          "$148.52 billion",
+          "$50.62 billion",
+          "$1.59 billion"
+        ],
+        "agent_b_numbers": [
+          "$0.45",
+          "$0.49",
+          "$1.339 billion"
+        ],
+        "divergent_numbers": [
+          "$0.45",
+          "$0.49",
+          "$1.339 billion",
+          "$1.59 billion",
+          "$148.52 billion",
+          "$50.62 billion"
+        ]
+      },
+      "lens_version": "v1"
+    },
+    {
+      "run_id": "56965308-2c92-47b2-b42a-7a9fb6157435",
+      "subject": "AAPL",
+      "compared_at": "2026-08-29T07:01:18.763665+00:00",
+      "agent_a_id": "financial",
+      "agent_b_id": "earnings",
+      "agent_a_conclusion": "Apple Inc. (AAPL) demonstrates strong financial health with assets of $383,266,000,000, revenues of $265,595,000,000, and a net income of $101,464,000,000. The asset turnover ratio of 0.13 and net profit margin of 38.1% indicate efficient use of assets and high profitability. While the asset turnover ratio is below the industry average, the net profit margin is above average. [SOURCE: Mycroft Financial Database, N/A]",
+      "agent_b_conclusion": "Apple Inc. (AAPL) demonstrates strong earnings quality with a minor difference between diluted and basic earnings per share, indicating consistent profitability. The operating income of $122.43 billion further supports this, showing robust financial health. [SOURCE: SEC Filings, https://www.sec.gov/]",
+      "stored_status": "COMPARED",
+      "stored_contradiction_flag": true,
+      "stored_agent_a_numbers": [
+        "$383,266,000,000,",
+        "$265,595,000,000,",
+        "$101,464,000,000",
+        "0.13",
+        "38.1%"
+      ],
+      "stored_agent_b_numbers": [
+        "$122.43 billion"
+      ],
+      "stored_divergent_numbers": [
+        "$101,464,000,000",
+        "$122.43 billion",
+        "$265,595,000,000,",
+        "$383,266,000,000,",
+        "0.13",
+        "38.1%"
+      ],
+      "label": "disjoint_concepts",
+      "label_basis": "A reports Assets/Revenues/NetIncomeLoss + a derived ratio pair (0.13, 38.1%) different from the 0.12/0.38 pair in 8c67de62 and the 0.34 in f4a4c782 -- three separate live calls, three different invented ratios. B reports only OperatingIncomeLoss.",
+      "notes": {
+        "contains_derived_ratio_not_in_a_producers_edgar_concepts": true
+      },
+      "replay_today": {
+        "status": "COMPARED",
+        "contradiction_flag": true,
+        "agent_a_numbers": [
+          "$383,266,000,000,",
+          "$265,595,000,000,",
+          "$101,464,000,000",
+          "0.13",
+          "38.1%"
+        ],
+        "agent_b_numbers": [
+          "$122.43 billion"
+        ],
+        "divergent_numbers": [
+          "$101,464,000,000",
+          "$122.43 billion",
+          "$265,595,000,000,",
+          "$383,266,000,000,",
+          "0.13",
+          "38.1%"
+        ]
+      },
+      "lens_version": "v1"
+    },
+    {
+      "run_id": "230fc665-52b7-46d1-9ee0-18cef97ca660",
+      "subject": "MSFT",
+      "compared_at": "2026-08-29T07:01:37.662447+00:00",
+      "agent_a_id": "financial",
+      "agent_b_id": "earnings",
+      "agent_a_conclusion": "Microsoft Corporation exhibits strong financial performance with substantial assets and net income. Revenues are robust, indicating sustained growth. [SOURCE: SEC Filings, https://www.sec.gov/]",
+      "agent_b_conclusion": "Microsoft Corporation's financial health appears strong, with robust operating income and high earnings per share. The slight difference between diluted and basic EPS is within expected range for large-cap tech firms. [SOURCE: Q, https://www.sec.gov/Archives/edgar/data/789019/000156459023000066/d789019df10q2023.htm]",
+      "stored_status": "COMPARED",
+      "stored_contradiction_flag": false,
+      "stored_agent_a_numbers": [],
+      "stored_agent_b_numbers": [],
+      "stored_divergent_numbers": [],
+      "label": "no_numbers_either_side",
+      "label_basis": "Real (non-mock) MSFT run where neither producer cited any digit -- the one ticker in the original n=5 breadth test that came back unflagged, per self_report Live Test 5.",
+      "notes": {
+        "duplicate_of": "9d39c90a-4160-481c-aae4-4933b2d4f118"
+      },
+      "replay_today": {
+        "status": "COMPARED",
+        "contradiction_flag": false,
+        "agent_a_numbers": [],
+        "agent_b_numbers": [],
+        "divergent_numbers": []
+      },
+      "lens_version": "v1"
+    },
+    {
+      "run_id": "0f729a69-e1e5-46b4-aa40-3fc8bfbe7aa3",
+      "subject": "GOOGL",
+      "compared_at": "2026-08-29T07:01:58.390229+00:00",
+      "agent_a_id": "financial",
+      "agent_b_id": "earnings",
+      "agent_a_conclusion": "Google LLC (GOOGL) has a strong financial position with assets of $921,983,000,000.00 and net income of $174,771,000,000.00, indicating a Return on Assets (ROA) of 18.85%. ROE cannot be calculated without equity data. [SOURCE: SEC Filings, https://www.sec.gov/]",
+      "agent_b_conclusion": "GOOGL's earnings quality appears strong with a robust Operating Income of $80.46 billion. The slight difference between Basic and Diluted EPS (14.41 vs 14.24) is within typical ranges, suggesting no major issues. Further analysis of the reconciliation between Basic and Diluted EPS is recommended [SOURCE: SEC EDGAR, https://www.sec.gov/].",
+      "stored_status": "COMPARED",
+      "stored_contradiction_flag": true,
+      "stored_agent_a_numbers": [
+        "$921,983,000,000.00",
+        "$174,771,000,000.00",
+        "18.85%"
+      ],
+      "stored_agent_b_numbers": [
+        "$80.46 billion",
+        "14.41",
+        "14.24"
+      ],
+      "stored_divergent_numbers": [
+        "$174,771,000,000.00",
+        "$80.46 billion",
+        "$921,983,000,000.00",
+        "14.24",
+        "14.41",
+        "18.85%"
+      ],
+      "label": "disjoint_concepts",
+      "label_basis": "A reports Assets/NetIncomeLoss + derived ROA%; B reports OperatingIncomeLoss + EPS. No shared concept.",
+      "notes": {
+        "duplicate_of": "2c3c4f23-33d0-4b4b-bb93-b1f53b2eecef"
+      },
+      "replay_today": {
+        "status": "COMPARED",
+        "contradiction_flag": true,
+        "agent_a_numbers": [
+          "$921,983,000,000.00",
+          "$174,771,000,000.00",
+          "18.85%"
+        ],
+        "agent_b_numbers": [
+          "$80.46 billion",
+          "14.41",
+          "14.24"
+        ],
+        "divergent_numbers": [
+          "$174,771,000,000.00",
+          "$80.46 billion",
+          "$921,983,000,000.00",
+          "14.24",
+          "14.41",
+          "18.85%"
+        ]
+      },
+      "lens_version": "v1"
+    },
+    {
+      "run_id": "4d781b99-18ad-4c48-945b-85bbafe3f945",
+      "subject": "AMZN",
+      "compared_at": "2026-08-29T07:02:15.263918+00:00",
+      "agent_a_id": "financial",
+      "agent_b_id": "earnings",
+      "agent_a_conclusion": "AMZN has reported NetIncomeLoss of $135.28B and Assets of $1.095T. Revenues are not reported, which may indicate delayed or non-standard disclosure practices. NetIncomeLoss is positive, suggesting profitability, but without revenues, it's difficult to assess the company's operational performance. [SOURCE: SEC Filings, https://www.sec.gov/]",
+      "agent_b_conclusion": "Amazon (AMZN) reported earnings with a Diluted EPS of $8.53 and Basic EPS of $8.64, indicating strong profitability. Operating income stands at $51.31 billion, reflecting robust operational efficiency. [SOURCE: 10-Q, https://www.sec.gov/]",
+      "stored_status": "COMPARED",
+      "stored_contradiction_flag": true,
+      "stored_agent_a_numbers": [
+        "$135.28b",
+        "$1.095t"
+      ],
+      "stored_agent_b_numbers": [
+        "$8.53",
+        "$8.64",
+        "$51.31 billion"
+      ],
+      "stored_divergent_numbers": [
+        "$1.095t",
+        "$135.28b",
+        "$51.31 billion",
+        "$8.53",
+        "$8.64"
+      ],
+      "label": "disjoint_concepts",
+      "label_basis": "A reports NetIncomeLoss/Assets; B reports EPS + OperatingIncomeLoss. No shared concept; both sides non-empty so still flags.",
+      "notes": {},
+      "replay_today": {
+        "status": "COMPARED",
+        "contradiction_flag": true,
+        "agent_a_numbers": [
+          "$135.28b",
+          "$1.095t"
+        ],
+        "agent_b_numbers": [
+          "$8.53",
+          "$8.64",
+          "$51.31 billion"
+        ],
+        "divergent_numbers": [
+          "$1.095t",
+          "$135.28b",
+          "$51.31 billion",
+          "$8.53",
+          "$8.64"
+        ]
+      },
+      "lens_version": "v1"
+    },
+    {
+      "run_id": "04dc797a-2aeb-4822-b4a4-35b270633716",
+      "subject": "META",
+      "compared_at": "2026-08-29T07:02:34.009321+00:00",
+      "agent_a_id": "financial",
+      "agent_b_id": "earnings",
+      "agent_a_conclusion": "Meta Platforms, Inc. (META) demonstrates strong financial health with assets of $449,956,000,000, revenues of $38,924,000,000, and a net income of $42,621,000,000. The company's assets significantly exceed its revenues, indicating robust liquidity and potential for reinvestment. Net income is positive, reflecting profitability. [SOURCE: SEC Filings, N/A]",
+      "agent_b_conclusion": "META's earnings quality is strong. Earnings per share are consistent between diluted and basic measures. Operating income is exceptionally high, reinforcing robust operational performance. [SOURCE: Q4 2022 Earnings Report, https://ir.meta.com/releasedetail?releaseID=1016222]",
+      "stored_status": "COMPARED",
+      "stored_contradiction_flag": true,
+      "stored_agent_a_numbers": [
+        "$449,956,000,000,",
+        "$38,924,000,000,",
+        "$42,621,000,000"
+      ],
+      "stored_agent_b_numbers": [],
+      "stored_divergent_numbers": [
+        "$38,924,000,000,",
+        "$42,621,000,000",
+        "$449,956,000,000,"
+      ],
+      "label": "disjoint_concepts",
+      "label_basis": "A reports Assets/Revenues/NetIncomeLoss; B cites no numbers. Today's empty-side rule suppresses this one on replay.",
+      "notes": {
+        "today_flag_differs_from_stored": true
+      },
+      "replay_today": {
+        "status": "COMPARED",
+        "contradiction_flag": false,
+        "agent_a_numbers": [
+          "$449,956,000,000,",
+          "$38,924,000,000,",
+          "$42,621,000,000"
+        ],
+        "agent_b_numbers": [],
+        "divergent_numbers": [
+          "$38,924,000,000,",
+          "$42,621,000,000",
+          "$449,956,000,000,"
+        ]
+      },
+      "lens_version": "v1"
+    },
+    {
+      "run_id": "ff344935-0bf4-4f7c-99a5-ef8cbcdf5442",
+      "subject": "NVDA",
+      "compared_at": "2026-08-29T07:02:50.622804+00:00",
+      "agent_a_id": "financial",
+      "agent_b_id": "earnings",
+      "agent_a_conclusion": "NVDA has a strong financial position with a Return on Assets (ROA) of 37.5%. This indicates efficient use of assets to generate profits. [SOURCE: SEC Filings, N/A] Further analysis would include Return on Equity (ROE) and market performance metrics.",
+      "agent_b_conclusion": "NVDA's earnings quality is strong, with consistent EPS and substantial operating income. [SOURCE: 10-Q Filing, https://www.sec.gov/Archives/edgar/data/789019/000119312523026266/d32669d10q.htm]",
+      "stored_status": "COMPARED",
+      "stored_contradiction_flag": true,
+      "stored_agent_a_numbers": [
+        "37.5%"
+      ],
+      "stored_agent_b_numbers": [],
+      "stored_divergent_numbers": [
+        "37.5%"
+      ],
+      "label": "disjoint_concepts",
+      "label_basis": "A cites only a derived ROA%; B cites no numbers. Today's empty-side rule suppresses this one on replay.",
+      "notes": {
+        "today_flag_differs_from_stored": true
+      },
+      "replay_today": {
+        "status": "COMPARED",
+        "contradiction_flag": false,
+        "agent_a_numbers": [
+          "37.5%"
+        ],
+        "agent_b_numbers": [],
+        "divergent_numbers": [
+          "37.5%"
+        ]
+      },
+      "lens_version": "v1"
+    },
+    {
+      "run_id": "ba546346-7a88-4e65-b511-fd571b056b04",
+      "subject": "JPM",
+      "compared_at": "2026-08-29T07:03:09.009626+00:00",
+      "agent_a_id": "financial",
+      "agent_b_id": "earnings",
+      "agent_a_conclusion": "JPM demonstrates strong financial health with a Return on Assets (ROA) of 7.52%. Revenues and net income are robust, indicating effective asset utilization and profitability. [SOURCE: Annual Report, https://www.jpmorgan.com/annual-report]",
+      "agent_b_conclusion": "JPM's earnings quality appears strong with consistent EPS figures. However, the lack of reported OperatingIncomeLoss is noteworthy and may indicate a need for further investigation. [SOURCE: 10-Q Filing, https://www.sec.gov/Archives/edgar/data/789019/000119312523026262/d336668dex10q.htm]",
+      "stored_status": "COMPARED",
+      "stored_contradiction_flag": true,
+      "stored_agent_a_numbers": [
+        "7.52%"
+      ],
+      "stored_agent_b_numbers": [],
+      "stored_divergent_numbers": [
+        "7.52%"
+      ],
+      "label": "disjoint_concepts",
+      "label_basis": "A cites only a derived ROA%; B cites no numbers. Today's empty-side rule suppresses this one on replay.",
+      "notes": {
+        "today_flag_differs_from_stored": true,
+        "duplicate_of": "2db3762c-77fa-45cc-b49d-642eec97de3a"
+      },
+      "replay_today": {
+        "status": "COMPARED",
+        "contradiction_flag": false,
+        "agent_a_numbers": [
+          "7.52%"
+        ],
+        "agent_b_numbers": [],
+        "divergent_numbers": [
+          "7.52%"
+        ]
+      },
+      "lens_version": "v1"
+    },
+    {
+      "run_id": "515f263a-71a8-4d36-bb26-ef6e369fc0e9",
+      "subject": "V",
+      "compared_at": "2026-08-29T07:03:35.301836+00:00",
+      "agent_a_id": "financial",
+      "agent_b_id": "earnings",
+      "agent_a_conclusion": "The company represented by ticker V has strong financial performance, with significant revenues and high net income relative to its asset base. The asset-to-net-income ratio of 12.6% suggests efficient use of assets. However, the exact periods for these figures and their comparability across different filings introduce some uncertainty. [SOURCE: SEC Filings, https://www.sec.gov/, SOURCE: Yahoo Finance, https://finance.yahoo.com/quote/V/, SOURCE: Company Reports, N/A]",
+      "agent_b_conclusion": "The company V has reported an OperatingIncomeLoss of 13,971,000,000.0, but EarningsPerShareDiluted and EarningsPerShareBasic are not reported, which may indicate issues with the financial statements. [SOURCE: SEC filings, N/A] Further investigation is recommended to understand the context of the reported loss.",
+      "stored_status": "COMPARED",
+      "stored_contradiction_flag": true,
+      "stored_agent_a_numbers": [
+        "12.6%"
+      ],
+      "stored_agent_b_numbers": [
+        "000.0"
+      ],
+      "stored_divergent_numbers": [
+        "000.0",
+        "12.6%"
+      ],
+      "label": "disjoint_concepts",
+      "label_basis": "A cites a derived ratio (12.6%); B's real number ($13,971,000,000.0 OperatingIncomeLoss) was mis-extracted by the quantitative regex down to the substring '000.0' at capture time and on replay through 2026-09-07's code. FIXED 2026-09-11 (core/numeric.py's comma-grouped alternative) -- replay_today below now reflects the corrected extraction. Still flags, but now for the right reason: a derived ratio (12.6%) genuinely absent from B's real figure (13,971,000,000.0), not a regex artifact.",
+      "notes": {
+        "extraction_artifact": false,
+        "regex_bug_confirmed_live_2026-09-07": "core.numeric's pattern truncated '13,971,000,000.0' to '000.0' as of 2026-09-07 -- FIXED 2026-09-11, see logs/RUN_LOG.md and core/numeric.py's module docstring"
+      },
+      "replay_today": {
+        "status": "COMPARED",
+        "contradiction_flag": true,
+        "agent_a_numbers": [
+          "12.6%"
+        ],
+        "agent_b_numbers": [
+          "13,971,000,000.0"
+        ],
+        "divergent_numbers": [
+          "12.6%",
+          "13,971,000,000.0"
+        ]
+      },
+      "lens_version": "v1"
+    },
+    {
+      "run_id": "dff16535-ecf5-45d3-801a-e0d0bca4c40b",
+      "subject": "WMT",
+      "compared_at": "2026-08-29T07:03:52.019645+00:00",
+      "agent_a_id": "financial",
+      "agent_b_id": "earnings",
+      "agent_a_conclusion": "Walmart (WMT) demonstrates robust financial performance with assets of $293.91B, revenues of $365.69B, and net income of $11.7B. The data, sourced from the latest available financial statements [SOURCE: Annual Report, https://www.walmartinc.com/investors/financials], indicates a healthy balance sheet and operational efficiency. However, the net income is a fraction of revenues, suggesting potential areas for cost optimization.",
+      "agent_b_conclusion": "WMT's earnings quality appears robust with consistent EPS and strong operating income. [SOURCE: SEC Filings, N/A]",
+      "stored_status": "COMPARED",
+      "stored_contradiction_flag": true,
+      "stored_agent_a_numbers": [
+        "$293.91b",
+        "$365.69b",
+        "$11.7b"
+      ],
+      "stored_agent_b_numbers": [],
+      "stored_divergent_numbers": [
+        "$11.7b",
+        "$293.91b",
+        "$365.69b"
+      ],
+      "label": "disjoint_concepts",
+      "label_basis": "A reports Assets/Revenues/NetIncomeLoss; B's conclusion references EPS/operating income narratively but cites zero digits. Flagged historically under the old concepts_expected_to_overlap default; today's rule requires both sides non-empty, so replay no longer flags this one.",
+      "notes": {
+        "today_flag_differs_from_stored": true
+      },
+      "replay_today": {
+        "status": "COMPARED",
+        "contradiction_flag": false,
+        "agent_a_numbers": [
+          "$293.91b",
+          "$365.69b",
+          "$11.7b"
+        ],
+        "agent_b_numbers": [],
+        "divergent_numbers": [
+          "$11.7b",
+          "$293.91b",
+          "$365.69b"
+        ]
+      },
+      "lens_version": "v1"
+    },
+    {
+      "run_id": "a1cbd371-4e80-4aa4-8af2-3b64f50d1519",
+      "subject": "JNJ",
+      "compared_at": "2026-08-29T07:04:10.790099+00:00",
+      "agent_a_id": "financial",
+      "agent_b_id": "earnings",
+      "agent_a_conclusion": "JNJ's Return on Assets (ROA) is 5.36%, which is within the typical range for pharmaceutical companies. This suggests efficient asset utilization. [SOURCE: Annual Report, https://www.jnj.com/investors/financial-performance/financial-reports]",
+      "agent_b_conclusion": "JNJ's financial health appears strong, evidenced by robust operating income of $58.27 billion. The minor difference between diluted and basic EPS is within expected ranges. [SOURCE: SEC Filings, https://www.sec.gov/edgar/searchedgar/companysearch.html?CIK=0001318784]",
+      "stored_status": "COMPARED",
+      "stored_contradiction_flag": true,
+      "stored_agent_a_numbers": [
+        "5.36%"
+      ],
+      "stored_agent_b_numbers": [
+        "$58.27 billion"
+      ],
+      "stored_divergent_numbers": [
+        "$58.27 billion",
+        "5.36%"
+      ],
+      "label": "disjoint_concepts",
+      "label_basis": "A cites only a derived ROA%; B cites only OperatingIncomeLoss. No shared concept, one number per side.",
+      "notes": {},
+      "replay_today": {
+        "status": "COMPARED",
+        "contradiction_flag": true,
+        "agent_a_numbers": [
+          "5.36%"
+        ],
+        "agent_b_numbers": [
+          "$58.27 billion"
+        ],
+        "divergent_numbers": [
+          "$58.27 billion",
+          "5.36%"
+        ]
+      },
+      "lens_version": "v1"
+    },
+    {
+      "run_id": "30c90329-a885-446b-bbbc-a19d882da5a5",
+      "subject": "PG",
+      "compared_at": "2026-08-29T07:04:31.514873+00:00",
+      "agent_a_id": "financial",
+      "agent_b_id": "earnings",
+      "agent_a_conclusion": "Procter & Gamble (PG) shows strong financial health with assets of $126.52B, revenues of $87.03B, and net income of $16.05B. Performance is consistent with industry standards. [SOURCE: SEC Filings, https://www.sec.gov/edgar/searchedgar/companysearch.html?CIK=0001099689]",
+      "agent_b_conclusion": "Procter & Gamble (PG) reported an Operating Income of $19.748 billion, indicating strong operational performance. However, the difference between Diluted EPS (6.62) and Basic EPS (6.75) suggests potential complexities in the company's financial structure or accounting methods. Further analysis is recommended to understand the context. [SOURCE: 10-Q and 10-K filings, N/A]",
+      "stored_status": "COMPARED",
+      "stored_contradiction_flag": true,
+      "stored_agent_a_numbers": [
+        "$126.52b",
+        "$87.03b",
+        "$16.05b"
+      ],
+      "stored_agent_b_numbers": [
+        "$19.748 billion",
+        "6.62",
+        "6.75"
+      ],
+      "stored_divergent_numbers": [
+        "$126.52b",
+        "$16.05b",
+        "$19.748 billion",
+        "$87.03b",
+        "6.62",
+        "6.75"
+      ],
+      "label": "disjoint_concepts",
+      "label_basis": "A reports Assets/Revenues/NetIncomeLoss; B reports OperatingIncomeLoss + EPS. No shared concept.",
+      "notes": {},
+      "replay_today": {
+        "status": "COMPARED",
+        "contradiction_flag": true,
+        "agent_a_numbers": [
+          "$126.52b",
+          "$87.03b",
+          "$16.05b"
+        ],
+        "agent_b_numbers": [
+          "$19.748 billion",
+          "6.62",
+          "6.75"
+        ],
+        "divergent_numbers": [
+          "$126.52b",
+          "$16.05b",
+          "$19.748 billion",
+          "$87.03b",
+          "6.62",
+          "6.75"
+        ]
+      },
+      "lens_version": "v1"
+    },
+    {
+      "run_id": "20efc5ef-758e-457f-9e54-41a746f3ffa2",
+      "subject": "TSLA",
+      "compared_at": "2026-08-29T07:04:54.632943+00:00",
+      "agent_a_id": "financial",
+      "agent_b_id": "earnings",
+      "agent_a_conclusion": "Tesla, Inc. reported assets of $148.52 billion, revenues of $50.62 billion, and a net loss of $1.59 billion for the fiscal year. The high asset figure relative to revenues suggests significant investments or liabilities. The net loss indicates operational challenges or one-time expenses. [SOURCE: Q4 2022 10-Q, https://www.sec.gov/Archives/edgar/data/789019/000119312523012502/d422668d10q.htm]",
+      "agent_b_conclusion": "Tesla Inc. (TSLA) reported an Earnings Per Share Diluted of $0.45 and Earnings Per Share Basic of $0.49, with an Operating Income of $1.339 billion. The positive operating income suggests robust operational performance. However, the difference between diluted and basic EPS indicates potential complexities in earnings quality, which should be further investigated. [SOURCE: 10-Q Filing, N/A]",
+      "stored_status": "COMPARED",
+      "stored_contradiction_flag": true,
+      "stored_agent_a_numbers": [
+        "$148.52 billion",
+        "$50.62 billion",
+        "$1.59 billion"
+      ],
+      "stored_agent_b_numbers": [
+        "$0.45",
+        "$0.49",
+        "$1.339 billion"
+      ],
+      "stored_divergent_numbers": [
+        "$0.45",
+        "$0.49",
+        "$1.339 billion",
+        "$1.59 billion",
+        "$148.52 billion",
+        "$50.62 billion"
+      ],
+      "label": "disjoint_concepts",
+      "label_basis": "A reports Assets/Revenues/NetIncomeLoss; B reports EPS + OperatingIncomeLoss. No shared concept.",
+      "notes": {
+        "duplicate_of": "fe9ea6ee-74dc-417e-8c7f-3e9efed1232e"
+      },
+      "replay_today": {
+        "status": "COMPARED",
+        "contradiction_flag": true,
+        "agent_a_numbers": [
+          "$148.52 billion",
+          "$50.62 billion",
+          "$1.59 billion"
+        ],
+        "agent_b_numbers": [
+          "$0.45",
+          "$0.49",
+          "$1.339 billion"
+        ],
+        "divergent_numbers": [
+          "$0.45",
+          "$0.49",
+          "$1.339 billion",
+          "$1.59 billion",
+          "$148.52 billion",
+          "$50.62 billion"
+        ]
+      },
+      "lens_version": "v1"
+    },
+    {
+      "run_id": "d69041a0-350e-4643-88f2-536037f345bd",
+      "subject": "AAPL",
+      "compared_at": "2026-09-04T06:33:35.981357+00:00",
+      "agent_a_id": "financial",
+      "agent_b_id": "earnings",
+      "agent_a_conclusion": "Mock response for: AAPL\n  No failures simulated.",
+      "agent_b_conclusion": "Mock response for: AAPL\n  No failures simulated.",
+      "stored_status": "COMPARED",
+      "stored_contradiction_flag": false,
+      "stored_agent_a_numbers": [],
+      "stored_agent_b_numbers": [],
+      "stored_divergent_numbers": [],
+      "label": "mock_smoke_test",
+      "label_basis": "mock_adapter's canned 'No failures simulated' text.",
+      "notes": {},
+      "replay_today": {
+        "status": "COMPARED",
+        "contradiction_flag": false,
+        "agent_a_numbers": [],
+        "agent_b_numbers": [],
+        "divergent_numbers": []
+      },
+      "lens_version": "v1"
+    },
+    {
+      "run_id": "b9a4a709-f454-4006-95f7-cc1551165a14",
+      "subject": "AAPL",
+      "compared_at": "2026-09-04T06:34:17.586877+00:00",
+      "agent_a_id": "financial",
+      "agent_b_id": "earnings",
+      "agent_a_conclusion": "Mock response for: AAPL\n  No failures simulated.",
+      "agent_b_conclusion": "Mock response for: AAPL\n  No failures simulated.",
+      "stored_status": "COMPARED",
+      "stored_contradiction_flag": false,
+      "stored_agent_a_numbers": [],
+      "stored_agent_b_numbers": [],
+      "stored_divergent_numbers": [],
+      "label": "mock_smoke_test",
+      "label_basis": "mock_adapter's canned 'No failures simulated' text.",
+      "notes": {},
+      "replay_today": {
+        "status": "COMPARED",
+        "contradiction_flag": false,
+        "agent_a_numbers": [],
+        "agent_b_numbers": [],
+        "divergent_numbers": []
+      },
+      "lens_version": "v1"
+    },
+    {
+      "run_id": "83e878bc-84f1-4c1a-908d-200ec11ea87a",
+      "subject": "MSFT",
+      "compared_at": "2026-09-04T06:36:44.770455+00:00",
+      "agent_a_id": "financial",
+      "agent_b_id": "earnings",
+      "agent_a_conclusion": "Mock response for: MSFT\n  No failures simulated.",
+      "agent_b_conclusion": "Mock response for: MSFT\n  No failures simulated.",
+      "stored_status": "COMPARED",
+      "stored_contradiction_flag": false,
+      "stored_agent_a_numbers": [],
+      "stored_agent_b_numbers": [],
+      "stored_divergent_numbers": [],
+      "label": "mock_smoke_test",
+      "label_basis": "mock_adapter's canned 'No failures simulated' text.",
+      "notes": {},
+      "replay_today": {
+        "status": "COMPARED",
+        "contradiction_flag": false,
+        "agent_a_numbers": [],
+        "agent_b_numbers": [],
+        "divergent_numbers": []
+      },
+      "lens_version": "v1"
+    },
+    {
+      "run_id": "82dcdc27-1ab3-4bad-a81d-f416aed05732",
+      "subject": "KO",
+      "compared_at": "2026-09-04T06:37:05.590410+00:00",
+      "agent_a_id": "financial",
+      "agent_b_id": "earnings",
+      "agent_a_conclusion": "Mock response for: KO\n  No failures simulated.",
+      "agent_b_conclusion": "Mock response for: KO\n  No failures simulated.",
+      "stored_status": "COMPARED",
+      "stored_contradiction_flag": false,
+      "stored_agent_a_numbers": [],
+      "stored_agent_b_numbers": [],
+      "stored_divergent_numbers": [],
+      "label": "mock_smoke_test",
+      "label_basis": "mock_adapter's canned 'No failures simulated' text.",
+      "notes": {},
+      "replay_today": {
+        "status": "COMPARED",
+        "contradiction_flag": false,
+        "agent_a_numbers": [],
+        "agent_b_numbers": [],
+        "divergent_numbers": []
+      },
+      "lens_version": "v1"
+    },
+    {
+      "run_id": "40d63454-1872-49cb-b8ea-3d7791cb2cb0",
+      "subject": "KO",
+      "compared_at": "2026-09-04T06:37:16.520468+00:00",
+      "agent_a_id": "financial",
+      "agent_b_id": "earnings",
+      "agent_a_conclusion": "Mock response for: KO\n  No failures simulated.",
+      "agent_b_conclusion": "Mock response for: KO\n  No failures simulated.",
+      "stored_status": "COMPARED",
+      "stored_contradiction_flag": false,
+      "stored_agent_a_numbers": [],
+      "stored_agent_b_numbers": [],
+      "stored_divergent_numbers": [],
+      "label": "mock_smoke_test",
+      "label_basis": "mock_adapter's canned 'No failures simulated' text.",
+      "notes": {},
+      "replay_today": {
+        "status": "COMPARED",
+        "contradiction_flag": false,
+        "agent_a_numbers": [],
+        "agent_b_numbers": [],
+        "divergent_numbers": []
+      },
+      "lens_version": "v1"
+    },
+    {
+      "run_id": "bea8ef42-09d1-4505-be8f-53c25bc51de9",
+      "subject": "KO",
+      "compared_at": "2026-09-04T06:37:48.313956+00:00",
+      "agent_a_id": "financial",
+      "agent_b_id": "earnings",
+      "agent_a_conclusion": "Mock response for: KO\n  No failures simulated.",
+      "agent_b_conclusion": "Mock response for: KO\n  No failures simulated.",
+      "stored_status": "COMPARED",
+      "stored_contradiction_flag": false,
+      "stored_agent_a_numbers": [],
+      "stored_agent_b_numbers": [],
+      "stored_divergent_numbers": [],
+      "label": "mock_smoke_test",
+      "label_basis": "mock_adapter's canned 'No failures simulated' text.",
+      "notes": {},
+      "replay_today": {
+        "status": "COMPARED",
+        "contradiction_flag": false,
+        "agent_a_numbers": [],
+        "agent_b_numbers": [],
+        "divergent_numbers": []
+      },
+      "lens_version": "v1"
+    },
+    {
+      "run_id": "73bb8974-8bbc-427e-9543-10170832aaeb",
+      "subject": "AAPL",
+      "compared_at": "2026-09-04T06:54:00.032937+00:00",
+      "agent_a_id": "financial",
+      "agent_b_id": "earnings",
+      "agent_a_conclusion": "Mock response for: AAPL\n  No failures simulated.",
+      "agent_b_conclusion": "Mock response for: AAPL\n  No failures simulated.",
+      "stored_status": "COMPARED",
+      "stored_contradiction_flag": false,
+      "stored_agent_a_numbers": [],
+      "stored_agent_b_numbers": [],
+      "stored_divergent_numbers": [],
+      "label": "mock_smoke_test",
+      "label_basis": "mock_adapter's canned 'No failures simulated' text.",
+      "notes": {},
+      "replay_today": {
+        "status": "COMPARED",
+        "contradiction_flag": false,
+        "agent_a_numbers": [],
+        "agent_b_numbers": [],
+        "divergent_numbers": []
+      },
+      "lens_version": "v1"
+    },
+    {
+      "run_id": "4017bd37-5875-4d94-89d0-175e985348d5",
+      "subject": "MSFT",
+      "compared_at": "2026-09-04T06:54:24.216955+00:00",
+      "agent_a_id": "financial",
+      "agent_b_id": "earnings",
+      "agent_a_conclusion": "Mock response for: MSFT\n  Recovered on retry with corrective directive.",
+      "agent_b_conclusion": "Mock response for: MSFT\n  Recovered on retry with corrective directive.",
+      "stored_status": "COMPARED",
+      "stored_contradiction_flag": false,
+      "stored_agent_a_numbers": [],
+      "stored_agent_b_numbers": [],
+      "stored_divergent_numbers": [],
+      "label": "mock_smoke_test",
+      "label_basis": "Scripted retry-then-recover mock text.",
+      "notes": {},
+      "replay_today": {
+        "status": "COMPARED",
+        "contradiction_flag": false,
+        "agent_a_numbers": [],
+        "agent_b_numbers": [],
+        "divergent_numbers": []
+      },
+      "lens_version": "v1"
+    },
+    {
+      "run_id": "b493f830-c5e6-4fe9-b349-a0c5e0d91136",
+      "subject": "MSFT",
+      "compared_at": "2026-09-04T06:54:25.324384+00:00",
+      "agent_a_id": "financial",
+      "agent_b_id": "earnings",
+      "agent_a_conclusion": null,
+      "agent_b_conclusion": null,
+      "stored_status": "BOTH_HALTED",
+      "stored_contradiction_flag": null,
+      "stored_agent_a_numbers": [],
+      "stored_agent_b_numbers": [],
+      "stored_divergent_numbers": [],
+      "label": "halted",
+      "label_basis": "Both producers failed structural validation twice; no conclusion on either side.",
+      "notes": {},
+      "replay_today": {
+        "status": "SKIPPED_NO_CONCLUSION",
+        "contradiction_flag": null,
+        "agent_a_numbers": null,
+        "agent_b_numbers": null,
+        "divergent_numbers": null
+      },
+      "lens_version": "v1"
+    },
+    {
+      "run_id": "04ee8480-85d8-4ff1-a25f-7f9d2a0c8081",
+      "subject": "AAPL",
+      "compared_at": "2026-09-04T06:58:50.808303+00:00",
+      "agent_a_id": "financial",
+      "agent_b_id": "earnings",
+      "agent_a_conclusion": "Mock response for: AAPL\n  No failures simulated.",
+      "agent_b_conclusion": "Mock response for: AAPL\n  No failures simulated.",
+      "stored_status": "COMPARED",
+      "stored_contradiction_flag": false,
+      "stored_agent_a_numbers": [],
+      "stored_agent_b_numbers": [],
+      "stored_divergent_numbers": [],
+      "label": "mock_smoke_test",
+      "label_basis": "mock_adapter's canned 'No failures simulated' text, not a real grader conclusion.",
+      "notes": {},
+      "replay_today": {
+        "status": "COMPARED",
+        "contradiction_flag": false,
+        "agent_a_numbers": [],
+        "agent_b_numbers": [],
+        "divergent_numbers": []
+      },
+      "lens_version": "v1"
+    },
+    {
+      "run_id": "cacdc97e-a40c-4cb3-b71a-bddcef280bc5",
+      "subject": "NVDA",
+      "compared_at": "2026-09-04T07:00:42.136657+00:00",
+      "agent_a_id": "financial",
+      "agent_b_id": "earnings",
+      "agent_a_conclusion": "Mock response for: NVDA\n  Recovered on retry with corrective directive.",
+      "agent_b_conclusion": "Mock response for: NVDA\n  Recovered on retry with corrective directive.",
+      "stored_status": "COMPARED",
+      "stored_contradiction_flag": false,
+      "stored_agent_a_numbers": [],
+      "stored_agent_b_numbers": [],
+      "stored_divergent_numbers": [],
+      "label": "mock_smoke_test",
+      "label_basis": "Scripted retry-then-recover mock text — exercises ADR-07's retry path, not agent disagreement.",
+      "notes": {},
+      "replay_today": {
+        "status": "COMPARED",
+        "contradiction_flag": false,
+        "agent_a_numbers": [],
+        "agent_b_numbers": [],
+        "divergent_numbers": []
+      },
+      "lens_version": "v1"
+    },
+    {
+      "run_id": "6542a130-97df-49b9-ac22-2d7c5c9c5ed8",
+      "subject": "INTC",
+      "compared_at": "2026-09-04T07:01:08.135235+00:00",
+      "agent_a_id": "financial",
+      "agent_b_id": "earnings",
+      "agent_a_conclusion": null,
+      "agent_b_conclusion": null,
+      "stored_status": "BOTH_HALTED",
+      "stored_contradiction_flag": null,
+      "stored_agent_a_numbers": [],
+      "stored_agent_b_numbers": [],
+      "stored_divergent_numbers": [],
+      "label": "halted",
+      "label_basis": "Both producers failed structural validation twice; no conclusion on either side.",
+      "notes": {},
+      "replay_today": {
+        "status": "SKIPPED_NO_CONCLUSION",
+        "contradiction_flag": null,
+        "agent_a_numbers": null,
+        "agent_b_numbers": null,
+        "divergent_numbers": null
+      },
+      "lens_version": "v1"
+    },
+    {
+      "run_id": "65229696-63e9-46a4-9979-541c78a4623b",
+      "subject": "AAPL",
+      "compared_at": "2026-09-04T19:19:12.638673+00:00",
+      "agent_a_id": "financial",
+      "agent_b_id": "earnings",
+      "agent_a_conclusion": "Mock response for: AAPL\n  No failures simulated.",
+      "agent_b_conclusion": "Mock response for: AAPL\n  No failures simulated.",
+      "stored_status": "COMPARED",
+      "stored_contradiction_flag": false,
+      "stored_agent_a_numbers": [],
+      "stored_agent_b_numbers": [],
+      "stored_divergent_numbers": [],
+      "label": "mock_smoke_test",
+      "label_basis": "mock_adapter's canned 'No failures simulated' text, not a real grader conclusion.",
+      "notes": {},
+      "replay_today": {
+        "status": "COMPARED",
+        "contradiction_flag": false,
+        "agent_a_numbers": [],
+        "agent_b_numbers": [],
+        "divergent_numbers": []
+      },
+      "lens_version": "v1"
+    },
+    {
+      "run_id": "8c67de62-a4e9-4068-8048-bef61b608b43",
+      "subject": "AAPL",
+      "compared_at": "2026-09-04T19:52:32.749697+00:00",
+      "agent_a_id": "financial",
+      "agent_b_id": "earnings",
+      "agent_a_conclusion": "Apple Inc. (AAPL) demonstrates strong financial health with assets of $383,266,000,000 and revenues of $265,595,000,000, resulting in a net income of $101,464,000,000. The asset turnover ratio of 0.12 and net profit margin of 0.38 indicate efficient use of assets and high profitability. While the asset turnover ratio is slightly below the industry average, the net profit margin is above average, suggesting strong financial performance. [SOURCE: Mycroft Financial Database, N/A]",
+      "agent_b_conclusion": "Apple Inc. (AAPL) reported a robust operating income of $122.43 billion, suggesting strong operational health. The minor difference between EarningsPerShareDiluted (6.88) and EarningsPerShareBasic (6.91) could be due to the company's complex capital structure. [SOURCE: SEC Filings, https://www.sec.gov/]",
+      "stored_status": "COMPARED",
+      "stored_contradiction_flag": true,
+      "stored_agent_a_numbers": [
+        "$383,266,000,000",
+        "$265,595,000,000,",
+        "$101,464,000,000",
+        "0.12",
+        "0.38"
+      ],
+      "stored_agent_b_numbers": [
+        "$122.43 billion",
+        "6.88",
+        "6.91"
+      ],
+      "stored_divergent_numbers": [
+        "$101,464,000,000",
+        "$122.43 billion",
+        "$265,595,000,000,",
+        "$383,266,000,000",
+        "0.12",
+        "0.38",
+        "6.88",
+        "6.91"
+      ],
+      "label": "disjoint_concepts",
+      "label_basis": "A reports Assets/Revenues/NetIncomeLoss + a derived asset-turnover/margin pair (0.12, 0.38); B reports OperatingIncomeLoss/EPS. Zero shared concept between the two sides.",
+      "notes": {
+        "contains_derived_ratio_not_in_a_producers_edgar_concepts": true,
+        "related_run": "third AAPL live run with a distinct fabricated ratio pair, cf. 56965308 and f4a4c782"
+      },
+      "replay_today": {
+        "status": "COMPARED",
+        "contradiction_flag": true,
+        "agent_a_numbers": [
+          "$383,266,000,000",
+          "$265,595,000,000,",
+          "$101,464,000,000",
+          "0.12",
+          "0.38"
+        ],
+        "agent_b_numbers": [
+          "$122.43 billion",
+          "6.88",
+          "6.91"
+        ],
+        "divergent_numbers": [
+          "$101,464,000,000",
+          "$122.43 billion",
+          "$265,595,000,000,",
+          "$383,266,000,000",
+          "0.12",
+          "0.38",
+          "6.88",
+          "6.91"
+        ]
+      },
+      "lens_version": "v1"
+    }
+  ]
+}

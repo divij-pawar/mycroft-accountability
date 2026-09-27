@@ -19,26 +19,21 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from typing import Literal, Optional
+from typing import Literal
+
+from core.numeric import QUANTITATIVE_RE
 
 ClaimType = Literal["citation", "quantitative", "hedge", "causal"]
 
 # ── Patterns ───────────────────────────────────────────────────────────────────
 
+# The quantitative pattern lives in core/numeric.py — it used to be copied
+# verbatim here, in consistency.py and in verification.py, hand-synced by comment.
 _CITATION_RE = re.compile(
     r'\[SOURCE:\s*(?P<label>[^\],]+),\s*(?P<url>[^\]]+)\]',
     re.IGNORECASE,
 )
 
-_QUANTITATIVE_RE = re.compile(
-    r'(?:'
-    r'\$[\d,]+(?:\.\d+)?(?:\s*(?:million|billion|trillion|M|B|T))?'
-    r'|[\d,]+(?:\.\d+)?\s*%'
-    r'|[\d,]+(?:\.\d+)?x'           # multiples e.g. 2.3x
-    r'|[\d,]+(?:\.\d+)?\s*bps'      # basis points
-    r')',
-    re.IGNORECASE,
-)
 
 _HEDGE_WORDS: frozenset[str] = frozenset({
     "estimated", "estimate", "approximately", "approximate", "roughly",
@@ -89,6 +84,25 @@ def _sentences(text: str) -> list[str]:
 
 # ── Public API ─────────────────────────────────────────────────────────────────
 
+def extract_claims_from_response(
+    thought_log: str | None, conclusion: str | None
+) -> list[ExtractedClaim]:
+    """
+    Extract claims from both blocks of an agent's response, not just thought_log.
+
+    The directive's citation instruction ("Cite all sources as [SOURCE: <label>,
+    <url or N/A>]") is worded under Block 2 (conclusion), but callers historically
+    only ever scanned thought_log — across every run stored in this subsystem's
+    history so far, that mismatch meant zero citation claims were ever extracted,
+    because models write their [SOURCE: ...] bracket (when they write one at all)
+    wherever the instruction told them to, and the code was looking at the wrong
+    block. Scanning both, concatenated, catches a citation regardless of which
+    block the model puts it in.
+    """
+    combined = "\n".join(t for t in (thought_log, conclusion) if t)
+    return extract_claims(combined)
+
+
 def extract_claims(thought_log: str | None) -> list[ExtractedClaim]:
     """
     Parse a thought_log string into structured ExtractedClaim objects.
@@ -123,7 +137,7 @@ def extract_claims(thought_log: str | None) -> list[ExtractedClaim]:
         lower = sentence.lower()
 
         # Quantitative
-        for m in _QUANTITATIVE_RE.finditer(sentence):
+        for m in QUANTITATIVE_RE.finditer(sentence):
             key = ("quantitative", m.group(0).lower())
             if key in seen:
                 continue

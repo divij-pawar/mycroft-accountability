@@ -20,58 +20,22 @@ ADR: stdlib only. No third-party HTTP or HTML libraries.
 from __future__ import annotations
 
 import json
-import re
 import urllib.error
 import urllib.request
-from typing import Optional
 
-from claims import ExtractedClaim
+from core.numeric import QUANTITATIVE_RE, close_enough, normalize_number
+from validation.claims import ExtractedClaim
 
-_NUMBER_RE = re.compile(
-    r'(?:'
-    r'\$[\d,]+(?:\.\d+)?(?:\s*(?:million|billion|trillion|M|B|T))?'
-    r'|[\d,]+(?:\.\d+)?\s*%'
-    r'|[\d,]+(?:\.\d+)?x'
-    r'|[\d,]+(?:\.\d+)?\s*bps'
-    r')',
-    re.IGNORECASE,
-)
-
-_SUFFIX_MAP: dict[str, float] = {
-    "trillion": 1e12, "t": 1e12,
-    "billion":  1e9,  "b": 1e9,
-    "million":  1e6,  "m": 1e6,
-}
 
 _TIMEOUT_S = 10
 _MAX_BYTES  = 300_000   # cap HTTP read at 300 KB
 
 
 # ── Number normalisation ───────────────────────────────────────────────────────
-
-def _normalize(s: str) -> float | None:
-    """Parse a quantitative claim string to a plain float, or None on failure."""
-    s = s.strip().replace(",", "").replace("$", "")
-    lower = s.lower()
-    for suffix, mult in _SUFFIX_MAP.items():
-        if lower.endswith(suffix):
-            try:
-                return float(lower[: -len(suffix)].strip()) * mult
-            except ValueError:
-                return None
-    s = re.sub(r"[%xbps]+$", "", s, flags=re.IGNORECASE).strip()
-    try:
-        return float(s)
-    except ValueError:
-        return None
-
-
-def _close_enough(a: float, b: float, tol: float = 0.01) -> bool:
-    """True if values agree within 1% relative tolerance."""
-    if a == 0.0 and b == 0.0:
-        return True
-    denom = max(abs(a), abs(b))
-    return denom > 0 and abs(a - b) / denom <= tol
+# One implementation, in core/numeric.py, shared with validation/facts.py. The
+# private names are kept so this module's call sites read as before.
+_normalize = normalize_number
+_close_enough = close_enough
 
 
 # ── Fetching helpers ───────────────────────────────────────────────────────────
@@ -113,7 +77,7 @@ def _numbers_from_edgar(text: str) -> set[float]:
 def _numbers_from_text(text: str) -> set[float]:
     """Extract normalised numbers from arbitrary text."""
     out: set[float] = set()
-    for m in _NUMBER_RE.finditer(text):
+    for m in QUANTITATIVE_RE.finditer(text):
         n = _normalize(m.group(0))
         if n is not None:
             out.add(n)

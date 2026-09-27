@@ -38,7 +38,8 @@ import uuid
 from dataclasses import dataclass
 from typing import Callable, Literal
 
-from schemas import AgentID, DataSource
+from core.numeric import extract_numbers
+from core.schemas import AgentID, DataSource
 
 ConsistencyAgreement = Literal["HIGH", "MEDIUM", "LOW", "UNKNOWN"]
 
@@ -49,16 +50,6 @@ _STOPWORDS: frozenset[str] = frozenset({
     "would", "could", "should", "may", "might", "this", "that", "these",
     "those", "it", "its", "not", "no", "nor", "also", "which", "who",
 })
-
-_NUMBER_RE = re.compile(
-    r'(?:'
-    r'\$[\d,]+(?:\.\d+)?(?:\s*(?:million|billion|trillion|M|B|T))?'
-    r'|[\d,]+(?:\.\d+)?\s*%'
-    r'|[\d,]+(?:\.\d+)?x'
-    r'|[\d,]+(?:\.\d+)?\s*bps'
-    r')',
-    re.IGNORECASE,
-)
 
 
 # ── Data class ─────────────────────────────────────────────────────────────────
@@ -101,7 +92,14 @@ def _content_words(text: str) -> set[str]:
 
 
 def _extract_numbers(text: str) -> list[str]:
-    return [m.group(0).strip().lower() for m in _NUMBER_RE.finditer(text)]
+    """
+    Delegates to core.numeric — this used to be a fourth hand-synced copy of the
+    quantitative regex. Kept as a named function here because
+    validation/cross_validation.py imports it by this name as its number-divergence
+    primitive, and that import is the reason the comparator does not re-implement
+    scoring.
+    """
+    return extract_numbers(text)
 
 
 def _jaccard(a: set, b: set) -> float:
@@ -160,7 +158,7 @@ def run_consistency_probe(
     Uses the same adapter (model, temperature) as the primary run so the
     comparison is fair.
     """
-    from middleware import HaltError, run_validation_loop
+    from pipeline.middleware import HaltError, run_validation_loop
 
     try:
         result = run_validation_loop(
