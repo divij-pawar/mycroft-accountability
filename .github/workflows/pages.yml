@@ -1,4 +1,4 @@
-# Publish the reference site (docs/reference/) to GitHub Pages.
+# Publish the reference site (docs/) to GitHub Pages.
 #
 # The site is rebuilt from source on every run: scripts/build_docs.py regenerates the parts read
 # off the code (file inventories, routes, environment variables, the Honest Ledger) and exits
@@ -40,7 +40,7 @@ jobs:
 
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: docs/reference
+          path: docs
 
   deploy:
     needs: build

@@ -4682,3 +4682,24 @@ date, recipe, inputs, commands, outputs, result, open issues.
 - **Results:** the full suite passes 471/471. The monorepo's `scripts/conformance.mjs`, run over the
   README, CLAUDE.md, pyproject.toml, both workflows, the builder and all doc sources, gives 45 files,
   all conform. The site was rebuilt after this entry.
+
+## 2026-09-27 (continued) -- Docs build fixed after the site moved to docs/
+
+- **Problem:** after commit `698926d` moved the site from `docs/reference/` to `docs/`, the Pages
+  build failed with 203 "no entry documents this file". `scripts/build_docs.py` still read
+  `docs/reference/src`, found no pages, and reported every file.
+- **Also found:** Pages served only `index.html`. `.gitignore`'s `/docs/*.html` rule, meant for
+  the local week 1–3 walkthroughs, ignored every generated page in `docs/`.
+- **Fixed:**
+  - `SRC`/`OUT` now point at `docs/src` and `docs`.
+  - Files under `docs/` (the site itself and the human's `docs/archive/`) no longer need file
+    entries (`UNDOCUMENTED_PREFIXES`), in the builder and in `tests/test_docs_coverage.py`.
+  - Links to gitignored local files are accepted.
+  - The entries for moved or removed docs files were dropped, and links to them became plain
+    text.
+  - `.gitignore` now ignores only `/docs/*_week*.html`.
+  - `pages.yml` uploads `docs`.
+  - `docs/.nojekyll` added, so a branch-based Pages deploy doesn't run Jekyll over the Markdown
+    sources.
+- **Result:** `python scripts/build_docs.py` gives 0 problems; the suite passes 471/471; the 38
+  site pages are now untracked and ready to commit. Nothing is committed.

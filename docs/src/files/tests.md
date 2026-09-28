@@ -263,7 +263,7 @@ has no broken link.
 
 What it locks in:
 - **Coverage.** Every project file (tracked by git, or new and not ignored) matches exactly one
-  entry in `docs/reference/src/`, and every entry matches a file. A new file without an entry fails
+  entry in `docs/src/`, and every entry matches a file. A new file without an entry fails
   here, with the list of problems and the command to rebuild.
 - **Consistency.** The site builds in memory with no problems: every `[[file link]]`, page link
   and anchor resolves. The builder and this test are themselves documented.
@@ -281,7 +281,7 @@ project module. It calls `git ls-files`; without git the coverage class is skipp
 - It doesn't check that the committed HTML matches the sources: run `python scripts/build_docs.py`
   after changing either.
 
-Related: [[scripts/build_docs.py]], [[docs/reference/**]]
+Related: [[scripts/build_docs.py]], `the reference site`
 
 ## `tests/test_earnings_grader.py`
 

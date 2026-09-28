@@ -1,6 +1,6 @@
 # Authoring the reference docs
 
-The reference site in `docs/reference/` is built by `scripts/build_docs.py` from the
+The reference site in `docs/` is built by `scripts/build_docs.py` from the
 Markdown sources in this folder. The written parts come from here. The inventory under every
 file entry (functions, classes, exports, imports, imported-by, line counts), the HTTP route
 table, the environment-variable table and the Honest Ledger page are generated from the
@@ -12,7 +12,7 @@ file that doesn't exist, when a `[[link]]` doesn't resolve, or when the site doe
 ## Layout
 
 ```
-docs/reference/
+docs/
   src/
     AUTHORING.md        this file
     pages/*.md          narrative pages (overview, architecture, features, decisions, ...)

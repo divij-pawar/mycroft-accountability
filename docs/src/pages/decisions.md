@@ -154,7 +154,7 @@ injectable, which is why the suite needs no patching of module globals.
 ## D-04 · The subsystem is self-contained in one folder
 - **Status:** In force
 - **Decided:** 2026-08-14; folder renamed 2026-08-21
-- **Where:** [[README.md]], [[CLAUDE.md]], [[logs/RUN_LOG.md]], [[docs/DATA_CONTRACT.md]], [[.gitignore]]
+- **Where:** [[README.md]], [[CLAUDE.md]], [[logs/RUN_LOG.md]], `docs/archive/DATA_CONTRACT.md`, [[.gitignore]]
 
 **Context.** The standalone prototype was brought into Mycroft, whose shared run log and root files
 are touched by several other authors.
@@ -924,7 +924,7 @@ forward-looking check is a word list.
 ## D-42 · Append-only is enforced by SQLite triggers
 - **Status:** In force
 - **Decided:** not recorded for `runs` (C-03, prototype); 2026-09-25 for `gate_decisions`
-- **Where:** [[web/db.py]], [[docs/DATA_CONTRACT.md]]
+- **Where:** [[web/db.py]], `docs/archive/DATA_CONTRACT.md`
 
 **Context.** Application discipline alone would let a bug elsewhere rewrite history.
 

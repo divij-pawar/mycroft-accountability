@@ -43,8 +43,12 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent  # verification-layer/
-SRC = ROOT / "docs" / "reference" / "src"
-OUT = ROOT / "docs" / "reference"
+SRC = ROOT / "docs" / "src"
+OUT = ROOT / "docs"
+
+# Files under docs/ are the site itself (sources, assets, built pages) and archived documents;
+# they are not required to have a file entry.
+UNDOCUMENTED_PREFIXES = ("docs/",)
 
 SECTIONS = ("Start", "Architecture", "Features", "Reference", "Files", "History")
 SITE_TITLE = "Verification layer reference"
@@ -627,6 +631,8 @@ class Site:
                 self.problems.append(f"{pat!r} has an entry on both {seen[pat].slug} and {page.slug}")
             seen[pat] = page
         for f in self.files:
+            if f.startswith(UNDOCUMENTED_PREFIXES):
+                continue
             exact = [(pg, pat) for pg, pat in patterns if pat == f]
             matches = exact or [(pg, pat) for pg, pat in patterns if is_glob(pat) and glob_match(pat, f)]
             if not matches:
@@ -989,7 +995,8 @@ class Site:
                         self.problems.append(f"{name}: link to missing file {target}")
                     continue  # a gitignored target is local-only: present on the author's machine, absent in a clone
                 if target not in anchors:
-                    self.problems.append(f"{name}: link to missing page {href}")
+                    if not _git_ignored(OUT / target):  # a gitignored local file (the week walkthroughs) is fine
+                        self.problems.append(f"{name}: link to missing page {href}")
                 elif frag and frag not in anchors[target]:
                     self.problems.append(f"{name}: link to missing anchor {href}")
 

@@ -29,8 +29,7 @@ web/data/filing_cache/
 
 # docs/ is tracked for design docs (DATA_CONTRACT.md) and its own index,
 # but the weekly walkthrough decks are large local-only artefacts.
-/docs/*.html
-!/docs/index.html
+/docs/*_week*.html
 
 # Accidental pip install artefacts (e.g. a file literally named "=2.8.0")
 =*

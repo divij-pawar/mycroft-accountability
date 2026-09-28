@@ -231,7 +231,7 @@ What it keeps out of git:
   `/divij`.
 - **Walkthrough decks:** `/docs/*.html`, with `!/docs/index.html` re-including the index.
   Because the pattern is anchored to `docs/`, the built reference site under
-  `docs/reference/` is not ignored (checked with `git check-ignore`).
+  `docs/` is not ignored (checked with `git check-ignore`).
 - **Stray pip artefacts:** `=*` (for example a file literally named `=2.8.0`).
 - **React build output:** `web/frontend/node_modules/`, `web/frontend/dist/`,
   `web/frontend/*.tsbuildinfo`.
@@ -314,7 +314,7 @@ Related: [[.github/workflows/pages.yml]], [[tests/test_docs_coverage.py]]
 - Triggers on a push to `main`, or by hand (`workflow_dispatch`).
 - The build job runs `python scripts/build_docs.py`, which regenerates the code-derived parts
   and exits non-zero on any problem, so a broken site never deploys. It then uploads
-  `docs/reference/` as the Pages artifact.
+  `docs/` as the Pages artifact.
 - The deploy job publishes it with `actions/deploy-pages`. Permissions are `pages: write` and
   `id-token: write`; concurrency group `pages`.
 - **One-time setup, by hand:** Settings → Pages → Build and deployment → Source: "GitHub
@@ -328,7 +328,7 @@ Related: [[.github/workflows/pages.yml]], [[tests/test_docs_coverage.py]]
 - It hadn't run on GitHub when it was written.
 - Inert in the monorepo, like [[.github/workflows/ci.yml]].
 
-Related: [[scripts/build_docs.py]], [[docs/reference/**]]
+Related: [[scripts/build_docs.py]], `the reference site`
 
 ## `Dockerfile`
 
@@ -376,156 +376,6 @@ and links to the repository and the docs.
   requirements.txt`.
 
 Related: [[requirements.txt]], [[README.md]]
-
-## `docs/DATA_CONTRACT.md`
-
-**Role:** the data contract for the run store, scoped to this subsystem.
-
-The repository-root `DATA_CONTRACT.md` governs Mycroft's `data/raw/` to `data/verified/`
-layers. This file covers only the run store (the SQLite database of agent attempts), which is
-machine-local and enters neither layer. It has one table row and a list of rules:
-
-- **Dataset:** `runs`, `sessions`, `flags`, from live agent attempts through
-  `run_validation_loop`, one `ReasoningObject` per attempt, stored in `web/data/*.db`
-  (gitignored). Nothing has been promoted to `data/verified/`.
-- **Gates:** a machine structural-parse gate (two failed parses halt the run, recorded as
-  `HALT`) and a human attestation gate, "not yet defined": no run has been attested. Owner:
-  unassigned.
-- **Rules:** append-only by SQLite triggers, but not tamper-evident, because the
-  unauthenticated `DELETE /api/runs` still drops the tables; the database may hold full raw
-  model output and is sensitive; reproduction is by replay, not by committing the database;
-  no invented counts; no secrets in tracked files.
-
-It moved from the subsystem root into `docs/` in commit `99aec80` (2026-09-26).
-
-### Limits and open issues
-- It names old module paths: `middleware.run_validation_loop` (now
-  `pipeline/middleware.py`) and `parser._parse_response` (now `core/parsing.py`).
-- The dataset list predates the `gate_decisions` table in `web/db.py` (the human decisions,
-  also append-only by trigger), and the reviewer-flag table is `reviewer_flags`, not `flags`.
-- It cites `accountability-layer-audit.md`, removed from the repository on 2026-09-27 (see
-  [the prototype audit](history.html#the-prototype-audit-accountability-layer-audit-md)).
-
-## `docs/SYSTEM_DESIGN.md`
-
-**Role:** the long-form design reference: system workflow, data model and design rationale for
-the accountability layer and Cross-Agent Validation.
-
-It dates itself "As of: 2026-09-14" and was written that day (`logs/RUN_LOG.md`, "Write
-docs/SYSTEM_DESIGN.md: full system workflow and design-decision reference"). Its status rule:
-every claim is either tested, tied to a cited live run, or marked not done. Sections:
-
-1. **What these two layers are, and how they relate.** Cross-Agent Validation is one function
-   that calls the accountability layer's `run_validation_loop` twice and compares the
-   conclusions.
-2. **Accountability layer workflow:** the `/api/chat` flow, the structural contract, ADR-07's
-   retry-then-halt loop, directive versioning, confidence scoring, the partial mitigations for
-   ADR-06 (claims, verification, consistency), persistence, and scope redaction with its
-   known gap.
-3. **Cross-Agent Validation workflow:** why it exists, the two producers, the comparison flow,
-   the two contradiction rules, the shared number regex, and `POST /api/compare`.
-4. **Design decisions and rationale:** a table (stdlib-only core, frozen dataclasses,
-   `Protocol` contracts, hardcoded directives, trigger-enforced append-only, and others).
-5. **Data model reference.**
-6. **Test and verification discipline.**
-7. **Honest status:** a snapshot of the Honest Ledger with severities and statuses.
-8. **File layout reference.**
-9. **Sources this document synthesizes.**
-
-Other reference pages cite it by section number for design reasons.
-
-### Limits and open issues
-The document was edited again at the 2026-09-27 cutover (per the B6 + U9 entry) but its
-snapshot parts were not refreshed:
-
-- "242 automated tests" in the header and §6, and §8's "242 stdlib unittest tests"; the log
-  now records 459.
-- "Nothing in this subsystem is committed to git past commit `c53746a`". Commits `db54d62`
-  to `c1dc294` (2026-09-26) now exist.
-- §7's ledger snapshot predates later changes; for example the 2026-09-27 timeout entry moved
-  `no-route-tests` and `retry-halt-unproven` to RESOLVED.
-- §8 lists `adapters/` as "gemini, ollama, mock, fixture + registry.py"; three of those are
-  archived. It lists `datasources/` as `edgar.py` only (there is also `filings.py`) and
-  `validation/` without the files added from 2026-09-24 on.
-- It cites `divij/` documents, which are gitignored.
-
-For current status, the live ledger (`GET /api/self-report`, [[web/self_report.py]]) is the
-source the document itself names.
-
-## `docs/index.html`
-
-**Role:** a standalone page that lists the weekly walkthrough decks in `docs/`.
-
-It fetches `https://api.github.com/repos/nikbearbrown/mycroft/contents/verification-layer/docs`
-in the browser, keeps the `.html` names, and draws one card per file, titled from the file
-name. If that request fails, it falls back to a hard-coded list:
-`accountability_layer_week1.html`, `inversion_audit_engine_week3.html`,
-`validation_loop_walkthrough_week2.html`. The page has its own inline styles (a purple
-gradient and system fonts).
-
-It moved from the subsystem root into `docs/` in commit `99aec80` (2026-09-26).
-
-### Limits and open issues
-- The decks are gitignored, so they exist only on the author's machine. On GitHub, a
-  successful API call can list only tracked `.html` files directly in `docs/`, which today is
-  this index itself (judgment from the `.gitignore` rule; not tested against GitHub). The
-  fallback list is used only when the request fails.
-- The page makes a network request to GitHub when opened.
-- Its colours are hard-coded rather than taken from `brutalist/DESIGN.md`. Whether DESIGN.md
-  applies to this page is not recorded; the 2026-09-24 decision entry ("Human decisions:
-  audit-layer roadmap approved...") excludes only the web app from DESIGN.md.
-
-## `docs/video/archive/*`
-
-**Role:** two archived narration scripts for a two-part explainer video series, "Building an
-audit layer for AI agents".
-
-Both scripts follow one structure: a production brief (audience, goal, glossary, scene map,
-assets to capture, accuracy guardrails, tone, pronunciation, open decisions), then timed
-chapters pairing narration with visuals, then a fact-check sheet mapping every claim to a
-`logs/RUN_LOG.md` entry. The brand graphics follow `brutalist/DESIGN.md`; app screen captures
-keep the app's own palette (a human decision dated 2026-09-24 in the scripts).
-
-| File | Origin | Date | Covers | What uses it |
-|---|---|---|---|---|
-| `docs/video/archive/part-1-two-ais-agreed.md` | Part 1, "Two AIs agreed. That's the problem." | Sources: RUN_LOG 2026-09-24 to 2026-09-25 | Why two agents agreeing is not evidence: period- and unit-aware facts (B0), figure-by-figure comparison (B1 + U2), concurrent runs (BL), and the first same-figure match (B2 + B3). | Nothing in the code. Reference for video production. |
-| `docs/video/archive/part-2-who-gets-the-last-word.md` | Part 2, "Who gets the last word." | Sources: RUN_LOG BG + U3 and B2 + B3 (2026-09-25), plus roadmap items not yet logged | The human decision gate, accounting checks, sources located in filings, and assessments and grades. | Nothing in the code. Reference for video production. |
-
-Both were added in commit `99aec80` (2026-09-26), whose message calls them "earlier video
-scripts ... archived". No log entry records why they went straight to an archive folder
-(judgment, not recorded).
-
-### Limits and open issues
-- Part 2's fact-check sheet leaves several claims marked `**[verify]**` (BP, U4, B4 to B6,
-  U5 to U9), because they were not yet in the run log when it was written. One figure
-  ("Bull BBB / Bear BB") is marked illustrative. The 2026-09-26 entry "B4 + U7: structured
-  assessments and bull/bear, built and reverted as the default" means the bull/bear material
-  should be checked against that entry before any recording.
-- `CLAUDE.md` says scripts follow `divij/video-script-writing-guide.md`, which is gitignored.
-
-## `docs/reference/**`
-
-**Role:** this reference site: its Markdown sources, its stylesheet and scripts, and its built
-HTML.
-
-| Path | What |
-|---|---|
-| `docs/reference/src/AUTHORING.md` | the format and accuracy rules for writing entries |
-| `docs/reference/src/pages/*.md` | the narrative pages: overview, architecture, features, reference, history |
-| `docs/reference/src/files/*.md` | one page per layer or folder, one entry per project file |
-| `docs/reference/assets/site.css` | the styles: the six `brutalist/DESIGN.md` colour tokens, light by default, with its dark-mode values under `data-theme="dark"`; EB Garamond, Inter and JetBrains Mono; no sticky header |
-| `docs/reference/assets/site.js` | the theme toggle (remembered in `localStorage` as `docs-theme`), the mobile menu, and search (press `/`; arrow keys and Enter to pick a result) |
-| `docs/reference/assets/search-index.js` | generated: every page, section, file, function, class, export, route and ledger entry |
-| `docs/reference/*.html` | generated: one page per source |
-
-- **Built by** [[scripts/build_docs.py]]; **checked by** [[tests/test_docs_coverage.py]].
-- **The built output is committed**, so the site opens straight from disk. The `/docs/*.html`
-  rule in [[.gitignore]] matches only files directly in `docs/`, so it doesn't reach
-  `docs/reference/`.
-- **Fonts** load from Google Fonts. Offline, the pages fall back to the stacks DESIGN.md names.
-- **Written with help.** On 2026-09-27 the per-file entries were drafted by AI subagents, each
-  given one folder and AUTHORING.md, then checked against the code by the session that assembled
-  them. Each entry names its sources; `logs/RUN_LOG.md` records the build.
 
 ## `logs/RUN_LOG.md`
 

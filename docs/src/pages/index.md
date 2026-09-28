@@ -85,5 +85,5 @@ Search (press `/`) covers pages, sections, files, functions, classes, exports an
 - **Built is not the same as observed.** Where a behaviour has only been exercised by tests with
   scripted agents, the page says so; where it has been seen on a live model, it says when.
 
-The site is rebuilt with `python scripts/build_docs.py`. See [[docs/reference/**|the entry for
-the site itself]] and [[scripts/build_docs.py]].
+The site is rebuilt with `python scripts/build_docs.py`. See the entry for
+the site itself and [[scripts/build_docs.py]].

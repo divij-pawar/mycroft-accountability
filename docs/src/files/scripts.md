@@ -187,11 +187,11 @@ It uses `set -e`, so a failed build stops the script.
 ## `scripts/build_docs.py`
 
 **Role:** builds this reference site: HTML pages from the Markdown sources in
-`docs/reference/src/`, plus everything that can be read off the code, generated fresh on every
+`docs/src/`, plus everything that can be read off the code, generated fresh on every
 build.
 
 ```bash
-python scripts/build_docs.py            # build into docs/reference/
+python scripts/build_docs.py            # build into docs/
 python scripts/build_docs.py --check    # build in memory, print problems, write nothing
 ```
 
@@ -240,7 +240,7 @@ It exits non-zero when it finds a problem. Standard library only, like the rest 
   (signatures, imports, routes, variables, the ledger, counts) are the ones generated.
 - **The build date is the only varying text.** The footer shows the day of the build, not a
   commit, so an unchanged source rebuilds to the same bytes on the same day.
-- **Styling** follows `brutalist/DESIGN.md` (see [[docs/reference/**]]).
+- **Styling** follows `brutalist/DESIGN.md` (see `the reference site`).
 
 ### Limits and open issues
 
@@ -248,5 +248,5 @@ It exits non-zero when it finds a problem. Standard library only, like the rest 
   lists) aren't listed.
 - The drift test checks coverage and links, not accuracy.
 
-Related: [[tests/test_docs_coverage.py]], [[docs/reference/**]]
+Related: [[tests/test_docs_coverage.py]], `the reference site`
 

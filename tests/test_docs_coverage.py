@@ -1,9 +1,9 @@
 """
-The reference docs (docs/reference/) cover the whole project and are internally consistent.
+The reference docs (docs/) cover the whole project and are internally consistent.
 
 What this locks in
     - Every project file (tracked by git, or new and not ignored) matches exactly one entry
-      in docs/reference/src/, and every entry matches a file. A new file without an entry
+      in docs/src/, and every entry matches a file. A new file without an entry
       fails here, which is the point: the docs can't silently fall behind the code.
     - Every [[file link]], page link and anchor in the built site resolves.
     - The site builds (scripts/build_docs.py), in memory, without writing anything.
@@ -32,11 +32,12 @@ class DocsCoverageTest(unittest.TestCase):
 
     def test_the_site_builds_with_no_problems(self):
         problems = sorted(set(self.site.problems))
-        self.assertEqual(problems, [], "\n" + "\n".join(problems) + "\n\nFix the docs in docs/reference/src/, "
+        self.assertEqual(problems, [], "\n" + "\n".join(problems) + "\n\nFix the docs in docs/src/, "
                          "then run: python scripts/build_docs.py")
 
     def test_every_project_file_is_documented(self):
-        undocumented = [f for f in self.site.files if f not in self.site.entry_of]
+        undocumented = [f for f in self.site.files
+                        if f not in self.site.entry_of and not f.startswith(bd.UNDOCUMENTED_PREFIXES)]
         self.assertEqual(undocumented, [])
 
     def test_this_test_and_the_builder_are_themselves_documented(self):

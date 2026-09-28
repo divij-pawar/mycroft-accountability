@@ -19,10 +19,10 @@ appended in order and never edited. The entry that documents it lists its major 
 
 | Document | What it is | Current? |
 |---|---|---|
-| [[docs/SYSTEM_DESIGN.md]] | The system design: components, ADRs, data flow | Partly out of date: active directive, concept sets, concurrency |
-| [[docs/DATA_CONTRACT.md]] | The data contract for inputs and records | Out of date in places |
-| [[docs/index.html]] | An earlier index page for the documentation | Kept as it was; it predates this site and its styling |
-| [[docs/video/archive/*]] | Scripts of two earlier explainer videos | Historical |
+| `docs/archive/SYSTEM_DESIGN.md` | The system design: components, ADRs, data flow | Partly out of date: active directive, concept sets, concurrency |
+| `docs/archive/DATA_CONTRACT.md` | The data contract for inputs and records | Out of date in places |
+| `docs/archive/index.html` | An earlier index page for the documentation | Kept as it was; it predates this site and its styling |
+| `docs/video/archive/*` | Scripts of two earlier explainer videos | Historical |
 
 ## Earlier walkthroughs (local only)
 
@@ -31,9 +31,9 @@ so they aren't in the repository and won't exist in a fresh clone. They are link
 unchanged, and describe the system at the time they were written. On the published site
 (GitHub Pages) these three links 404, since the files were never pushed.
 
-- [Three mechanisms against silence](../accountability_layer_week1.html) (week 1)
-- [Validation loop walkthrough](../validation_loop_walkthrough_week2.html) (week 2)
-- [Inversion Audit Engine](../inversion_audit_engine_week3.html) (week 3)
+- [Three mechanisms against silence](accountability_layer_week1.html) (week 1)
+- [Validation loop walkthrough](validation_loop_walkthrough_week2.html) (week 2)
+- [Inversion Audit Engine](inversion_audit_engine_week3.html) (week 3)
 
 ## The archive
 
@@ -97,4 +97,4 @@ Contents:
   its finding 2.3, `web/self_report.py`'s `audit-criticals` entry names it as its source, and
   the README's §7 condition refers to it.
 
-Related: [[README.md]], [[docs/DATA_CONTRACT.md]], [[web/self_report.py]]
+Related: [[README.md]], `docs/archive/DATA_CONTRACT.md`, [[web/self_report.py]]

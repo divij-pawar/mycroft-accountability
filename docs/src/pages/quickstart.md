@@ -114,12 +114,12 @@ The published copy is at [divij-pawar.github.io/mycroft-accountability](https://
 deployed by [[.github/workflows/pages.yml]] on every push to `main`. Locally:
 
 ```bash
-python scripts/build_docs.py            # rebuild docs/reference/
+python scripts/build_docs.py            # rebuild docs/
 python scripts/build_docs.py --check    # report problems, write nothing
 ```
 
 A new file without a documentation entry fails `tests/test_docs_coverage.py`. Add its entry to
-the right page in `docs/reference/src/files/` (see `docs/reference/src/AUTHORING.md`).
+the right page in `docs/src/files/` (see `docs/src/AUTHORING.md`).
 
 ## First things to try
 

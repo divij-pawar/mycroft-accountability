@@ -298,7 +298,7 @@ validation/    figure comparison, accounting checks, decision gate and redaction
 web/           FastAPI server, SQLite store, scope tokens, step trace, Honest Ledger; web/frontend/ is the React review app
 tests/         the network-free, model-free suite, including the layering and docs-coverage tests
 scripts/       start-server.sh, build_docs.py, live-run scripts
-docs/          the reference site (docs/reference/) and design documents
+docs/          the reference site (docs/) and design documents
 archive/       replaced files, moved rather than deleted
 logs/          RUN_LOG.md: every change, live run and correction, append-only
 .github/       CI and GitHub Pages workflows
@@ -314,7 +314,7 @@ the ledger are generated from the code on every build, and
 [`tests/test_docs_coverage.py`](tests/test_docs_coverage.py) fails if any file has no entry or any
 link breaks.
 
-Offline, open `docs/reference/index.html` directly (it's static HTML), or rebuild it with
+Offline, open `docs/index.html` directly (it's static HTML), or rebuild it with
 `python scripts/build_docs.py`.
 
 ## Status
