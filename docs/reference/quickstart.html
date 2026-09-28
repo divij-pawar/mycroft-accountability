@@ -31,7 +31,7 @@
     <p class="eyebrow">Start</p>
     <h1>Running it</h1>
     <p class="lede">Install the dependencies, configure the environment, start the server and the review app, and run the tests.</p>
-    <nav class="toc" aria-label="On this page"><h2>On this page</h2><ul><li class="toc-2"><a href="#prerequisites">Prerequisites</a></li><li class="toc-2"><a href="#install">Install</a></li><li class="toc-2"><a href="#configure">Configure</a></li><li class="toc-2"><a href="#start-the-server">Start the server</a></li><li class="toc-2"><a href="#build-the-review-app">Build the review app</a></li><li class="toc-2"><a href="#run-the-tests">Run the tests</a></li><li class="toc-2"><a href="#build-these-docs">Build these docs</a></li><li class="toc-2"><a href="#first-things-to-try">First things to try</a></li></ul></nav>
+    <nav class="toc" aria-label="On this page"><h2>On this page</h2><ul><li class="toc-2"><a href="#prerequisites">Prerequisites</a></li><li class="toc-2"><a href="#install">Install</a></li><li class="toc-2"><a href="#configure">Configure</a></li><li class="toc-2"><a href="#start-the-server">Start the server</a></li><li class="toc-2"><a href="#or-run-it-in-docker">Or run it in Docker</a></li><li class="toc-2"><a href="#build-the-review-app">Build the review app</a></li><li class="toc-2"><a href="#run-the-tests">Run the tests</a></li><li class="toc-2"><a href="#build-these-docs">Build these docs</a></li><li class="toc-2"><a href="#first-things-to-try">First things to try</a></li></ul></nav>
     <article>
 <p>Everything runs locally: a FastAPI server on port 8000, a SQLite file for the record, a local Ollama model for the agents, and a React review app the server serves at <code>/app</code>. Commands below run from <code>verification-layer/</code> unless they say otherwise.</p>
 <h2 id="prerequisites">Prerequisites<a class="anchor" href="#prerequisites" aria-label="Link to this section">#</a></h2>
@@ -52,6 +52,11 @@ pip install -r requirements.txt</code></pre>
 <pre><code class="lang-bash">python -m uvicorn web.server:app --reload --port 8000</code></pre>
 <p>Then open <code>http://localhost:8000/</code>. It redirects to the review app at <code>/app/</code>. Without a build, <code>/</code> returns a page explaining how to make one, and the API still works. FastAPI's generated API explorer is at <code>/docs</code>.</p>
 <p><code>start-web-server.sh</code> in the package root does the same with a hard-coded WSL path; see <a href="files-root.html#f-start-web-server-sh"><code>start-web-server.sh</code></a>.</p>
+<h2 id="or-run-it-in-docker">Or run it in Docker<a class="anchor" href="#or-run-it-in-docker" aria-label="Link to this section">#</a></h2>
+<p>The image holds the server and the built review app; the model stays on the host. See <a href="files-root.html#f-dockerfile"><code>Dockerfile</code></a> (not yet built on the machine that wrote it).</p>
+<pre><code class="lang-bash">docker build -t mycroft-accountability .
+docker run --rm -p 127.0.0.1:8000:8000 --env-file .env mycroft-accountability</code></pre>
+<p>Publish the port on <code>127.0.0.1</code> only. On Linux, add <code>--add-host=host.docker.internal:host-gateway</code> so the container can reach Ollama on the host.</p>
 <h2 id="build-the-review-app">Build the review app<a class="anchor" href="#build-the-review-app" aria-label="Link to this section">#</a></h2>
 <pre><code class="lang-bash">cd web/frontend
 npm ci
@@ -63,6 +68,7 @@ npm run dev        # or: a Vite dev server with hot reload</code></pre>
 cd web/frontend &amp;&amp; npm run verify              # type-check, Vitest, then a build</code></pre>
 <p>Neither suite needs a model, the network or an API key. See <a href="files-tests.html">Python tests</a> and <a href="files-frontend-tests.html">Review app tests</a>.</p>
 <h2 id="build-these-docs">Build these docs<a class="anchor" href="#build-these-docs" aria-label="Link to this section">#</a></h2>
+<p>The published copy is at <a href="https://divij-pawar.github.io/mycroft-accountability/">divij-pawar.github.io/mycroft-accountability</a>, rebuilt and deployed by <a href="files-root.html#f-github-workflows-pages-yml"><code>.github/workflows/pages.yml</code></a> on every push to <code>main</code>. Locally:</p>
 <pre><code class="lang-bash">python scripts/build_docs.py            # rebuild docs/reference/
 python scripts/build_docs.py --check    # report problems, write nothing</code></pre>
 <p>A new file without a documentation entry fails <code>tests/test_docs_coverage.py</code>. Add its entry to the right page in <code>docs/reference/src/files/</code> (see <code>docs/reference/src/AUTHORING.md</code>).</p>

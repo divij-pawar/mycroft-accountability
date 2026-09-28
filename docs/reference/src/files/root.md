@@ -49,73 +49,60 @@ from outside.
 
 ## `README.md`
 
-**Role:** the quick-reference guide: what the subsystem is, its honest status, the package
-layout, install steps and the self-containment rule.
+**Role:** the repository's storefront: what the system does, its architecture as Mermaid
+diagrams, walkthroughs from recorded real runs, the quickstart, resilience and edge cases, the
+layout, and a link to this site.
 
-Sections, in order:
+Rewritten on 2026-09-27 to showcase the project (`logs/RUN_LOG.md`, "GitHub Pages, CI, Docker and
+a showcase README"). Sections, in order:
 
-- **Introduction.** The subsystem as the executable form of the Snickerdoodle contract. It
-  records the rename from `accountability-layer` to `verification-layer` on 2026-08-21, when
-  Cross-Agent Validation (comparing two agents' conclusions) was added on the same evidence
-  store.
-- **What the accountability component enforces.** A table mapping principles P3, P4, P5 and
-  P8 of `SNICKERDOODLE.md` to the code that implements them.
-- **Status — honest.** "Research prototype. Localhost only." It restates the CRITICAL findings
-  of the technical audit inline, because the audit "now lives in the author's gitignored
-  working folder" (see [[accountability-layer-audit.md]]). It says no recipe should claim
-  `RUNNABLE-LIVE` on top of this layer until §7 of that audit is addressed.
-- **Layout.** One table per layer (`core/`, `adapters/`, `pipeline/`, `datasources/`,
-  `producers/`, `validation/`, then `web/`, `scripts/`, `tests/`, `docs/`), with the
-  dependency rule: each layer imports only from the layers above it, and `core/` imports
-  nothing internal.
-- **Install.** Python 3.10 or later, a virtualenv, `pip install -r requirements.txt`, the
-  test suite, and starting the server with `uvicorn` on port 8000.
-- **Self-contained by design.** The subsystem modifies no file outside its folder. The stated
-  cost is that repository CI does not conformance-check it, because
-  `scripts/conformance.mjs` (at the repository root) does not include this folder in its
-  default paths. It records one measurement: running conformance over the whole folder with a
-  local `env/` present walked 6,241 files in 10m45s on the author's machine.
+- **Title, badges, value proposition.** Badges for CI, the published docs, Python 3.10+ and the
+  prototype status. An HTML comment marks where a demo GIF can go.
+- **Callouts.** `[!IMPORTANT]` localhost only, linking `audit-criticals`. `[!NOTE]` what it doesn't
+  claim.
+- **Architecture.** A layer flowchart with the external services, a sequence diagram of a ticker
+  compare, and state diagrams of the ADR-07 loop and the gate. They are drawn from
+  [Layers and components](architecture.html) and [A run end to end](lifecycle.html).
+- **Walkthroughs.** Each is taken from a fixture in `web/frontend/tests/fixtures/`, with its run id
+  and date:
+  - the gated Pokémon run `ec1a3b44`, including the investor view and a decision request with a
+    real refusal message;
+  - AAPL `20c538e4`, with its figure rows and accounting checks;
+  - AAPL `8ecb0922`, with its grades and synthesis. It carries a warning that this run used
+    extraction v1, which the record found unreliable;
+  - the Markdown export.
+- **Quickstart.** Three routes:
+  - the sandbox: the offline suites, the docs build and the frontend verify, with no model or
+    keys;
+  - live, with Ollama;
+  - Docker.
+
+  It explains that there is no mock mode, per [D-17](decisions.html#d-17).
+- **Resilience and edge cases.** A table of failure, mechanism and evidence. Each row says whether
+  it is tested, observed (with the record's numbers), only in the code, or open.
+- **Project layout, Documentation, Status.**
+
+### Design notes
+- The rewrite follows a showcase blueprint the human supplied (value proposition, architecture
+  diagram, quickstart, resilience). Two of the blueprint's suggestions were declined, both by the
+  human on 2026-09-27:
+  - a mock mode, which conflicts with D-17;
+  - a move into `src/`, which would break the layering test and the monorepo path.
+- Numbers in the README come from the record: the retry and halt counts, the four Ollama hangs,
+  and the stream overlaps. It gives no test count, because the CI badge and this site's
+  generated counts stay current and a hand-written number wouldn't.
 
 ### Limits and open issues
-The README is behind the code in several places. Each of these was checked against the files
-on disk when this page was written:
+- **The badges show no status** until the workflows first run on GitHub. The docs badge links to
+  the Pages site, which exists only once Pages is enabled.
+- **The illustrative decision** in walkthrough 1 is not a recorded decision. The run was still
+  awaiting a real reviewer when the README was written.
+- **Fixed by the rewrite** (the previous README's drift): it listed the archived adapters as live
+  and the removed `failure_mode`, gave a stale "242 tests", named two contracts, omitted
+  `filings.py` and the bull/bear lenses, and restated four of the audit's five critical findings.
+  The previous README is in git history.
 
-- **Archived adapters listed as live.** The `adapters/` table lists
-  `adapters/gemini_adapter.py` and `ollama_adapter.py` as the live providers, and the P8 row
-  cites them for their determinism caveats. Both were moved to
-  [[archive/adapters/gemini_adapter.py|archive/adapters/]] on 2026-09-23 (`logs/RUN_LOG.md`,
-  "Make LangChain the sole agent framework..."). [[adapters/registry.py]] now registers one
-  provider, `langchain`.
-- **LangChain adapter described with a scripted mode it no longer has.** The table says
-  `adapters/langchain_adapter.py` runs a scripted double "when `failure_mode` is set". That mode
-  was removed on 2026-09-22 ("Remove all mock/scripted features from the running app...");
-  the scripted double now lives in [[tests/support.py]]. `requirements.txt` states the current
-  behaviour correctly ("always makes a real call, no scripted mode").
-- **Stale test count.** "242 tests, all passing (as of 2026-09-11)". The latest log entry
-  (2026-09-27, "A model-call timeout, and a ledger refresh that found two wrong claims")
-  records 459/459. The paragraph itself tells the reader to trust `GET /api/self-report` over
-  it.
-- **Four CRITICAL findings, not five.** The README restates four. The audit it summarises has
-  five in §2; the fifth (2.5, a hardcoded fallback signing secret and an undocumented
-  `ACCOUNTABILITY_SECRET` variable) is not restated.
-- **Route count.** "Fourteen of sixteen API routes have no authentication" describes the
-  audited commit `fe45eb4`. `web/server.py` now defines more routes than that; the finding is
-  still carried as `audit-criticals` in the [Honest Ledger](ledger.html#audit-criticals).
-- **Install step 3** says the "mock and fixture adapters cover every path". The mock adapter is
-  archived; the test doubles are [[tests/support.py]] and [[adapters/fixture_adapter.py]]. Its
-  command, `python -m unittest discover -s tests`, also differs from the one in `CLAUDE.md`
-  (`-s tests -t .`).
-- **Layout omissions.** The tables do not list `core/assessment.py`,
-  `datasources/filings.py`, `producers/bull.py`, `producers/bear.py`, or
-  `validation/audit.py`, `constraints.py`, `divergence.py`, `facts.py` and `gate.py`.
-- **"Nothing sits loose at the root except README.md, CLAUDE.md, requirements.txt,
-  .env.example and .gitignore".** The root also holds tracked `__init__.py`, `.gitattributes`,
-  `start-web-server.sh` and (in git, though deleted in the working copy)
-  `accountability-layer-audit.md`.
-- **`scripts/run_cross_agent_live.py` "Requires GEMINI_API_KEY".** That script cannot start
-  today: it imports the archived adapters (see [[scripts/run_cross_agent_live.py]]).
-
-Related: [[docs/SYSTEM_DESIGN.md]], [[CLAUDE.md]], [[requirements.txt]]
+Related: [[CLAUDE.md]], [[.github/workflows/ci.yml]], [[.github/workflows/pages.yml]]
 
 ## `CLAUDE.md`
 
@@ -124,6 +111,14 @@ Related: [[docs/SYSTEM_DESIGN.md]], [[CLAUDE.md]], [[requirements.txt]]
 It adds subsystem rules on top of the repository-root `SNICKERDOODLE.md`, `CLAUDE.md` and
 `AGENTS.md`, and says it does not override them. The rules:
 
+- **Two repositories, one folder.** The subsystem lives at `verification-layer/` on
+  `nikbearbrown/mycroft`'s `feature/accountability-layer` branch, and at the root of
+  `divij-pawar/mycroft-accountability`'s `main`, kept in sync with `git subtree`. Syncs run from
+  a monorepo clone (`subtree pull` to bring standalone changes in, `subtree push` to send
+  monorepo changes out). Never push to the monorepo's `main`; never `--squash`; no
+  force-pushes; an agent pushes only when asked for that push. Gitignored data doesn't sync. A
+  fuller guide may sit in `.claude/git-workflow.md`, which is local and gitignored. Set up on
+  2026-09-27 (`logs/RUN_LOG.md`).
 - **Log every meaningful change** in `logs/RUN_LOG.md`, in the format Recipe, Inputs,
   Commands, Outputs, Result, Open issues. If a Claude agent made the change, also add an entry
   to `divij/work.md`, claiming AI authorship only with evidence (the session itself, or a
@@ -240,6 +235,8 @@ What it keeps out of git:
 - **Stray pip artefacts:** `=*` (for example a file literally named `=2.8.0`).
 - **React build output:** `web/frontend/node_modules/`, `web/frontend/dist/`,
   `web/frontend/*.tsbuildinfo`.
+- **Packaging output:** `*.egg-info/` and `/build/`, added on 2026-09-27 with
+  [[pyproject.toml]], which makes `pip install .` possible.
 
 ### Design notes
 The `/docs/*.html` rule replaced an earlier rule that ignored all of `/docs`, which would have
@@ -285,60 +282,100 @@ and does not build the React app.
   packages"). Why it was kept alongside `scripts/start-server.sh` is not recorded (judgment,
   not recorded).
 
-## `accountability-layer-audit.md`
+## `.github/workflows/ci.yml`
 
-**Role:** the technical audit of the original prototype, dated 2026-08-13, of commit `fe45eb4`.
-It is tracked in git but deleted in the working copy.
+**Role:** continuous integration on every push and pull request. It runs the Python suite, the
+docs coverage check, and the review app's type-check, tests and build.
 
-> Status: `git status` shows this file as deleted and unstaged (` D`). It is still in `HEAD`
-> (read with `git show HEAD:verification-layer/accountability-layer-audit.md`). `README.md`
-> says the audit "now lives in the author's gitignored working folder and is not distributed
-> with the repo". The 2026-09-27 entry "Committing the work since c53746a..." records that the
-> deletion was deliberately left out of those commits, because it was not part of that work
-> and earlier entries say the file stays.
-
-The audit came in with the prototype on 2026-08-14 as a `*-audit.md` file, per the
-Snickerdoodle convention (`logs/RUN_LOG.md`, "Integrate accountability-layer into Mycroft").
-It is layer 2 of the verification stack: a report for human judgment, not a verdict. Its
-method: every source file read, docstring claims traced to code paths, the suite run (108
-tests passing at that commit).
-
-Contents:
-
-- **§0 Executive summary and §0.1 re-orientation.** The core engine is well built; problems
-  cluster in guarantees "stated in documentation and enforced at one call site, but not
-  structurally".
-- **§1 What works correctly:** the parser, the retry-then-halt loop (ADR-07), schema
-  validation, key-omitting investor redaction, bound SQL parameters, append-only triggers,
-  consistent adapters, honest determinism caveats, and a fully wired UI.
-- **§2 Critical findings (five):** 2.1 investor redaction bypassed at storage and read time;
-  2.2 read routes unauthenticated; 2.3 `DELETE /api/runs` destroys the audit log without
-  auth; 2.4 anyone can mint an `auditor` token; 2.5 a hardcoded fallback signing secret and an
-  undocumented environment variable.
-- **§3 High:** ADR-04's computed confidence unreachable for real providers; audit records lost
-  on infrastructure failure; replay drops `context`; a near-tautological consistency probe;
-  number normalisation copied three times.
-- **§4 Medium and §5 Low** findings, grouped by area.
-- **§6 Test coverage:** which modules had no tests at the time.
-- **§7 Prioritized fix list:** eleven items, from closing the tiered-access bypass to
-  housekeeping.
-- **§8** The project's thesis applied to its own claims.
+- **`python` job,** on Python 3.10 and 3.12 (the supported floor and the version the suites are
+  usually run on):
+  - `pip install -r requirements.txt`;
+  - `python -m unittest discover -s tests -t .`;
+  - `python scripts/build_docs.py --check`.
+- **`frontend` job,** on Node 20: `npm ci`, then `npm run verify` in `web/frontend`.
+- Neither job needs a model, the network beyond package installs, or a secret. The suites are
+  network-free and model-free by design.
+- The README's CI badge reads this workflow.
 
 ### Limits and open issues
-- The code has moved since the audit. Some findings are recorded as resolved (the three
-  number-regex copies became `core/numeric.py`; `tests/test_claims.py` now covers claim
-  extraction). Others still hold in the current code: `DELETE /api/runs` in `web/server.py`
-  still calls `clear_all()`, which drops every table, with no auth dependency; replay still
-  passes an empty context (`web/server.py`, the comment "context not stored separately —
-  replay on subject only").
-- If the deletion is committed, three live references dangle: `docs/DATA_CONTRACT.md` cites
-  its finding 2.3, `web/self_report.py`'s `audit-criticals` entry names it as its source, and
-  the README's §7 condition refers to it.
-- An entry for a file missing from disk may trip the "entry names a file that doesn't exist"
-  check in `tests/test_docs_coverage.py`, depending on whether that test reads git or the
-  working tree.
+- It hadn't run on GitHub when it was written (2026-09-27): it was checked by parsing it and by
+  running the same commands locally.
+- In the `nikbearbrown/mycroft` monorepo, this file sits at `verification-layer/.github/` and is
+  inert, because GitHub reads workflows only from the repository root. The monorepo's own CI is
+  its root `verify.yml`.
 
-Related: [[README.md]], [[docs/DATA_CONTRACT.md]], [[web/self_report.py]]
+Related: [[.github/workflows/pages.yml]], [[tests/test_docs_coverage.py]]
+
+## `.github/workflows/pages.yml`
+
+**Role:** publishes this reference site to GitHub Pages, at
+`https://divij-pawar.github.io/mycroft-accountability/`.
+
+- Triggers on a push to `main`, or by hand (`workflow_dispatch`).
+- The build job runs `python scripts/build_docs.py`, which regenerates the code-derived parts
+  and exits non-zero on any problem, so a broken site never deploys. It then uploads
+  `docs/reference/` as the Pages artifact.
+- The deploy job publishes it with `actions/deploy-pages`. Permissions are `pages: write` and
+  `id-token: write`; concurrency group `pages`.
+- **One-time setup, by hand:** Settings → Pages → Build and deployment → Source: "GitHub
+  Actions".
+
+### Limits and open issues
+- **Local-only links 404.** The published site has no week 1–3 walkthroughs, because they're
+  gitignored, so those History links 404 there.
+- **Everything is public.** The site includes the Honest Ledger's open security findings.
+  Publishing them was the human's decision on 2026-09-27; the repository is public.
+- It hadn't run on GitHub when it was written.
+- Inert in the monorepo, like [[.github/workflows/ci.yml]].
+
+Related: [[scripts/build_docs.py]], [[docs/reference/**]]
+
+## `Dockerfile`
+
+**Role:** one image with the API server and the built review app. The model runs outside it.
+
+- **Stage 1** (`node:20-slim`): `npm ci` and `npm run build` in `web/frontend`.
+- **Stage 2** (`python:3.12-slim`): installs `requirements.txt`, copies the source and the built
+  `dist/`, exposes 8000, and runs `uvicorn web.server:app --host 0.0.0.0`.
+- `OLLAMA_HOST` defaults to `http://host.docker.internal:11434`, so agents reach Ollama on the
+  host. `.env` is passed with `--env-file` at run time and never copied in (see
+  [[.dockerignore]]).
+- The documented run command publishes the port on `127.0.0.1` only, because the routes are
+  partly unauthenticated ([audit-criticals](ledger.html#audit-criticals)).
+
+### Limits and open issues
+- **Not yet built.** The Docker engine wasn't running on the machine where it was written
+  (2026-09-27), so the image hasn't been built or run.
+- `host.docker.internal` resolves on Docker Desktop. On Linux, `docker run` needs
+  `--add-host=host.docker.internal:host-gateway`.
+- The run store is written inside the container (`web/data/`) and is lost with it, unless a
+  volume is mounted there.
+
+Related: [[.dockerignore]], [[requirements.txt]], [[web/server.py]]
+
+## `.dockerignore`
+
+**Role:** keeps secrets, local data and rebuildable output out of the Docker build context.
+
+It excludes `.env`, `.git`, `.github`, `.claude`, `env/`, `__pycache__`, `web/data/`, the
+frontend's `node_modules/` and `dist/` (both rebuilt inside the image), the local-only folders
+`divij/`, `context/`, `openclaw/` and `youtube/`, and the gitignored `docs/*.html` walkthroughs.
+
+Related: [[Dockerfile]], [[.gitignore]]
+
+## `pyproject.toml`
+
+**Role:** project metadata in the standard format: name, description, `requires-python >= 3.10`,
+and links to the repository and the docs.
+
+- Dependencies are `dynamic`, read from [[requirements.txt]], so that file stays the single
+  source.
+- Packages are listed explicitly: `core`, `adapters`, `pipeline`, `datasources`, `producers`,
+  `validation`, `web`.
+- It isn't published anywhere. The documented install remains `pip install -r
+  requirements.txt`.
+
+Related: [[requirements.txt]], [[README.md]]
 
 ## `docs/DATA_CONTRACT.md`
 
@@ -366,8 +403,8 @@ It moved from the subsystem root into `docs/` in commit `99aec80` (2026-09-26).
   `pipeline/middleware.py`) and `parser._parse_response` (now `core/parsing.py`).
 - The dataset list predates the `gate_decisions` table in `web/db.py` (the human decisions,
   also append-only by trigger), and the reviewer-flag table is `reviewer_flags`, not `flags`.
-- It cites `accountability-layer-audit.md`, deleted in the working copy (see
-  [[accountability-layer-audit.md]]).
+- It cites `accountability-layer-audit.md`, removed from the repository on 2026-09-27 (see
+  [the prototype audit](history.html#the-prototype-audit-accountability-layer-audit-md)).
 
 ## `docs/SYSTEM_DESIGN.md`
 

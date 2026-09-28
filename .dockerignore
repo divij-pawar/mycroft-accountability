@@ -1,0 +1,18 @@
+# Kept out of the image: secrets, local data, build output rebuilt inside the image, and the
+# local-only folders .gitignore also excludes.
+.env
+.git
+.github
+.claude
+env/
+**/__pycache__
+*.pyc
+web/data/
+web/frontend/node_modules/
+web/frontend/dist/
+divij/
+context/
+openclaw/
+youtube/
+docs/*.html
+!docs/index.html

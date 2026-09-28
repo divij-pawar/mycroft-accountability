@@ -1,0 +1,25 @@
+# Project metadata. requirements.txt stays the single source of dependencies (read here through
+# setuptools' dynamic field), and `pip install -r requirements.txt` stays the documented install;
+# this project is not published as a package.
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mycroft-accountability"
+version = "0.1.0"
+description = "An accountability layer for LLM agents: structural validation with retry and halt, cross-agent comparison against SEC filings, and a human decision gate."
+readme = "README.md"
+requires-python = ">=3.10"
+dynamic = ["dependencies"]
+
+[project.urls]
+Repository = "https://github.com/divij-pawar/mycroft-accountability"
+Documentation = "https://divij-pawar.github.io/mycroft-accountability/"
+
+[tool.setuptools]
+packages = ["core", "adapters", "pipeline", "datasources", "producers", "validation", "web"]
+
+[tool.setuptools.dynamic]
+dependencies = { file = ["requirements.txt"] }

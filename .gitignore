@@ -40,3 +40,7 @@ web/data/filing_cache/
 web/frontend/node_modules/
 web/frontend/dist/
 web/frontend/*.tsbuildinfo
+
+# Packaging output: pyproject.toml makes `pip install .` possible, which leaves these behind.
+*.egg-info/
+/build/

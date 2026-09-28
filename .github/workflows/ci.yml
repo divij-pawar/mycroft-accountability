@@ -1,0 +1,57 @@
+# Continuous integration: the Python suite, the docs coverage check and the review app's
+# type-check, tests and build. All three run without a model, the network or an API key; the
+# suites are network-free and model-free by design (see CLAUDE.md, "Test before claiming done").
+#
+# In the nikbearbrown/mycroft monorepo this file sits at verification-layer/.github/ and is
+# inert: GitHub reads workflows only from the repository root.
+name: ci
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Test suite (network-free, model-free)
+        run: python -m unittest discover -s tests -t .
+
+      - name: Reference docs build cleanly (every file documented, every link resolves)
+        run: python scripts/build_docs.py --check
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web/frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: web/frontend/package-lock.json
+
+      - run: npm ci
+
+      - name: Type-check, Vitest, then build
+        run: npm run verify

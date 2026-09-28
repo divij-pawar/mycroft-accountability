@@ -4,6 +4,48 @@ Scoped to this subsystem only. For the whole-repo constitution, see the repo roo
 `SNICKERDOODLE.md` and `CLAUDE.md`/`AGENTS.md` — this file does not override them, it adds
 subsystem-specific rules for anyone (human or AI agent) working inside `verification-layer/`.
 
+## Two repositories, one folder
+
+This subsystem lives in two GitHub repositories with the same contents, kept in sync with
+`git subtree`:
+
+| Repository | Where the subsystem is | Branch |
+|---|---|---|
+| `nikbearbrown/mycroft` (the monorepo) | `verification-layer/` | `feature/accountability-layer` |
+| `divij-pawar/mycroft-accountability` (standalone) | the repository root | `main` |
+
+The standalone history is a `git subtree split --prefix=verification-layer` of the feature
+branch, so commit ids differ between the two while the files match. "This directory" in the rest
+of this file means `verification-layer/` in the monorepo and the root in the standalone repo.
+
+- **Work in either repo; sync from a monorepo clone.** Both syncs run in a clone of
+  `nikbearbrown/mycroft`, on `feature/accountability-layer`, with a remote named
+  `accountability` pointing at the standalone repo. The standalone clone can't sync on its own.
+  - Standalone → feature branch:
+    `git subtree pull --prefix=verification-layer accountability main`, then
+    `git push origin feature/accountability-layer`.
+  - Feature branch → standalone:
+    `git subtree push --prefix=verification-layer accountability main`, then `git pull` in the
+    standalone clone.
+- **Never push to `nikbearbrown/mycroft`'s `main`**, and don't merge `origin/main` into the
+  feature branch. The feature branch is the only branch this workflow uses there.
+- **Plain `subtree push` / `subtree pull` only, never `--squash`.** Commit before syncing, and
+  sync one direction at a time. No force-pushes: a rejected push means the other side has
+  commits to pull first.
+- **Pushes and syncs are outward-facing.** An agent runs one only when asked for that specific
+  push, and says which repository and branch it goes to first.
+- **Gitignored data doesn't sync** (`.env`, `env/`, `web/data/`, `divij/`, `.claude/`); it lives
+  only in each local clone. In the standalone repo, the repo-root files this file refers to
+  (`SNICKERDOODLE.md`, `AGENTS.md`, `scripts/conformance.mjs`, `brutalist/`) don't exist: they
+  are in the monorepo. The tests and `python scripts/build_docs.py` run in either.
+
+`.github/` (CI and the GitHub Pages deploy), `Dockerfile` and `pyproject.toml` are used by the
+standalone repo. They sync into the monorepo as `verification-layer/...` and are inert there,
+because GitHub reads workflows only from a repository's root.
+
+A fuller local guide, with setup history and troubleshooting, may be in `.claude/git-workflow.md`.
+It isn't synced.
+
 ## Log every meaningful change
 
 - Before finishing any change to a file in this directory, add an entry to

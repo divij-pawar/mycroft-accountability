@@ -69,6 +69,11 @@ def project_files() -> list[str]:
     return sorted(files)
 
 
+def _git_ignored(path: Path) -> bool:
+    """Whether git ignores `path` (it needn't exist). Such files are local-only by design."""
+    return subprocess.run(["git", "check-ignore", "-q", str(path)], cwd=ROOT).returncode == 0
+
+
 def is_deleted(rel: str) -> bool:
     return not (ROOT / rel).exists()
 
@@ -979,9 +984,10 @@ class Site:
                         self.problems.append(f"{name}: link to missing asset {target}")
                     continue
                 if target.startswith("../"):
-                    if not (OUT / target).resolve().exists():
+                    path = (OUT / target).resolve()
+                    if not path.exists() and not _git_ignored(path):
                         self.problems.append(f"{name}: link to missing file {target}")
-                    continue
+                    continue  # a gitignored target is local-only: present on the author's machine, absent in a clone
                 if target not in anchors:
                     self.problems.append(f"{name}: link to missing page {href}")
                 elif frag and frag not in anchors[target]:

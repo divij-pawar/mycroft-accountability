@@ -1,203 +1,331 @@
-# Verification Layer
+# Mycroft accountability layer
 
-_A runnable implementation of the Snickerdoodle contract — the part of Mycroft where
-the principles stop being prose and start being code that halts._
+[![ci](https://github.com/divij-pawar/mycroft-accountability/actions/workflows/ci.yml/badge.svg)](https://github.com/divij-pawar/mycroft-accountability/actions/workflows/ci.yml)
+[![docs](https://img.shields.io/badge/docs-reference%20site-C8102E)](https://divij-pawar.github.io/mycroft-accountability/)
+![python](https://img.shields.io/badge/python-3.10%2B-2a1a0e)
+![status](https://img.shields.io/badge/status-research%20prototype%2C%20localhost%20only-545454)
 
-Mycroft's chapters argue that AI made execution cheap but not judgment cheap. This
-subsystem is the argument in executable form: an agent wrapper that refuses to pass
-along output it cannot structurally verify, writes an append-only record of every
-attempt, and renders that record differently to different readers.
+**LLM agents fail quietly: a malformed answer, an invented figure, two agents that disagree and
+nobody notices.** This system wraps agents in a strict output contract that retries or halts, runs
+two agents on the same SEC filings and compares their figures one by one, and stops at a human
+decision gate when they disagree, keeping an append-only record of every attempt and decision.
 
-**Renamed from `accountability-layer` on 2026-08-21**, when a second component, Cross-Agent
-Validation, was built on top of the same evidence store. This folder now holds both: the
-accountability mechanism (which records what one agent did) and Cross-Agent Validation
-(which compares two agents against each other). See `logs/RUN_LOG.md` for both changes.
+<!-- Demo GIF goes here: record the review app (New compare -> both agents live -> the figure
+     matrix -> the decision gate) and embed it with ![demo](docs/demo.gif). -->
+
+> [!IMPORTANT]
+> **Research prototype. Localhost only.** Several routes are unauthenticated and the token endpoint
+> issues any scope to anyone ([Honest Ledger: `audit-criticals`](https://divij-pawar.github.io/mycroft-accountability/ledger.html#audit-criticals)).
+> Don't expose it to a network.
+
+> [!NOTE]
+> **What it doesn't claim.** It detects *numeric* disagreement between two agents' conclusions, not
+> reasoning errors. It doesn't decide which agent is right; a person does. A grade is always a
+> model's judgment unless a human set it. The reviewer's name at the gate is typed, not
+> authenticated.
+
+**Contents:** [Architecture](#architecture) · [Walkthroughs](#walkthroughs) ·
+[Quickstart](#quickstart) · [Resilience and edge cases](#resilience-and-edge-cases) ·
+[Project layout](#project-layout) · [Documentation](#documentation) · [Status](#status)
+
+## Architecture
+
+The code is split into layers with a one-way dependency rule: a layer may import only from the
+layers beneath it. [`tests/test_layering.py`](tests/test_layering.py) reads every import with `ast`
+and fails naming the file and line of any import the rule forbids.
+
+```mermaid
+flowchart TB
+    UI["Review app<br/>React, served at /app"]
+    subgraph layers["Python packages (arrows point to what a layer may import)"]
+        WEB["web/<br/>FastAPI routes, SSE streams, SQLite store, scope tokens, step trace"]
+        VAL["validation/<br/>figure comparison, accounting checks, gate, synthesis, audit"]
+        PRO["producers/<br/>concept lenses over EDGAR data"]
+        PIP["pipeline/<br/>retry-then-halt loop"]
+        ADA["adapters/<br/>LangChain agent, Tavily tool loop"]
+        DS["datasources/<br/>EDGAR companyfacts, inline-XBRL filings"]
+        CORE["core/<br/>contracts, directives, parser, schemas, assessment vocabulary"]
+    end
+    UI -- "REST + server-sent events" --> WEB
+    WEB --> VAL
+    WEB --> PRO
+    WEB --> ADA
+    VAL --> PIP
+    PRO --> PIP
+    PRO --> DS
+    PIP --> CORE
+    ADA --> CORE
+    DS --> CORE
+    ADA -. model .-> LLM[("Ollama or Gemini")]
+    ADA -. search .-> TAV[("Tavily")]
+    DS -. XBRL .-> SEC[("SEC EDGAR")]
+    WEB --> DB[("SQLite<br/>append-only runs and decisions")]
+    classDef accent stroke:#C8102E,stroke-width:2px
+    class WEB,CORE accent
+```
+
+### A ticker compare, end to end
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant R as Reviewer (review app)
+    participant S as web/server.py
+    participant E as SEC EDGAR
+    participant A as Agent A (financial lens)
+    participant B as Agent B (earnings lens)
+    participant V as validation/
+    R->>S: POST /api/compare/stream {"ticker": "AAPL"}
+    S->>E: lookup CIK, fetch companyfacts (once, shared)
+    E-->>S: XBRL facts with period, form, accession
+    par both agents at the same time
+        S->>A: its lens of the facts, through the retry/halt loop
+        A-->>S: thought_log + conclusion
+    and
+        S->>B: its lens of the facts, through the retry/halt loop
+        B-->>S: thought_log + conclusion
+    end
+    S->>A: extraction call: grade, direction, assumptions
+    S->>B: extraction call: grade, direction, assumptions
+    S->>V: compare figures, run accounting checks, synthesize
+    V-->>S: one status per metric, checks, gate items
+    S-->>R: every step streamed live, then the stored record
+    Note over R,V: AWAITING_DECISION until a named reviewer decides every open item
+```
+
+### The two state machines that stop things
+
+Every agent attempt goes through the ADR-07 loop. Every compare run goes through the gate.
+
+```mermaid
+stateDiagram-v2
+    direction LR
+    [*] --> Attempt1
+    Attempt1 --> Success: two blocks parse
+    Attempt1 --> Attempt2: PARSE_FAILURE, corrective directive
+    Attempt2 --> Success: parses
+    Attempt2 --> Halted: HALT
+    Success --> [*]
+    Halted --> [*]: HaltError, every attempt kept
+```
+
+```mermaid
+stateDiagram-v2
+    direction LR
+    [*] --> NO_DECISION_NEEDED: nothing two-sided
+    [*] --> AWAITING_DECISION: mismatched figure, failed hard check, or differing grades
+    AWAITING_DECISION --> AWAITING_DECISION: a decision recorded, items still open
+    AWAITING_DECISION --> DECIDED: every item has a named decision
+    NO_DECISION_NEEDED --> [*]
+    DECIDED --> [*]
+```
+
+Runs stored before the gate existed are `NOT_GATED` and are never gated retroactively.
+
+## Walkthroughs
+
+Every output below is from a recorded real run, kept as a test fixture in
+[`web/frontend/tests/fixtures/`](web/frontend/tests/fixtures/). Nothing is invented for the README.
+
+### 1. Two agents disagree, and the gate stops the run
+
+Run `ec1a3b44` (2026-09-25), a subject compare: "In what year was the first Pokemon game released
+in North America?" Agent A ran on `llama3.2`, agent B on `qwen2.5:7b`, both with web search.
+
+| | Agent A | Agent B |
+|---|---|---|
+| Conclusion | "…in North America was in 1998, with the release of Pokémon Red and Blue for Game Boy." | "…was released in North America in 1996 [SOURCE: GameFAQs, …]." |
+| Figure | `1998` | `1996` |
+
+The comparison gives one row, `release_year: MISMATCH`, the only two-sided conflict, so the gate
+opens and the run is `AWAITING_DECISION`. **An investor-scope read of the same run** keeps the
+status but withholds both values and both conclusions until someone decides:
+
+```json
+{ "metric": "release_year", "status": "MISMATCH", "raw_a": null, "raw_b": null, "withheld": true }
+```
+
+with the note *"Pending human review: this run has an open decision (a disputed figure, a failed
+check or the grade)."* A reviewer decides through the API (or the review app):
+
+```bash
+curl -X POST localhost:8000/api/runs/<run_id>/decisions \
+  -H "authorization: Bearer $AUDITOR_TOKEN" -H "content-type: application/json" \
+  -d '{"decision": "accept_a", "decided_by": "A. Reviewer", "cited_items": ["release_year"],
+       "rationale": "NA release was September 1998; 1996 is the Japanese release."}'
+```
+
+A decision that can't be checked is **refused, never repaired**. With a short rationale the
+server answers 422: *"Give your reasoning in at least 20 characters."* Decisions are appended to a
+table SQLite itself refuses to update or delete.
+
+> [!NOTE]
+> This run is still awaiting a real reviewer. The decision above illustrates the request shape;
+> no AI records a gate decision, by design.
+
+### 2. Every figure checked against the filing
+
+Run `20c538e4` (2026-09-25), `AAPL`, both agents on `llama3.2`, the financial lens against the
+earnings lens. The two agents agree where they overlap:
+
+| Metric | Agent A | Agent B | Status |
+|---|---|---|---|
+| Diluted EPS | `$2.02` | `$2.02` | `MATCH` |
+| Net income | `$29.79 billion` | `$29.788 billion` | `MATCH` (0.01% apart) |
+| Revenue | `$109.4 billion` | — | `ONE_SIDED` (only A's lens carries it) |
+| Revenue change | `16%` | — | `UNCORROBORATED` |
+
+Agreement isn't proof, so the accounting checks ask separately whether each agent quoted its
+source correctly and whether the filing itself adds up:
+
+```text
+matches_source       hard       pass  Agent A     cited $29.79 billion; given $29.79B (3 months ending 2026-06-27, 10-Q)
+matches_source       hard       pass  Agent B     cited $29.788 billion; given $29.79B (3 months ending 2026-06-27, 10-Q)
+balance_sheet_filed  hard       pass  The filing  assets $383.3B vs liabilities and equity $383.3B (as of 2026-06-27)
+eps_basic_ge_diluted hard       pass  The filing  basic $2.03 vs diluted $2.02 (2026-03-29 to 2026-06-27)
+net_le_operating     heuristic  pass  The filing  net income $29.79B vs operating income $35.7B (2026-03-29 to 2026-06-27)
+```
+
+A failed **hard** check on an agent's own figures opens the gate; heuristics and checks on the
+filing only inform. In the review app, each figure has a **Source** button that shows it inside the
+10-Q itself, located through its inline-XBRL tag.
+
+### 3. Two grades, one explanation
+
+Run `8ecb0922` (2026-09-27), `AAPL`. After each answer passes, a separate model call reads it for
+a structured assessment in a closed vocabulary (`AAA`…`CCC`, `buy`/`hold`/`sell`). Values outside
+it are refused, never coerced.
+
+| | Grade | Direction | Stated assumptions |
+|---|---|---|---|
+| Agent A | `AAA` | `buy` | revenue growth 16%, margins stable |
+| Agent B | `A` | `buy` | margins expanding |
+
+The synthesis calls no model. It classifies the disagreement (`data`, `assumption` or
+`weighting`) and counts the evidence behind each grade, without scoring it: *"Same figures,
+different assumptions: agent A assumes stable margins, agent B assumes expanding margins. Decide
+which assumption the evidence supports."* There is no consensus ("The agents' grades or directions
+differ"), so a `grade` item opens at the gate, and only a grade a human sets is ever shown to
+investors.
+
+> [!WARNING]
+> This run used the first extraction prompt (`assess-extract-v1`), which the record later found
+> reported past growth as a forward assumption, so its `assumption` class is unreliable. The prompt
+> was revised (`assess-extract-v2`), and the synthesis still rests on few live runs
+> ([`synthesis-thin-and-lexical`](https://divij-pawar.github.io/mycroft-accountability/ledger.html#synthesis-thin-and-lexical)).
+
+### 4. The review, exported
+
+Any compare run exports as an audit record (JSON) or a Markdown review, built after scope
+redaction, so an investor's export carries only what an investor may see:
+
+```bash
+curl localhost:8000/api/runs/<run_id>/export.md -H "authorization: Bearer $INVESTOR_TOKEN" -o review.md
+```
+
+## Quickstart
+
+### Sandbox: no model, no keys, no cost
+
+The test suites are network-free and model-free by design. They exercise the loop, the comparison,
+the checks, the gate and redaction with scripted agents and the recorded runs above:
+
+```bash
+git clone https://github.com/divij-pawar/mycroft-accountability.git && cd mycroft-accountability
+python -m venv env && source env/bin/activate      # Windows (Git Bash): source env/Scripts/activate
+pip install -r requirements.txt
+python -m unittest discover -s tests -t .
+```
+
+```bash
+python scripts/build_docs.py                        # rebuild the reference site; fails on any undocumented file
+cd web/frontend && npm ci && npm run verify         # type-check, Vitest on recorded runs, build
+```
+
+There is deliberately no mock mode in the running app: a scripted answer would look like evidence
+(design decision [D-17](https://divij-pawar.github.io/mycroft-accountability/decisions.html#d-17)).
+
+### Live: local model and real filings
+
+```bash
+ollama pull llama3.2
+cp .env.example .env            # set SEC_USER_AGENT; TAVILY_API_KEY enables web search
+scripts/start-server.sh         # builds the review app if needed, then serves on :8000
+```
+
+Open <http://localhost:8000/>, choose **New compare**, enter `AAPL`, and watch both agents work.
+Every setting and environment variable is on the
+[configuration page](https://divij-pawar.github.io/mycroft-accountability/config.html).
+
+### Docker
+
+```bash
+docker build -t mycroft-accountability .
+docker run --rm -p 127.0.0.1:8000:8000 --env-file .env mycroft-accountability
+```
+
+The image holds the server and the built review app; the model stays outside (Ollama on the host,
+through `host.docker.internal`). Publish the port on `127.0.0.1` only.
+
+## Resilience and edge cases
+
+What goes wrong with agents, what the system does about it, and the evidence it works. "Tested"
+means covered by the suites; "observed" means seen on a real model, with the record's numbers.
+
+| Failure | What happens | Evidence |
+|---|---|---|
+| **Malformed output** (missing blocks, text outside them) | One retry with a corrective directive, then halt; every attempt kept ([ADR-07](https://divij-pawar.github.io/mycroft-accountability/f-validation-loop.html)) | Observed: 13 retries in 48 real-model agent runs, 4 recovered, 9 halted (2026-09-22 to 2026-09-24) |
+| **The model parrots its instructions** | A conclusion copying 8+ consecutive words of the directive, or an empty one, is a structural failure | Observed: 7 of 10 stored v1.5.0 conclusions had echoed it before the check existed |
+| **The model server stalls** | `MODEL_TIMEOUT_S` (default 120 s with nothing received) abandons the call; the run is recorded as halted with the reason | Tested against a stub server; Ollama hung 4 times in compares before it existed |
+| **An agent loops on tool calls** | At most 4 tool round trips per call | In the code (`_MAX_TOOL_ITERATIONS`); not covered by a test |
+| **Placeholder tool arguments** (`"None"`, `"N/A"`) | One retry with only the query; a second failure is shown to the model as a tool error, never a fake result | Observed live, then tested |
+| **No search key** | The call runs without tools, and the server warns when a message contains a URL it can't check | In the code; not covered by a test |
+| **Invented or misquoted figures** | Cross-agent `MISMATCH` gates; `UNCORROBORATED` flags one-sided figures; each figure is checked against the filing value the agent was given; citations are fetched and checked | Tested; a fabricated AAPL debt-to-equity figure is the corpus's confirmed true positive |
+| **Two agents at once** | Thread-safe step trace; unique, gap-free sequence numbers | Tested; observed overlapping model calls of 39.4 s and 16.9 s |
+| **The browser closes mid-run** | The run keeps going and is stored anyway: "a closed browser tab must not be able to delete" the record | In the code; not covered by a test |
+| **Disputed values leaking to investors** | Redaction covers the record, the live stream and search results in the trace | A leak via search results was found and fixed on 2026-09-26, then verified on a restarted server |
+| **Rate limits** | Not handled beyond what the client libraries do | Open |
+
+## Project layout
+
+```text
+core/          contracts (AgentAdapter, ModelCall, JsonFetcher), versioned directives, parser, schemas, assessment vocabulary
+adapters/      the LangChain adapter (Ollama or Gemini, Tavily tool loop, stall timeout) and the provider registry
+pipeline/      the retry-then-halt validation loop; LangFuse tracing
+datasources/   SEC EDGAR companyfacts; inline-XBRL filing excerpts (the only data egress)
+producers/     concept lenses: financial, earnings, bull, bear; the two pairings
+validation/    figure comparison, accounting checks, decision gate and redaction, synthesis, audit export
+web/           FastAPI server, SQLite store, scope tokens, step trace, Honest Ledger; web/frontend/ is the React review app
+tests/         the network-free, model-free suite, including the layering and docs-coverage tests
+scripts/       start-server.sh, build_docs.py, live-run scripts
+docs/          the reference site (docs/reference/) and design documents
+archive/       replaced files, moved rather than deleted
+logs/          RUN_LOG.md: every change, live run and correction, append-only
+.github/       CI and GitHub Pages workflows
+```
 
 ## Documentation
 
-**[The reference site](docs/reference/index.html)** documents every file, feature, layer,
-component and design decision in this folder: how a run flows end to end, the HTTP API,
-configuration, record shapes, the Honest Ledger, and a list of places where older documents
-(including parts of this README) no longer match the code.
+**[The reference site](https://divij-pawar.github.io/mycroft-accountability/)** documents every
+file, feature, layer and design decision. It covers a run end to end, the HTTP API,
+configuration, record shapes, 49 decision records, the Honest Ledger, and a list of places where
+older documents no longer match the code. The file inventories, routes, environment variables and
+the ledger are generated from the code on every build, and
+[`tests/test_docs_coverage.py`](tests/test_docs_coverage.py) fails if any file has no entry or any
+link breaks.
 
-- **Open it locally.** It's static HTML: open `docs/reference/index.html` in a browser, no
-  server needed. (GitHub shows `.html` files as source, not as pages.) Light by default; the
-  header has a dark-theme toggle.
-- **Rebuild it** after changing the code or the docs: `python scripts/build_docs.py`. Its
-  sources are in `docs/reference/src/` (see `AUTHORING.md` there), and parts of it (file
-  inventories, routes, environment variables, the ledger) are generated from the code.
-- **It can't silently fall behind.** `tests/test_docs_coverage.py` fails if a file has no
-  entry or a link breaks.
+Offline, open `docs/reference/index.html` directly (it's static HTML), or rebuild it with
+`python scripts/build_docs.py`.
 
-## What the accountability component enforces
+## Status
 
-| Snickerdoodle principle | How this code implements it |
-|---|---|
-| **P3 — Provenance or it isn't evidence** | Every agent attempt produces a `ReasoningObject` (`core/schemas.py`) carrying run_id, agent_id, attempt number, directive version, raw output, and outcome. Runs persist to an append-only SQLite store with `RAISE(ABORT)` triggers against `UPDATE`/`DELETE` (`web/db.py`). |
-| **P4 — Gates are hard stops** | `run_validation_loop` (`pipeline/middleware.py`) parses the agent's response structurally; on failure it retries **once** with a corrective directive, and on second failure raises `HaltError`. It does not degrade, summarize, or pass through. |
-| **P5 — Two customers, twice** | `to_dict(investor_scope=True)` structurally *omits* `thought_log` / `raw_output` / `llm_tokens` rather than nulling them — the auditor reads the reasoning, the investor reads the conclusion. |
-| **P8 — Trust is earned** | Confidence is recorded and classified against a threshold; determinism claims are hedged in the adapters rather than asserted (`gemini_adapter.py`, `ollama_adapter.py` both state that seed reproducibility holds only within a fixed model version and quantization). |
-
-## Status — honest
-
-**Research prototype. Localhost only. Do not expose to a network.**
-
-The core engine (parser, validation loop, schemas, cross-agent comparison) is well-built and
-well-tested: **242 tests, all passing** (as of 2026-09-11), stdlib `unittest` only. The
-web/auth layer is not — `GET /api/self-report` discovers the live count rather than
-restating this number, so trust that over this paragraph.
-A full technical audit of commit `fe45eb4` records **four CRITICAL findings**, all
-reachable over HTTP with no credentials. That audit now lives in the author's
-gitignored working folder and is not distributed with the repo, so its findings are
-restated here rather than linked:
-
-1. Investor redaction is bypassed at storage time by `RunSession.to_dict()`.
-2. Fourteen of sixteen API routes have no authentication at all.
-3. `DELETE /api/runs` drops and recreates the audit tables, unauthenticated.
-4. `POST /api/auth/token` mints an `auditor` token for anyone who asks.
-
-Per the verification stack, that audit is layer 2 — *a report for human judgment*, not
-a verdict. Nothing here is attested, and no recipe in `recipes/` should claim
-`RUNNABLE-LIVE` on top of this layer until §7 of the audit is addressed.
-
-## Layout
-
-Organised as inward-pointing layers: each one may import from the layers above it in
-this table and never from the layers below. `core/` imports nothing internal at all,
-which is what makes it safe for every other layer to depend on.
-
-### `core/` — abstractions and domain types (no internal dependencies)
-
-| Path | What it is |
-|---|---|
-| `core/contracts.py` | The two contracts everything else is written against, as `Protocol`s: `AgentAdapter` (`(subject, context, directive) -> AgentResponse`) and `JsonFetcher` (`url -> dict`). Both used to exist only as prose in a comment. |
-| `core/parsing.py` | Structural parsing of `<thought_log>` / `<conclusion>`; raises `StructuralParseError`. The best-tested module here. (Was `parser.py`, which shadowed a stdlib module name.) |
-| `core/schemas.py` | `ReasoningObject` / `RunSession` + their validation rules and tiered serialization. |
-| `core/directive.py` | Versioned system directives; the corrective directive used on retry. |
-| `core/numeric.py` | The one definition of "a number": the quantitative-token regex and magnitude suffixes. Previously three verbatim copies across `claims`/`consistency`/`verification`, each carrying a comment asking the reader to keep it in sync by hand. |
-
-### `adapters/` — one provider each, all satisfying `AgentAdapter`
-
-| Path | What it is |
-|---|---|
-| `adapters/registry.py` | Provider name to factory, label and model-key. Adding a provider is one entry here; nothing in `web/` or `scripts/` branches on the provider set. |
-| `adapters/gemini_adapter.py`, `ollama_adapter.py` | Live Gemini and local Ollama, each over their native SDK/protocol. |
-| `adapters/langchain_adapter.py` | Live Ollama via LangChain's `ChatOllama`, or — when `failure_mode` is set — a scripted, network-free double (LangChain's own `GenericFakeChatModel`) whose `FAILURE_MODES` drive ADR-07's retry/halt paths in tests. Replaced `mock_adapter.py` (archived at `archive/adapters/mock_adapter.py`, not deleted, per this repo's never-delete rule). Deliberate exception to stdlib-only: adds `langchain-core` and `langchain-ollama`. |
-| `adapters/fixture_adapter.py` | Deterministic stand-in with a caller-chosen conclusion, for testing logic that consumes a conclusion. Not the only Producer B path anymore; see `producers/earnings.py`. |
-
-### `pipeline/` — execution machinery
-
-| Path | What it is |
-|---|---|
-| `pipeline/middleware.py` | The retry-then-halt validation loop (ADR-07). |
-| `pipeline/observability.py` | LangFuse tracing wrapper around adapters, used by every producer. |
-
-### `datasources/` — the only network egress (P2)
-
-| Path | What it is |
-|---|---|
-| `datasources/edgar.py` | SEC EDGAR read client: `lookup_cik`, `fetch_company_facts`, `latest_value`. Every fetch is injectable, which is why the suite is network-free without patching module globals. |
-
-### `producers/` — the agents whose disagreement is measured
-
-| Path | What it is |
-|---|---|
-| `producers/lens.py` | `ConceptLens` (a producer's whole identity: concepts, `AgentID`, header, trace name) and `run_lens`, the single runner all producers share. A third producer is a `ConceptLens` value, not a new module. |
-| `producers/financial.py` | Producer A — balance-sheet and top-line concepts. |
-| `producers/earnings.py` | Producer B — a *different* slice of the same companyfacts payload (per-share/operating-income), giving Cross-Agent Validation a second real, independently-reasoned agent instead of only the fixture. |
-
-### `validation/` — the verification stack
-
-| Path | What it is |
-|---|---|
-| `validation/claims.py`, `validation/verification.py`, `validation/consistency.py` | Claim extraction, claim verification against source, and consistency probing across repeated runs of one agent. Used by both `/api/chat` (since Week 7) and, as of 2026-09-11, `/api/compare` — per-producer, independently. |
-| `validation/cross_validation.py` | **Cross-Agent Validation** — runs two agents on one subject, flags numeric contradictions between their conclusions, and persists both agents' records under one shared `run_id`. Reuses `validation/consistency.py`'s scoring unmodified. `contradiction_rule` picks between the legacy `"symmetric_difference"` rule (default, every existing test unchanged) and `"concept_aware"` (`validation/concept_linkage.py`, what `/api/compare` uses in production). |
-| `validation/concept_linkage.py` | Tags each extracted number with the known lens concept nearest it, so a number that can never be corroborated by the other producer (disjoint concept vocabularies, by construction) is excluded from comparison instead of auto-flagged. **Wired in as of 2026-09-11**: `run_cross_agent_validation`'s `contradiction_rule="concept_aware"` (the mode `/api/compare` and `scripts/run_cross_agent_live.py` now both use) delegates here. Measured against `tests/fixtures/cross_agent_real_runs_corpus.json`: kills 15 of 16 disjoint-concept false positives, preserves the one confirmed true positive, introduces none. See `tests/test_concept_linkage.py` and the module docstring for what it still can't do (a bare ratio/percentage is syntactically identical whether it's a legitimate derived metric or a fabrication) — the legacy `"symmetric_difference"` rule remains the default for backward compatibility. |
-
-### `web/`, `scripts/`, `tests/`, `docs/`
-
-| Path | What it is |
-|---|---|
-| `web/` | FastAPI server, JWT auth, SQLite store, step tracing, and the browser UI (`web/frontend/`, React; served at `/` since 2026-09-27 — the classic `web/static/` UI is archived in `archive/web-static-legacy/`). |
-| `web/self_report.py` | The subsystem's own honest ledger: known issues and live-model-test results, each with a source reference and an OPEN/RESOLVED/BY_DESIGN/UNVERIFIED status. Served at `GET /api/self-report` and shown in the UI. Automated test counts are discovered live rather than hard-coded, so they cannot drift from the suite. |
-| `scripts/run_cross_agent_live.py` | Manual script (not part of the automated suite) that runs Cross-Agent Validation with two real LLM calls — `producers/financial.py` vs. `producers/earnings.py` — instead of a fixture Producer B. Requires `GEMINI_API_KEY`. |
-| `scripts/run_overlap_concept_live.py` | Manual script: unlike the one above, both sides read the **identical** context (Producer A's own concept set), so any divergence can only come from how each model reasoned over the same evidence — the live test nothing in the corpus had ever run. Defaults to two local Ollama models. See its docstring and `logs/RUN_LOG.md`'s 2026-09-11 entry for what four real runs found. |
-| `scripts/smoke_langfuse_trace.py` | Manual LangFuse end-to-end trace check. Was named `test_langfuse_integration.py`, where it read as part of the automated suite while actually making a live EDGAR fetch. |
-| `scripts/start-server.sh` | Convenience launcher; resolves its own directory and activates `env/` only if one exists. |
-| `tests/` | Stdlib `unittest` only — no pytest, no network, no live model. |
-| `docs/SYSTEM_DESIGN.md` | Detailed system workflow, data model, and design-decision rationale for both the accountability layer and Cross-Agent Validation, with an embedded honest-status snapshot. Start here for the full picture; this README stays the quick-reference layout. |
-| `docs/DATA_CONTRACT.md` | The store's data contract. |
-| `docs/index.html` | Index for the Week 1-3 walkthrough decks in `docs/` (the decks themselves are gitignored local artifacts). |
-
-Nothing sits loose at the root except `README.md`, `CLAUDE.md`, `requirements.txt`,
-`.env.example` and `.gitignore` — the files tooling expects to find there.
-
-## Install
-
-**Requires Python ≥ 3.10** (tested on 3.12.6). Dependencies are **not** installed by
-Mycroft's `npm install` — this is the only Python service in the repo and it carries
-its own [`requirements.txt`](requirements.txt).
-
-The core engine is stdlib-only, so if you just want to run the tests you can skip
-straight to step 3 on a bare interpreter. The install is only needed for the web app
-and the live LLM providers.
-
-**1.** Create a virtualenv:
-
-```bash
-cd verification-layer && python -m venv env
-```
-
-**2.** Activate it, then install. Activation differs by platform —
-`env\Scripts\activate` on Windows, `source env/bin/activate` on macOS/Linux:
-
-```bash
-python -m pip install -r requirements.txt
-```
-
-**3.** Run the test suite — no credentials or network needed, since the
-mock and fixture adapters cover every path:
-
-```bash
-cd verification-layer && python -m unittest discover -s tests
-```
-
-**4.** Start the local server on http://localhost:8000:
-
-```bash
-cd verification-layer && python -m uvicorn web.server:app --reload --port 8000
-```
-
-`scripts/start-server.sh` does the same thing from any working directory, and activates
-`env/` only if that virtualenv exists. It still needs a POSIX shell (`#!/bin/bash`), so on
-Windows use the `uvicorn` command above or run it under Git Bash.
-
-Copy `.env.example` to `.env` for real Gemini calls or LangFuse tracing; both degrade
-gracefully when unset. `.env` is gitignored here and at the Mycroft root — never commit it.
-
-## Self-contained by design
-
-Every file this subsystem needs lives in this directory. It has its own
-[`.gitignore`](.gitignore), [`docs/DATA_CONTRACT.md`](docs/DATA_CONTRACT.md), and
-[`logs/RUN_LOG.md`](logs/RUN_LOG.md), and it modifies **no file outside this folder** —
-not the repo-root manifests, not `scripts/`, not the shared run log. That keeps the merge
-surface at zero against the other contributors' branches (the shared `logs/RUN_LOG.md`
-has been touched by seven authors and is the repo's most contended file).
-
-The cost is explicit: **CI does not conformance-check this code**, because the repo gate
-(`scripts/conformance.mjs`) only walks its `DEFAULT_PATHS` and this directory is not in
-them. Run it yourself from the repo root before committing:
-
-```bash
-node scripts/conformance.mjs verification-layer
-```
-
-One wart, measured: that command has no exclusion list for this directory, so if a local
-`env/` virtualenv exists here, `node scripts/conformance.mjs verification-layer` walks into
-it and shells out to `py_compile` once **per file** in site-packages. Measured on this
-machine: **6,241 files, 10m45s** — it looks hung, but it is only extremely slow (and it does
-pass). Either run conformance before creating the venv, or point it at specific files:
-
-```bash
-node scripts/conformance.mjs verification-layer/validation/cross_validation.py
-```
+- **Built and tested:** everything above. The CI badge reflects the current suites.
+- **Observed on real models:** the runs cited above, on local `llama3.2` and `qwen2.5:7b`. Gemini is
+  configured but not confirmed working.
+- **Known issues** are listed, with sources, in the
+  [Honest Ledger](https://divij-pawar.github.io/mycroft-accountability/ledger.html), and served live
+  at `GET /api/self-report`.
+- **Two repositories.** This repo is kept in sync with `verification-layer/` in
+  [`nikbearbrown/mycroft`](https://github.com/nikbearbrown/mycroft) (branch
+  `feature/accountability-layer`) using `git subtree`; see [`CLAUDE.md`](CLAUDE.md).
+- **Change history:** [`logs/RUN_LOG.md`](logs/RUN_LOG.md), append-only; corrections are new entries.

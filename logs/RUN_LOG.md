@@ -4567,3 +4567,118 @@ date, recipe, inputs, commands, outputs, result, open issues.
       Menu; no overflow at either width.
 - **Not done:** the repository-root README (outside `verification-layer/`) was not changed. Nothing
   is committed.
+
+## 2026-09-27 (continued) -- Git workflow between the monorepo and the standalone repo, written down
+
+- **Recipe:** none; repository workflow documentation. Requested: instructions on how the git
+  workflow is set up between `nikbearbrown/mycroft` and `divij-pawar/mycroft-accountability`, in
+  `.claude/` and as a section of the root `CLAUDE.md` (the human chose the section over a separate
+  `CLAUDE.local.md`).
+- **The setup being documented** (run earlier the same day, from the monorepo clone on
+  `feature/accountability-layer`; the pushes were run by the human):
+  - the standalone repo's original `main` (ending `fe45eb4`) was kept as `archive/original-main`;
+  - `main` was replaced with `git subtree split --prefix=verification-layer`;
+  - checked afterwards: the feature branch `a2c618b` and the standalone `main` had the same folder
+    tree (`d3df6d8`);
+  - no monorepo branch was created, and `nikbearbrown/mycroft`'s `main` was not touched.
+- **Changed:**
+  - `CLAUDE.md`: new section "Two repositories, one folder". It covers which repo holds the folder
+    where, that syncs run from a monorepo clone with the `accountability` remote, the exact sync
+    commands both ways, and the rules (never push to the monorepo's `main`, no `--squash`, no
+    force-pushes, agents push only when asked). It also says which repo-root files exist only in
+    the monorepo. No local paths, since this file syncs.
+  - `.claude/git-workflow.md` (new, local only: `.claude/` is gitignored). It adds this machine's
+    two clone paths and remotes (`origin` means a different repo in each), the setup history, a
+    sync-status check, troubleshooting, the local-only data list, and a re-clone recipe.
+  - `docs/reference/src/files/root.md`: the `CLAUDE.md` entry lists the new section; site rebuilt.
+- **Commands:** `python scripts/build_docs.py`; `python -m unittest tests.test_docs_coverage`
+  (results in the next line).
+- **Open issues:** nothing committed or synced. After committing here, the change reaches the
+  feature branch only through a `subtree pull` in the monorepo clone.
+- **Results, and two defects the rebuild found here.** Both would also fail the docs test in any
+  fresh clone and on the committed feature branch.
+  1. **The week 1-3 links were flagged as broken.** The three walkthroughs are gitignored, so
+     they don't exist in a clone. `scripts/build_docs.py` now treats a link out of the site to a
+     gitignored file as local-only (`_git_ignored`), not broken.
+  2. **`accountability-layer-audit.md` had an entry but no file.** Its deletion was committed on
+     2026-09-27 (`7de4db6` in the monorepo, `56ea8ba` here), contrary to the earlier note that the
+     file stays. The file entry became a "Removed from the repository" section on the History
+     page, with the `git show` commands to read it from history. Three links now point there. The
+     drift page lists the three references that still cite the file (`docs/DATA_CONTRACT.md`,
+     `web/self_report.py`'s `audit-criticals`, `README.md` §7).
+  - After both fixes: `python scripts/build_docs.py` gives 0 problems;
+    `tests/test_docs_coverage.py` passes; the full suite passes 471/471 in the standalone clone.
+    The rebuilt HTML also shows line-ending-only changes (`core.autocrlf`), which git normalises
+    on commit.
+  - Restoring or archiving the audit file is the human's call. Nothing is committed.
+
+## 2026-09-27 (continued) -- GitHub Pages, CI, Docker and a showcase README
+
+- **Recipe:** none; publishing and presentation. Requested: publish the reference site as a
+  GitHub Page from `divij-pawar/mycroft-accountability`, and a more attractive README with
+  examples and walkthroughs, following a showcase guide the human supplied.
+- **Decisions by the human** (asked before building):
+  - the repository is public, so free Pages;
+  - no mock mode, because D-17 forbids scripted answers in the app; the zero-cost path is the
+    offline suites plus real outputs from recorded runs;
+  - add a CI workflow with a badge, a Dockerfile and a `pyproject.toml`, and keep the layered
+    package layout (no `src/` move);
+  - Mermaid diagrams, with an HTML comment slot for a GIF the human may record later.
+- **Added:**
+  - `.github/workflows/pages.yml`: on a push to `main` or by hand, `python
+    scripts/build_docs.py`, which fails on any problem, so a broken site never deploys. It then
+    uploads `docs/reference/` and deploys with `actions/deploy-pages@v4`.
+  - `.github/workflows/ci.yml`: the unittest suite and `build_docs.py --check` on Python 3.10 and
+    3.12, and `npm ci && npm run verify` for the review app.
+  - `Dockerfile`: multi-stage. Node 20 builds the review app; Python 3.12 runs uvicorn;
+    `OLLAMA_HOST=http://host.docker.internal:11434`; `.env` only at run time; the documented run
+    publishes on `127.0.0.1` only. Plus `.dockerignore`.
+  - `pyproject.toml`: metadata only. Dependencies are read dynamically from `requirements.txt`,
+    with an explicit package list; it isn't published.
+  - `.gitignore`: `*.egg-info/` and `/build/`, now that `pip install .` is possible.
+  - In the monorepo, `.github/` sits at `verification-layer/.github/` and is inert; `CLAUDE.md`
+    says so.
+- **README.md rewritten:**
+  - badges; a two-sentence value proposition; `[!IMPORTANT]`, `[!NOTE]` and `[!WARNING]` callouts;
+  - four Mermaid diagrams: the layers, a ticker-compare sequence, the ADR-07 loop and the gate;
+  - four walkthroughs from recorded real runs, with run ids and dates: Pokémon `ec1a3b44` (the
+    gate and the investor view), AAPL `20c538e4` (figures checked against the 10-Q), AAPL
+    `8ecb0922` (grades and synthesis, with a warning that it used extraction v1), and the
+    Markdown export;
+  - the quickstart (sandbox, live, Docker);
+  - a resilience table, where each row says tested, observed with the record's numbers, only in
+    the code, or open;
+  - the project layout, documentation and status.
+  - This fixes the three README rows on the drift page.
+- **Claims checked before writing.** Three evidence labels were first written as "tested" and
+  then corrected to "in the code; not covered by a test", after a search found no test for them:
+  the tool-loop cap, the missing-search-key warning, and a closed browser tab not losing the run.
+  Run `8ecb0922`'s assessments were confirmed as `assess-extract-v1` from the fixture, and the
+  quoted refusal text is `validation/gate.py`'s own. The illustrative decision request is
+  labelled as such; no gate decision was recorded.
+- **Site:**
+  - entries for the five new files;
+  - the `README.md` and `.gitignore` entries updated;
+  - Docker and the published URL added to the quickstart;
+  - History notes that the week 1–3 links 404 when published;
+  - the drift page marks the README rows fixed. Its "nothing fixed" line now reads "fixed only
+    where a row says so".
+  - A `<https://...>` autolink was replaced, because the site's renderer would have dropped it
+    as an unknown tag.
+- **Verified:**
+  - both workflows parse (PyYAML), with the expected triggers, permissions, jobs and action
+    versions;
+  - `pyproject.toml` parses, and `pip install --dry-run --no-deps .` reports "Would install
+    mycroft-accountability-0.1.0" and leaves nothing behind;
+  - all four README Mermaid blocks parse and render with Mermaid 11 in the in-app browser;
+  - `python scripts/build_docs.py` gives 0 problems. Suite and conformance results are in the
+    next line.
+- **Not verified:**
+  - **The Docker image was not built.** `docker build` failed to reach the engine because Docker
+    Desktop wasn't running, and WSL has no Docker.
+  - **The workflows haven't run on GitHub.** The badges read "no status" until they do.
+  - **Pages needs one manual step:** Settings → Pages → Source: GitHub Actions.
+- **Open issues:** nothing committed or pushed; the GIF slot is empty.
+- **Results:** the full suite passes 471/471. The monorepo's `scripts/conformance.mjs`, run over the
+  README, CLAUDE.md, pyproject.toml, both workflows, the builder and all doc sources, gives 45 files,
+  all conform. The site was rebuilt after this entry.

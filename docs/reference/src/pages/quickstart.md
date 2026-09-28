@@ -74,6 +74,19 @@ explorer is at `/docs`.
 `start-web-server.sh` in the package root does the same with a hard-coded WSL path; see
 [[start-web-server.sh]].
 
+## Or run it in Docker
+
+The image holds the server and the built review app; the model stays on the host. See
+[[Dockerfile]] (not yet built on the machine that wrote it).
+
+```bash
+docker build -t mycroft-accountability .
+docker run --rm -p 127.0.0.1:8000:8000 --env-file .env mycroft-accountability
+```
+
+Publish the port on `127.0.0.1` only. On Linux, add
+`--add-host=host.docker.internal:host-gateway` so the container can reach Ollama on the host.
+
 ## Build the review app
 
 ```bash
@@ -96,6 +109,9 @@ Neither suite needs a model, the network or an API key. See [Python tests](files
 [Review app tests](files-frontend-tests.html).
 
 ## Build these docs
+
+The published copy is at [divij-pawar.github.io/mycroft-accountability](https://divij-pawar.github.io/mycroft-accountability/), rebuilt and
+deployed by [[.github/workflows/pages.yml]] on every push to `main`. Locally:
 
 ```bash
 python scripts/build_docs.py            # rebuild docs/reference/

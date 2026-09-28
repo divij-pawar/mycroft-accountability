@@ -8,7 +8,7 @@ summary: Disagreements between the code and its documents, and latent defects, f
 
 Writing an entry for every file meant reading every file against what the other documents claim
 about it. This page records what didn't match, so it isn't lost (P6: a disagreement between
-artifacts is a logged defect; no artifact silently wins). **Nothing on this page has been fixed.**
+artifacts is a logged defect; no artifact silently wins). Items are fixed only where a row says so.
 Each item says how it was established:
 
 - **ran**: confirmed by running something;
@@ -20,9 +20,9 @@ The file entries linked here have the detail under "Limits and open issues".
 
 | Where | What it says | What the code does | How |
 |---|---|---|---|
-| [[README.md]] | The Gemini and Ollama adapters are live; the LangChain adapter has a scripted `failure_mode` | Both are archived; there is no scripted mode | read |
-| [[README.md]] | "242 tests"; two contracts; the corrective directive is in `core/directive.py`; tracing is used by every producer | The count is discovered live; there are three contracts (with `ModelCall`); the corrective directive is in `pipeline/middleware.py`; the web routes don't use LangFuse | read |
-| [[README.md]] | Omits `datasources/filings.py`, `select_fact`, the bull and bear lenses, shared concepts | They exist | read |
+| [[README.md]] | The Gemini and Ollama adapters are live; the LangChain adapter has a scripted `failure_mode` | Both are archived; there is no scripted mode | read; **fixed 2026-09-27** (README rewritten) |
+| [[README.md]] | "242 tests"; two contracts; the corrective directive is in `core/directive.py`; tracing is used by every producer | The count is discovered live; there are three contracts (with `ModelCall`); the corrective directive is in `pipeline/middleware.py`; the web routes don't use LangFuse | read; **fixed 2026-09-27** (README rewritten) |
+| [[README.md]] | Omits `datasources/filings.py`, `select_fact`, the bull and bear lenses, shared concepts | They exist | read; **fixed 2026-09-27** (README rewritten) |
 | [[docs/SYSTEM_DESIGN.md]] | Directive v1.1.0 is active, of two versions | v1.5.2 is active, of nine | read |
 | [[docs/SYSTEM_DESIGN.md]] | The two agents run one after the other; the lenses are disjoint; lists removed provider fields | Concurrent by default; lens v2 shares two concepts | read |
 | [[docs/SYSTEM_DESIGN.md]] | The structural check is the parser's only check; lists fewer investor-scope omissions | The parser also rejects empty and echoed conclusions; investor scope also omits directive text, context window and four assessment fields | read |
@@ -32,6 +32,7 @@ The file entries linked here have the detail under "Limits and open issues".
 | [[.env.example]] | — | Doesn't list `OLLAMA_HOST`, `CROSS_AGENT_MAX_CONCURRENCY` or `ACCOUNTABILITY_SECRET` | read |
 | [[logs/RUN_LOG.md]] 2026-09-27 (commits) | The SSE parser "doesn't accept CRLF" | It normalises CRLF within a chunk; it breaks only when a CR/LF pair is split across two chunks, which is what the clean-checkout test hit. A correction is appended to the log | read |
 | [[logs/RUN_LOG.md]] 2026-09-26 (U5 + U6) | Clicking outside a source popover returns focus | It doesn't | read |
+| [[docs/DATA_CONTRACT.md]], [[web/self_report.py]] (`audit-criticals`) | cite `accountability-layer-audit.md` | The file was removed from the repository on 2026-09-27; see [the prototype audit](history.html#the-prototype-audit-accountability-layer-audit-md) | read |
 
 ## Comments and docstrings that no longer match
 
