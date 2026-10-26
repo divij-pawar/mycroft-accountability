@@ -4703,3 +4703,786 @@ date, recipe, inputs, commands, outputs, result, open issues.
     sources.
 - **Result:** `python scripts/build_docs.py` gives 0 problems; the suite passes 471/471; the 38
   site pages are now untracked and ready to commit. Nothing is committed.
+
+## 2026-10-05 -- Planted-error benchmark and the probe label
+
+- **Recipe:** none. These are the first two items of the plan for the next two Mycroft videos:
+  fix the consistency probe shown as a retry, and measure the detector with planted errors.
+- **Probe label (ledger `consistency-probe-shown-as-retry` → RESOLVED):**
+  - `web/step_trace.py`'s `wrap_adapter` takes `kind` and `label`.
+  - The chat route's consistency probe runs through its own wrapper, with kind `probe` and label
+    "Consistency probe, attempt N", so `LLM attempt` steps are only the agent's own attempts.
+  - The review app's chat lane says "Asking again to check consistency" while the probe runs
+    (`liveRun.ts` `phaseLine` → `probing`; `Pages.tsx`; `types.ts` adds `probe` to the step
+    kinds).
+  - **Tests:**
+    - `tests/test_concurrency_and_stream.py`
+      `test_chat_consistency_probe_is_traced_as_a_probe_not_a_retry`. It failed with the server
+      change removed and passes with it: the deliberate break.
+    - `web/frontend/tests/live.test.tsx`, two tests: an open probe reads as probing, and a real
+      second attempt still reads as a retry.
+  - Not yet seen on a live chat run. Traces stored before the fix keep the old label.
+- **Planted-error benchmark (`scripts/planted_errors.py`, new):**
+  - **Method:** five recorded ticker compares from `web/frontend/tests/fixtures/` (`beb02048`,
+    `20c538e4`, `7a099f0c`, `8ecb0922`, `881a625e`). Every dollar or per-share figure each agent
+    cited is altered one at a time:
+    - errors: +1%, +10%, billion↔million, swapped digits;
+    - controls: the same value rewritten, or rounded one decimal.
+  - Each altered answer is run through the deterministic comparison, the accounting checks and
+    `gate_items`. No model, no network, no randomness.
+  - **Result** (`logs/planted-errors-audit.md`, `logs/planted-errors.json`):
+    - 60 planted errors: 37 stopped the run (62%), 0 flagged only, 23 missed.
+    - 34 controls: 3 stopped wrongly. EPS rounded from `$2.02` to `$2.0` (twice) and net income
+      rounded from `$29.8 billion` to `$30 billion` were stopped by the comparison, which allows
+      no rounding, although the source check does.
+  - **Why the 23 misses got through** (computed facts; one error can have several):
+    - 19 had no filing value checked for that metric for that agent. Plain "EPS" maps to no filed
+      concept, and one agent was given no revenue figure.
+    - 10 had only one agent answering.
+    - 7 sat in a "…, respectively" list. In AAPL `20c538e4`, agent B's `$35.695 billion`
+      operating income was tagged as net income.
+    - 7 had another figure for the same metric still matching the other agent.
+  - **Checked by hand:** for the `20c538e4` operating-income miss, the comparison paired the
+    closest net-income figures (`MATCH`), and the source check passed on agent B's other figure.
+    These are the detector's own rules, not a bug in the benchmark.
+  - `tests/test_planted_errors.py` adds 10 tests.
+- **Also:** the channel's `CLAUDE.md` (outside this repo, in `humanitarians-youtube`) now points
+  Mycroft fact-checks at this clone instead of `D:\Code\mycroft\verification-layer`.
+- **Commands:**
+  - `python -m unittest discover -s tests -t .`;
+  - `npm run verify` (113/113, after `npm ci`, since this clone had never installed the frontend
+    packages);
+  - `python scripts/build_docs.py`;
+  - `python scripts/planted_errors.py`.
+- **Open issues:**
+  - The misses are the coverage gaps for the next video, measured before and after with this
+    benchmark: "respectively" lists, plain EPS, and a comparison that doesn't allow rounding.
+  - `divij/work.md` couldn't be updated: no `divij/` folder exists in this clone, and the copy
+    under `D:\Code\mycroft\verification-layer\divij\` is empty.
+  - Nothing is committed.
+
+## 2026-10-05 (continued) -- Coverage fix, measured with the planted-error benchmark
+
+- **Recipe:** none. This is the first code item of the next video plan: close the blind spots the
+  benchmark found, and measure before and after with the same yardstick.
+- **Before** (`scripts/planted_errors.py`, five recorded runs):
+  - 60 planted errors, 37 stopped the run (62%), 23 missed;
+  - 3 of 34 controls stopped wrongly.
+- **Changed:**
+  - **Rounding in the comparison** (`validation/facts.py`): `precision_of(raw, value)`, one unit of
+    the last digit written, moved here and is shared with the source check. `_agree` lets a
+    dollar or per-share pair agree when one figure is written more coarsely than the other and
+    within one unit of it. Same-precision figures get no allowance.
+    - **Broke during testing, fixed:** the first version gave every pair a one-unit allowance.
+      `tests/test_facts.py` `test_per_share_tolerance_is_a_cent` caught `$2.02` against `$2.03`
+      turning into a MATCH, and the rule was narrowed to coarser-versus-finer.
+  - **"…, respectively"** (`validation/facts.py` `_respectively`): figures are paired in order
+    with the metrics named before them, when the counts match. "diluted and basic" count as the
+    two EPS metrics.
+  - **Plain "EPS" against the filing** (`validation/constraints.py` `_plain_eps_vs_source`): it
+    passes if it agrees with any filed EPS figure the agent was given, and fails if it agrees with
+    none. It is a hard check, so it gates.
+  - **Rounding in the agent rules** (`_holds_within_rounding`): a rule passes if some reading of
+    each figure within one unit of its last digit satisfies it. This cleared a false stop the
+    better tagging exposed: basic EPS rounded to `$2.0` beside diluted `$2.02`.
+  - **A number-parsing bug, found while writing a test** (`core/numeric.py`). The magnitude suffix
+    needed no word boundary under a case-insensitive pattern, so "$2.03 this quarter" parsed as
+    $2.03 trillion, "$10 total" as $10 trillion and "$2.02 basic" as $2.02 billion. The suffix
+    must now end a word, and `bn`/`tn`/`mn` are listed explicitly.
+    - This affects every detector: claims, consistency, the comparison and the checks. The
+      labelled real-run corpus test still passes.
+    - **Broke during the fix, fixed:** a shell here-doc wrote `\b` as a backspace character, which
+      dropped every suffix match. The suite caught it, and the byte was restored.
+  - **Benchmark causes:** a new cause, "another figure for the same metric still matched the
+    filing (one agreeing figure passes)".
+- **After:**
+  - 60 planted errors, **50 stopped (83%)**, 10 missed;
+  - **0 of 34 controls stopped**;
+  - all 10 misses are in `881a625e`, where only one agent answered. 6 of the 10 are also "another
+    figure still matched the filing", and 4 are "no filing value checked for this metric".
+- **Tests:** 16 new tests, each break checked where it matters:
+  - `tests/test_facts.py` `TestRespectively` (4) and `TestRoundingAgreement` (3);
+  - `tests/test_constraints.py` `TestCoverageFix` (5);
+  - `tests/test_numeric.py` `TestSuffixBoundary` (2), which fails with the fix removed;
+  - `tests/test_planted_errors.py`, where the respectively case is now asserted caught.
+- **Ledger:** `checks-lexical-coverage` gets an update. It stays OPEN: an unrecognised phrasing,
+  "one agreeing figure passes", one-sided runs and the source-sanity period remain.
+- **Docs:** the entries for `validation/facts.py`, `validation/constraints.py`, `core/numeric.py`
+  and the benchmark test are updated; the site is rebuilt.
+- **Not verified:** none of this has been seen on a live run. The changes alter what future compare
+  runs gate on, and that hasn't been observed against a real model. The frontend is unchanged.
+- **Open issues:** "one agreeing figure passes" is the next blind spot (6 of the 10 misses).
+  Nothing is committed.
+
+## 2026-10-05 (continued) -- An agent session as the agent, over MCP, and watching any run live
+
+- **Recipe:** none. Requested: Claude Code as the agent, going through the accountability and
+  verification layers, tracked step by step in the review app, as a third default setup beside
+  LangChain/Ollama. The human has no Anthropic API key, so the layer works as an MCP server and
+  the agent runs in the human's own session.
+- **Decisions by the human** (asked before building):
+  - **Agent B:** either the local model or a second session, chosen per run (`partner`).
+  - **Search:** the layer's Tavily tool or the agent's own web search, whichever gives better
+    results.
+  - **Library:** the official MCP Python SDK.
+- **Built:**
+  - **`web/agent_sessions.py`.** `SessionAgent` satisfies `AgentAdapter` and `ModelCall`:
+    - it queues each prompt for the session and waits for its `submit`;
+    - the server parses the reply, so the retry is the validation loop's own second call, and
+      the reason goes back in `previous_attempt_failed`;
+    - a silent session halts the run (`SessionTimeout`, `AGENT_SESSION_TIMEOUT_S` default 900 s);
+    - searches through the layer are recorded in the trace.
+  - **`web/mcp_server.py`.** Five tools (`start_compare`, `join_compare`, `submit`, `search`,
+    `get_run`) and agent instructions, mounted in the FastAPI app at `/mcp` (Streamable HTTP).
+  - **`web/live.py`,** a registry of runs in progress. Every compare run registers, whoever
+    started it.
+    - `GET /api/runs/live` lists them.
+    - `GET /api/runs/{id}/live` replays and follows a run's events, filtered for an investor
+      watcher like `/api/compare/stream`.
+  - **`web/server.py` `_run_compare`** takes `sessions`, `run_id` and `started_by`. A session
+    slot's model label is "session: <label>", and producer metadata carries `session: true`.
+    Everything else in the pipeline is unchanged.
+  - **The review app:**
+    - "Live runs" (`#/live`) lists runs in progress, and `#/live/{id}` watches one with the
+      existing live lanes (`WatchView.tsx`, `watchRun`, `useLiveRun.watch`);
+    - a session lane reads "Waiting for the agent session";
+    - a watched run that ends opens its stored record.
+  - **Paperwork:** `requirements.txt` adds `mcp>=1.8` as a deliberate exception (optional at
+    runtime); `.env.example` gets two settings; the README gets a "Use your own agent: Claude
+    Code, Codex or Cursor" section; the ledger gets `session-identity-self-reported` (OPEN); docs
+    entries are added for the six new files.
+- **Tested:**
+  - `tests/test_mcp_sessions.py`, 12 tests:
+    - the format check, the retry and the halt;
+    - the assessment request;
+    - two sessions disagreeing on 1998 against 1996, which opens the gate;
+    - the session timeout;
+    - search with and without a key (the layer's search replaced, no network);
+    - the watch stream, including at investor scope;
+    - the official MCP client over Streamable HTTP against uvicorn, listing the five tools and
+      completing a run.
+  - `web/frontend/tests/watch.test.tsx`, 5 tests.
+  - **Broke during testing, fixed:** the MCP server held the original search function, so a
+    patched test reached the real Tavily client. The server now looks it up at call time, and the
+    test asserts the replacement was called.
+  - **Totals:**
+    - Python 508/508 on Windows; on WSL the same, with the MCP tests skipping if `mcp` is absent;
+    - frontend 118/118 and a clean build;
+    - `python scripts/build_docs.py` gives 0 problems.
+- **Live, on the running server** (preview server, real EDGAR, Ollama `llama3.2` as agent B,
+  run `ec01e3f6`): a scripted MCP client stood in for the session as agent A.
+  - **Retry:** a deliberately malformed reply came back as attempt 2 with "Response missing both
+    <thought_log> and <conclusion> blocks". The review app's watch page showed "Retrying
+    (attempt 2): waiting for the agent session".
+  - **Completion:** the good reply was accepted, the grade JSON was requested and accepted, and
+    the run came out `COMPARED`, gate `NO_DECISION_NEEDED`. The watch page handed over to the
+    stored record.
+  - **Limits of this run:**
+    - the scripted client's answer was weak (its own regex missed the context format);
+    - agent B wrote revenue as "$54.25 billion" (the filing has $109.4 billion), shown as
+      `ONE_SIDED` and unchecked, because the earnings lens isn't given revenue. That's the
+      "no filing value checked" blind spot, seen live.
+- **Not verified:** no real Claude Code, Codex or Cursor session has run it. A session's label is
+  self-reported, and `/mcp` is unauthenticated like the rest of the server (localhost only).
+- **Open issues:** a real-session run; agent B's label for `partner="session"` is fixed at start.
+  Nothing is committed.
+
+## 2026-10-05 (continued) -- `start-server.sh` committed with CRLF line endings
+
+- **Recipe:** none. Reported by the human: in WSL, `./scripts/start-server.sh` failed with
+  "bad interpreter: /bin/bash^M", and `sh start-server.sh` with "set: Illegal option -".
+- **Cause:** the script was in the index with CRLF (`git ls-files --eol`: `i/crlf`), so bash read
+  the shebang as `/bin/bash` plus a carriage return.
+- **Change:**
+  - converted `scripts/start-server.sh` to LF;
+  - added `*.sh text eol=lf` to `.gitattributes`, so `core.autocrlf=true` on Windows can't
+    reintroduce it.
+- **Checked:** `bash -n` under WSL passes. The server itself wasn't started from WSL in this
+  session.
+- **Note:** run it as `./scripts/start-server.sh` or `bash scripts/start-server.sh`, not `sh`.
+  It uses bash features (`BASH_SOURCE`), and `sh` in Ubuntu is dash.
+- **Open issues:** the index still holds the CRLF copy until this is committed.
+
+## 2026-10-05 (continued) -- `start-server.sh` under `sh`, a copied virtualenv, and `mcp` 2.x
+
+- **Recipe:** none. Follows the CRLF entry above. Its note "use bash, not `sh`" is superseded
+  here: the script is now plain POSIX sh.
+- **Reported by the human:** `sh scripts/start-server.sh` failed with "Bad substitution"
+  (`${BASH_SOURCE[0]}` in dash).
+- **Found while testing the fix in WSL:**
+  1. **`env/` was copied from another location.** `env/bin/activate` hard-codes
+     `/mnt/d/Code/mycroft/accountability-layer/env`, so after activating, `python` wasn't on PATH
+     ("exec: python: Permission denied").
+  2. **The WSL venv had no `mcp`.** `pip install -r requirements.txt` picked `mcp` 2.3.0. 2.x
+     renamed `mcp.server.fastmcp.FastMCP` to `MCPServer`, so `web/mcp_server.py` failed to import.
+     The server's `except ImportError` treated that as "not installed" and left `/mcp` unmounted
+     without a word (`POST /mcp` gave 404).
+- **Changes:**
+  - **`scripts/start-server.sh`:** `#!/bin/sh`; `$0` in place of `BASH_SOURCE`; it runs
+    `env/bin/python` (or `env/Scripts/python.exe`) directly instead of sourcing `activate`.
+  - **`requirements.txt`:** `mcp>=1.8,<2`, with the reason.
+  - **`web/server.py`:** if `mcp` is installed but can't be imported, print a warning to stderr
+    saying `/mcp` isn't mounted and how to fix it.
+  - **`tests/test_mcp_sessions.py`:** the skip guard now checks for `mcp.server.fastmcp` (1.x),
+    not just `mcp`, so a 2.x install skips with a reason instead of erroring.
+- **Checked:**
+  - **WSL** (dash, launched from `~`, `PORT=8765`): `mcp` 1.30.0 reinstalled into `env/`. Suite
+    508/508. `GET /api/runs/live` gives 200. `POST /mcp` initialize gives 200 with the server's
+    instructions.
+  - **Windows:** suite 508/508.
+  - Not checked: no real agent session connected, and the 2.x warning path wasn't exercised
+    after the pin.
+- **Open issues:**
+  - porting `web/mcp_server.py` to `mcp` 2.x is deferred;
+  - `env/`'s own `activate` and `pip` scripts still point at the old path. Use
+    `env/bin/python -m pip`, or recreate the venv.
+
+## 2026-10-06 -- Financial agent: build plan written, nothing built
+
+- **Recipe:** none. Requested: a user-facing financial agent (chat UI, real end-of-day price
+  data, technical analysis, uploaded documents, model switching, a thinking display, a letter
+  grade with reasons) and a Verification-tab flow that picks any analysis and runs two agents
+  on it. The human asked for a harsh critique first, then for the agreed plan to be written
+  down before anything is executed.
+- **Inputs:** the human's proposal and answers in the session; this README; `core/assessment.py`;
+  `validation/gate.py` (P1 at line 220, `_INTERNAL_KEYS` at 240); `web/server.py`'s replay route;
+  `web/mcp_server.py`; `web/self_report.py`; `logs/planted-errors-audit.md`.
+- **Main points from the review that changed the plan:**
+  - grade equality as red/green would show two agents agreeing on a wrong figure as green. The
+    source check, not the cross-agent comparison, stopped most planted errors (14 of 17 per
+    alteration), so grounding comes first;
+  - AAA–CCC is a credit-rating scale, so it is replaced with a 5-point signal plus horizon and
+    conviction;
+  - re-verification must replay frozen inputs. `web/server.py`'s replay passes `""` as context
+    today (line 1402), and the new feature mustn't inherit that;
+  - indicators are computed in code, never by the model;
+  - uploaded documents are untrusted, and a session agent with shell access raises the stakes
+    of prompt injection;
+  - the investment amount was dropped (it affected nothing, and read as personalized advice).
+- **Decisions by the human:**
+  - the agent is a separate component, in its own folder inside this directory for now, to be
+    moved later;
+  - one user type, and the agent's output goes to that user;
+  - the progress screen shows the thought log lightly, and the Verification tab shows it in full;
+  - non-reasoning models are labelled, with thinking disabled;
+  - session agents over `/mcp` provide long context;
+  - users can bring their own agents;
+  - every review pushback was accepted.
+- **Commands:**
+  - `python scripts/build_docs.py`: 0 problems;
+  - `python -m unittest discover -s tests -t .`: 538/538 OK.
+- **Outputs:**
+  - `financial_agent/PLAN.md`: decisions D1–D14, layout and layering, data, bundle and replay,
+    the three agent kinds, record shapes, the signal card, Tier-1 grounding, the Tier-2 verdict,
+    web routes and tabs, security, tests, seven phases with "done when" lines, what isn't
+    claimed, open questions Q1–Q4;
+  - `docs/src/files/financial-agent.md`, the docs entry, with the rebuilt site.
+- **Result:** plan written. **No code was written, and nothing in the plan has run.**
+- **Not checked:** `node scripts/conformance.mjs` (it lives in the monorepo, not in this
+  standalone clone).
+- **Open issues:**
+  - Q1–Q4 in the plan;
+  - P2 will measure whether llama3.2 can pass an analysis contract, given its 2-of-10 format
+    pass rate with the assessment block (ledger `assessment-not-produced`);
+  - the earlier compare-run decision allowing a session's own web search still stands for
+    compare runs. For analysis runs it marks the run `inputs_captured: false` (plan D11).
+
+## 2026-10-06 -- Plan-then-search, citations checked against what was retrieved, confidence lowered by the checks
+
+- **Recipe:** none. The human reviewed their first chat run, `03bd3ca5` ("What was Apples
+  revenue last quarter?", llama3.2, LangChain + Tavily), and asked for three things:
+  1. the model should first choose its search terms, then run several searches;
+  2. **fix 1:** check citations against the URLs the agent actually retrieved;
+  3. **fix 2:** lower confidence for what the checks find.
+- **What the analysis of 03bd3ca5 found** (it is the fixture for the new tests):
+  - The answer ($109.42B for the quarter ending June 27, 2026) was right.
+  - Every fact was cited to `https://www.macrumors.com/stocks/aapl/revenue`. None of the five
+    search results had that URL, and it returns HTTP 404: the model fused MacRumors' name with
+    stockanalysis.com's path.
+  - The verifier reported "couldn't check" (`verified: null`). The probe's $94B (the year-ago
+    quarter) was flagged as divergent, and nothing acted on it.
+  - The run kept 0.75 `STANDARD`.
+- **Changed:**
+  - **`adapters/langchain_adapter.py`, plan then search.** With tools active and no Context:
+    - one planning call, capped at 256 tokens, asks for 2 to 4 queries aimed at different kinds
+      of source (`_plan_searches`, `_parse_search_plan`);
+    - every query runs, traced like the agent's own tool calls (`_traced_tool_call`, now shared
+      with the tool loop), and is reported as a "Search plan: N searches" step;
+    - the results become the Context, each URL beside its text, each search represented in turn
+      and each URL once, within `SEARCH_RESULTS_CHAR_LIMIT` (`_format_search_results`);
+    - the answer is one call with no tool bound;
+    - a retry reuses the plan and the results (a "reusing the N searches above" step) instead of
+      searching again;
+    - with a Context (compare runs, pasted context), nothing changes.
+  - **`adapters/langchain_adapter.py`, output cap.** Every model call is capped at
+    `MODEL_MAX_TOKENS` (2048 by default) generated tokens. The cap is in `.env.example`.
+  - **`validation/verification.py`, fix 1.** `verify_claims(claims, retrieved_urls)`: a cited
+    URL outside what the agent was given or found is `check="not_retrieved"` and isn't fetched. A
+    404 or 410 is `page_missing` (verified False); a blocked site or a timeout stays
+    `unreachable` (None). Every checked citation carries its `check`.
+  - **`validation/claims.py`.** Citations are de-duplicated by URL, not label: one site name for
+    two pages is two citations, and both are checked.
+    - `tests/test_claims.py`'s dedupe test pinned the old rule. It now pins same-URL dedupe and
+      has a new test for two pages under one label.
+    - This also resolves the "rate numerator and denominator count different things" note in the
+      verification docs.
+  - **`web/server.py`:**
+    - `_retrieved_urls` takes the URLs from the run's own trace, never from the agent's account;
+      the chat route and each compare producer use it. An agent session's slot passes None,
+      because its own web search is invisible to the server.
+    - **Fix 2:** `_check_penalties` lowers a chat run's score:
+      - by 0.3 for an unseen or missing source;
+      - by 0.15 when nothing confirmed;
+      - by 0.2 for divergent probe figures, or 0.1 for LOW agreement;
+      - a failed probe counts for nothing;
+      - the floor is 0.05.
+    - The payload, the session and the stored row get the lowered score, with
+      `confidence_before_checks` and `confidence_adjustments`. The amounts are a judgement, said
+      so in the code.
+    - Compare runs have no run-level confidence, so fix 2 isn't applied there.
+  - **Review app.** New badges "Agent never saw this source" and "Page doesn't exist", a glossary
+    entry, a list of what lowered the confidence on a chat record, and the `plan` step kind.
+  - **Docs.** Entries updated for `verification.py`, `langchain_adapter.py` and the chat route;
+    `tests/test_search_plan_and_citations.py` added.
+- **Tested:**
+  - `tests/test_search_plan_and_citations.py`, 28 tests. They include run 03bd3ca5 replayed
+    through `/api/chat`: `not_retrieved`, 0.75 to 0.1, `HIGH_UNCERTAINTY_SPECULATIVE`, and the
+    stored row reads 0.1.
+  - `tests/test_model_timeout.py` gets the output cap.
+  - A frontend banner test.
+  - **Totals:** Python 538/538, frontend 119/119, clean build, docs 0 problems.
+- **Live** (Windows, a separate server on port 8010, llama3.2 + Tavily, the human's WSL server on
+  8000 untouched). Five runs, each fixing what the previous one showed:
+  1. **`72cfce56`** (plan, then the tool still bound for the answer): 3 planned searches plus 1 of
+     the model's own. Attempt 1 was correct and correctly cited (macrotrends, a retrieved URL),
+     but its opening tag was lost across turns. Attempt 2 wrote a search out as text. Halted. This
+     led to the answer becoming one call with no tool bound.
+  2. **`c193509d`** (one call, 6,000 characters of results): both answers ended without
+     `</conclusion>`. Ollama's log shows `truncated = 0`, a 32,768-token window, and no limit hit.
+     Halted. The retry reused the searches, as designed.
+  3. **`MSFT`** (same setup, never stored): one answer ran to 10,341 tokens, about 10 minutes and
+     still going, until I stopped my server. MODEL_TIMEOUT_S is a stall limit, so nothing stopped
+     it. This led to the output cap.
+  4. **`516f7899`** (MSFT, cap on): the cap stopped a repeating answer at 2,048 tokens (110 s).
+     The retry listed URLs and stopped. Halted. The limit was then cut to 3,000 characters.
+  5. **`3e02840d`** (3,000 characters): both answers again lacked `</conclusion>`. Halted. This
+     led to the closing lines restating the format.
+  6. **`f7fa8074`** (format restated): passed on attempt 1.
+     - **The answer:** $109.417B, correct.
+     - **Citations:** Statista and Yahoo Finance were fetched and confirmed; macrotrends was
+       `unreachable` (blocked). Rate 0.667.
+     - **The probe:** it failed its format twice, so agreement is `UNKNOWN`, no penalty applies,
+       and confidence stays 0.75 `STANDARD`.
+     - **The record page** shows the badges.
+- **Not shown by these runs:**
+  - Fix 2's penalties firing live. They fire in tests; in `f7fa8074` none applied.
+  - A `not_retrieved` citation live. Every citation in `f7fa8074` was a retrieved URL.
+  - The probe re-planned the same three queries (same seed and temperature), so it is not
+    independent in what it searches.
+  - One success in two tries of this final prompt shape is not a rate.
+- **Open issues:**
+  - **A label that isn't the source.** `f7fa8074` labelled a Yahoo Finance article "Apple" and
+    called it "Apple's official report". The URL was retrieved, so the check passed. The label
+    isn't checked.
+  - **A confirmation that proves little.** That same Yahoo article is about Q4 CY2025 ($143.8B);
+    it was "confirmed" because any figure in the answer matching any figure on the page counts
+    (the pooled-number limit already in the verification docs).
+  - **llama3.2's format.** With planned results, llama3.2 dropped `</conclusion>` in 4 of 6 answer
+    attempts. A larger local model, or an agent session over MCP, may do better; untried.
+  - **Unclosed final block.** Whether the parser should accept an unclosed final `<conclusion>` at
+    the end of a response is a validation-rule decision for the human. It hasn't been changed.
+  - `context_window.context` is still empty for planned runs; the results are in the trace.
+  - Nothing is committed.
+
+## 2026-10-06 (continued) -- Financial agent plan: the four open questions answered
+
+- **Recipe:** none. Follows "Financial agent: build plan written, nothing built" above.
+- **Inputs:** the human's answers to Q1–Q4 in `financial_agent/PLAN.md`:
+  - Q1: show a letter too;
+  - Q2: default to 3–6 months;
+  - Q3: Alpha Vantage, for which the human supplied a key in the session;
+  - Q4: no.
+- **Changes:**
+  - **`financial_agent/PLAN.md`:**
+    - §4.1: Stooq first, Alpha Vantage (`ALPHAVANTAGE_API_KEY`) as the fallback. If Alpha
+      Vantage returns only a compact series, long-window indicators are reported as
+      `insufficient_history`, not computed on short data;
+    - §6.2: letters A–E as a display alias of the stored 5-point ordinal. A missing horizon is
+      3–6 months, labelled as the default;
+    - §6.4: no verdict opens a gate item by itself;
+    - §12: the open questions are now marked answered.
+  - **`.env.example`:** an empty `ALPHAVANTAGE_API_KEY=`, marked "not read by any code yet".
+  - **`docs/src/files/root.md`:** a row for the new variable. **`docs/src/files/financial-agent.md`:**
+    the answered questions.
+- **The key itself:** not written to any file or log by the agent. The human puts it in `.env`
+  themselves (the plan's rule: an agent never writes or logs a key).
+- **Commands:** `python scripts/build_docs.py`, 0 problems; `tests.test_docs_coverage` OK.
+- **Result:** plan decisions complete. No code has been written, and phase 1 has not started.
+- **Open issues:** confirm in phase 1 what Stooq and the Alpha Vantage key actually serve
+  (series length, rate limits).
+
+## 2026-10-06 (continued) -- Chat runs filed by company; the record shows the search results the agent read
+
+- **Recipe:** none. Requested by the human: fixes 3 and 4 from the analysis of run 03bd3ca5.
+- **Fix 3: filing by company.**
+  - **Before:** chat runs were filed under the question's first word, upper-cased, so 03bd3ca5
+    was `WHAT` and `GET /api/runs?ticker=AAPL` never found it.
+  - **`datasources/tickers.py` (new)** finds the company a question names: `$TICKER`, then an
+    all-capitals listed ticker (minus `EPS`, `CEO` and similar), then a capitalised company name.
+    - Names are SEC titles without legal suffixes. A possessive or plural on the last word is
+      allowed, and so is the first word of the 500 largest names unless it's generic.
+    - Longest match wins, then earliest, then the larger company. No match gives `CHAT`.
+  - **The data** is a snapshot, `datasources/company_tickers.tsv` (10,434 entries, fetched
+    2026-10-06; its first line says so), regenerated by `scripts/refresh_tickers.py`. Nothing
+    touches the network at run time or in tests.
+  - **`web/server.py` `_ticker`** uses it, and the chat payload now carries `ticker`.
+    **`web/db.py`** stores a payload's own ticker, else the subject's company (`_payload_ticker`).
+  - **Stored history is unchanged:** rows written before today keep `WHAT` and the like.
+  - **It's a filing heuristic, not a fact:** two companies in a question are filed under one, and
+    a common-word name is found only when capitalised.
+- **Fix 4: what the agent was sent.**
+  - **Before:** a planned run's `context_window.context` was `""`, though the agent answered from
+    the search results.
+  - **The chain:** `AgentResponse` and `StructuralParseError` get `retrieved_context`. The
+    LangChain adapter sets it to the planned results it put in the prompt, on success and on a
+    failed attempt. `pipeline/middleware.py` records it as `context_window["retrieved"]`. The
+    review app's "What the agent was sent" shows it under its own label.
+  - **Withholding is unchanged:** `context_window` is still auditor-only.
+- **Tested:**
+  - `tests/test_tickers.py`, 10 tests: questions with and without a company; `/api/chat`'s
+    payload, session and row agree, and the run is found with `?ticker=AAPL`.
+  - Five fix-4 tests in `tests/test_search_plan_and_citations.py`: the loop's record on success
+    and on a halt, and the adapter's own report.
+  - Two frontend `ContextWindow` tests.
+  - **Totals:** Python 553/553, frontend 121/121, build clean, docs 0 problems.
+- **Live, run `52c061a7`** (port 8010, llama3.2 + Tavily, "What was Apples revenue last
+  quarter?"):
+  - **The record:** filed `AAPL` in payload, session and row. The attempt's `context_window`
+    holds the 2,753 characters of results, and the record page shows them and the confidence
+    list.
+  - **Fix 2, live for the first time:** the probe's figures diverged, and confidence went from
+    0.75 to 0.55.
+  - **The answer was wrong:** $143.76B, the December 2025 quarter, not the June 2026 one (Tavily
+    returned different pages than in `f7fa8074`).
+  - **The checks didn't catch it:** its citations were retrieved and "confirmed", because the
+    number is on the page. Only the probe's disagreement lowered the score, and 0.55 is still
+    `STANDARD`.
+- **Open issues:**
+  - **Planner periods:** the planner's "Apple Q4 revenue" query adds a period the question didn't
+    give, against its instructions, and it steers toward an older quarter.
+  - **"Last quarter":** nothing checks which period a figure is from.
+  - **Penalty sizes:** a wrong answer whose sources contain its number loses only the probe's
+    0.2. Whether that penalty is large enough is a judgement for the human.
+  - Nothing is committed.
+
+## 2026-10-06 (continued) -- Financial agent phase 1: prices, indicators, frozen bundles, tools, replay
+
+- **Recipe:** `financial_agent/PLAN.md` §10, phase 1. Requested by the human: "yes start phase 1".
+- **Inputs:**
+  - Alpha Vantage, with the human's key from `.env`. It was loaded by code and never printed or
+    logged. The probe scripts asserted the key was absent from every saved file.
+  - Stooq; SEC EDGAR; the plan.
+- **Found live before building (changes the plan, recorded in PLAN.md §13):**
+  - **Stooq** `q/d/l/?s=aapl.us&i=d` returned an HTML page running a JavaScript SHA-256
+    proof-of-work browser check, not CSV. Getting past it would mean defeating a bot check, so
+    Stooq is dropped and Alpha Vantage is the only price source.
+  - **Alpha Vantage, free key:**
+    - `TIME_SERIES_DAILY&outputsize=full` answered "Information: ... premium feature ...";
+    - a second request within a second answered with the 1-per-second / 25-per-day notice;
+    - compact gave 100 daily bars (2026-05-13 to 2026-10-05);
+    - `TIME_SERIES_WEEKLY` gave 1,405 bars (1999-11-12 to 2026-10-05), free.
+
+    Hence two requests per fetch: daily for the short windows, weekly for the long ones.
+  - About 9 of the day's 25 requests were used: probes, fixtures, and the live fetch below.
+- **Built:**
+  - **`core/analysis.py`** (new). The shared record contract:
+    - the 5-point signal with letters A–E, horizons (default 3-6m), conviction, agent kinds,
+      reasoning modes, evidence tiers, verdicts;
+    - `validate_signal`, strict and never coerced;
+    - `canonical_json` / `content_hash`, which refuse NaN;
+    - TypedDict record shapes.
+  - **`financial_agent/prices.py`** (new). Alpha Vantage daily compact + weekly, with:
+    - each refusal kind distinguished;
+    - the key redacted from every URL and error;
+    - a ticker check before any URL is built, and bar sanity checks;
+    - possible-split dates;
+    - a day cache under `web/data/price_cache/` (now in `.gitignore`);
+    - `python -m financial_agent.prices TICKER`.
+  - **`financial_agent/indicators.py`** (new). Ten indicators, stdlib only, with formulas in the
+    docstring and a standard panel of 17. They refuse as `insufficient_history` or
+    `possible_split` rather than computing on a short or split window.
+  - **`financial_agent/bundle.py`** (new). A bundle hashed over its data only, `bundle_problems`,
+    and an EDGAR filing snapshot via `datasources/edgar.py` `select_fact`.
+  - **`financial_agent/tools.py`** (new). `describe_data`, `get_prices`, `get_indicators`,
+    `get_filing_facts`:
+    - pure functions; a bad request returns an error result;
+    - `ToolRecorder` keeps gap-free, thread-safe seq numbers with result hashes.
+  - **`financial_agent/replay.py`** (new). `load_bundle` (hash-checked), `replay_recorder`, and
+    `check_recorded_calls`.
+  - **`web/db.py`.** Tables `analysis_bundles`, `analysis_runs` and `analysis_verdicts`:
+    - append-only triggers, CHECKs on the vocabularies, foreign keys;
+    - insert/get/list functions and `purge_old_analyses`; `clear_all` drops them;
+    - `web/server.py` calls the purge at startup (two lines). No new route.
+  - **Other files:**
+    - `core/contracts.py`: the `JsonFetcher` docstring names the new default implementation;
+    - `tests/test_layering.py`: `financial_agent` added. It may import core, adapters,
+      pipeline and datasources, never validation or web. `financial_agent/prices.py` is named as
+      an egress point;
+    - `.env.example`: the key's comment now describes what it does.
+- **Broke during building, fixed:**
+  1. `INSERT OR IGNORE` for bundles also skipped the `sha256:` CHECK, so a malformed hash went
+     in silently. The test caught it; now `ON CONFLICT(bundle_hash) DO NOTHING`.
+  2. An RSI edge-case test series (1, 2, 3, 4) was flagged as a split (1 to 2 is +100%). That is
+     the detector working; the test series was changed to 10..13.
+  3. The CLI's arrow character crashed under Windows' cp1252 console after a successful fetch;
+     replaced with "to".
+  4. My first Python-based edits wrote LF into five CRLF files (`web/server.py`, `web/db.py`,
+     `core/contracts.py`, `.env.example`, `docs/src/files/root.md`). That made `web/server.py`'s
+     diff look like a 3,305-line rewrite. CRLF was restored, and `git ls-files --eol` shows
+     `w/crlf` for all five.
+- **Found live while verifying (fixed by flagging, not by changing EDGAR selection):**
+  - A live AAPL bundle selected operating cash flow as "3 months ending 2025-12-27" (fiscal
+    Q1), while the other nine facts ended 2026-06-27.
+  - Cause: `select_fact` prefers a standalone quarter to a year-to-date figure, and Apple
+    reports cash flow only year to date after Q1. Compare runs use the same rule; their lenses
+    don't read this concept.
+  - The filing snapshot now marks such facts `stale` and lists them, and `describe_data` reports
+    them. Whether to give the agent the latest year-to-date figure instead is open.
+- **Commands:**
+  - `python -m unittest discover -s tests -t .`: **623/623 OK**. 70 new tests in
+    `tests/test_analysis_record.py` (19), `test_fa_bundle.py` (21), `test_fa_indicators.py`
+    (18) and `test_fa_prices.py` (12). The suite ran 538 at the start of this session. The other
+    15 came from test changes made outside this session between the two runs:
+    `tests/test_tickers.py` and `tests/test_search_plan_and_citations.py` were modified at
+    00:46-00:48, after the first run at 00:28. Which tests account for the 15 wasn't traced.
+  - `python scripts/build_docs.py`: 0 problems.
+  - `node scripts/conformance.mjs` not run (monorepo only).
+- **Observed live (done-when for phase 1):** `python -m financial_agent.prices AAPL` at
+  2026-10-06T05:31:28Z returned:
+  - source `alphavantage`, as of 2026-10-05;
+  - 100 daily bars (2026-05-13 to 2026-10-05) and 156 weekly bars (2023-10-20 to 2026-10-05),
+    no suspect dates;
+  - all 17 panel indicators `ok`, for example last close 332.89, RSI(14) 53.7839, 52-week range
+    243.42–345.34.
+
+  A full live bundle with EDGAR facts:
+  - `sha256:6b6b17d9e377ec55...`, about 19 KB, `bundle_problems` empty;
+  - 10 of 10 filing concepts found;
+  - three recorded tool calls replayed with no problems.
+
+  The cache file was checked and doesn't contain the key.
+- **Fixtures:** `tests/fixtures/av_aapl_daily_compact_2026-10-05.json` and
+  `av_aapl_weekly_2026-10-05_trimmed.json`, the real replies, the weekly one trimmed to 160 bars.
+- **Docs:**
+  - entries for every new file, the new fixtures, the db tables, the layering rule;
+  - `architecture.md`'s "the only data egress" claims corrected, with a `financial_agent/` row
+    and a Prices component;
+  - the README layout;
+  - PLAN.md: status, and §13 "Changes made while building".
+- **Not built and not claimed:** no agent loop, prompt, route, MCP tool or UI. Nothing calls
+  `fetch_prices` except the CLI. Indicator values are checked against hand-worked examples, not
+  against a third-party charting tool.
+- **Open issues:**
+  - stale year-to-date selection for cash-flow concepts;
+  - no split adjustment (refusal only), and the split thresholds also flag real crashes;
+  - the free key's 25-a-day limit caps distinct tickers at about 12 a day;
+  - `architecture.md`'s layer diagram (SVG) doesn't show `financial_agent/` yet;
+  - nothing is committed.
+
+## 2026-10-06 (continued) -- Human decision: move the whole app to shadcn/ui; clickable layout mockup first
+
+- **Recipe:** none. Requested: "Read these backend structures and write a highly usable layout that
+  maps perfectly to this app and its tools using shadcn/ui."
+- **Decisions by the human** (asked before building, because shadcn/ui brings Tailwind, Radix,
+  class-variance-authority, clsx, tailwind-merge and lucide-react into a frontend whose README
+  makes every package a deliberate exception):
+  - **Scope: migrate the whole app,** not only the new financial-agent tabs. This supersedes the
+    2026-09-24 decision that the app keeps its existing look. The mockup keeps the existing
+    palette by mapping shadcn's tokens onto it, so the change is in components and layout, not
+    in colors. The 2026-09-24 entry is left as written.
+  - **Deliverable: a clickable mockup first,** approved before any package enters the repo.
+- **Built:** a standalone page, published privately as the artifact "Mycroft App Layout"
+  (https://claude.ai/artifact/KjSfkChf4Y2UUfHKqmuSfb). It isn't in the repo; the source is in
+  the session's scratchpad.
+  - **Built with:** React 18 and `htm` from CDNs, the Tailwind play CDN, and shadcn's
+    class recipes and HSL tokens written by hand. Geist, light and dark.
+  - **The shell:** a sidebar with three groups (Financial agent; Verification layer; System),
+    breadcrumbs, a Ctrl-K command menu, the auditor/investor scope switch in the sidebar footer,
+    and a "needs a decision" count.
+  - **Views:** Analysis (chat, progress from the step trace, working notes, the signal card,
+    the evidence rail with indicators, prices, filing and tool calls), Verify (all five verdict
+    states, the signal scale, agent A/B grounding), New compare, Ask one agent, Live runs,
+    Runs, Run detail (figures, checks, grades, agents, trace, the decision gate form, flags),
+    Honest Ledger, Directive, Settings.
+  - **"Show component names"** labels each region with the shadcn/ui component it becomes.
+- **Data:**
+  - **Real:**
+    - the cached AAPL price snapshot (as of 2026-10-05) and its indicator panel;
+    - a live EDGAR filing snapshot, with operating cash flow flagged stale;
+    - four real recorded tool calls over a real bundle (`sha256:d20a9b5b1c309...`);
+    - stored compare run `8ecb0922`, from `web/frontend/tests/fixtures/run_compare_b5_auditor.json`;
+    - the run list from the frontend fixtures;
+    - the 27 Honest Ledger entries and directive v1.5.2.
+  - **Illustrative, and labelled so on the page:** the financial agent's signal, reasons,
+    working notes and every verdict. No financial agent has run yet (phase 2 isn't built).
+  - The script asserted the Alpha Vantage key is absent from the published data.
+- **Checked:** one look in the browser pane (dark theme, 800 px wide): it renders with no
+  console errors. One fix followed: the working-notes header wrapped, so it was shortened. Not
+  checked: phone width, the light theme, and each view in turn.
+- **Side effect:** `.claude/launch.json` (gitignored) gained a `layout-mockup` entry, a static
+  server on port 8766. 8765 was taken by another session's server.
+- **Open issues:**
+  - the mockup is awaiting the human's approval;
+  - the migration plan (the package list for the frontend README, the order of views, keeping
+    the 118 frontend tests green) is not written yet;
+  - nothing is committed.
+
+## 2026-10-06 (continued) -- Layout mockup v2: decluttered after human feedback
+
+- **Recipe:** none. Feedback from the human on v1: "very cluttered and disorganized ... difficult to focus on the important things".
+- **Changes (same artifact URL, version 2; v1 kept in the session scratchpad):**
+  - **Navigation:** 10 sidebar items cut to 5. Compare and Ask are now a "New run" menu on Runs that opens a side sheet; Live runs is the Runs "Running" filter; the Directive is a Settings tab. The scope switch is a single select in the sidebar footer.
+  - **Mockup controls** (the banner, the state toggles, the component-name switch) moved into one floating "Mockup" panel, out of the design.
+  - **Analysis:** the answer is the focus. Progress is one line that expands; citations are quiet tokens (label, value, check), with sources and call numbers moved into an Evidence sheet that opens on request. The bundle hash moved there too.
+  - **Verify:** the verdict comes first, with the A-E scale and both agents underneath; setup is one row.
+  - **Run detail:** one status line, a single "Needs your decision" bar that opens the decision form in a side sheet, five tabs, and the mechanics under Details.
+  - **Colour:** match, pass and complete states are now muted checks; only warning, danger and halt keep coloured fills.
+- **Checked:** one look in the browser pane (dark, 800 px): no console errors. Citation values were then rounded to 2 decimals for display, and a long model label shortened.
+- **Open issues:** awaiting approval. Nothing is committed.
+
+## 2026-10-26 -- Week 1 of the October plan: access control, route tests, and the first half of the financial agent
+
+- **Recipe:** none. Requested: "start building week 1" of `october plan.md` (gitignored): baseline,
+  auth hardening, route tests, two untested README claims, and the first feature, "ask for a signal".
+- **Inputs:** the repo as left on 2026-10-06 (about 120 uncommitted paths); Python 3.13.3 from
+  Homebrew; `requirements.txt`; the recorded AAPL price and EDGAR fixtures; no live model, no
+  Alpha Vantage key, no network call to any model or price source in this entry.
+- **Commands:**
+  - `python -m unittest discover -s tests -t .` (baseline, then after each item) and
+    `npm ci && npx vitest run`, `npm run verify` in `web/frontend/`;
+  - `python scripts/build_docs.py`;
+  - the real server with scripted stand-ins for the model and the data (below), viewed in the
+    browser pane.
+- **Outputs:**
+  - **Baseline.** With a working interpreter the suite had 623 tests and 2 failures, both
+    `package-lock.json: no entry documents this file`. The repo's `env/` is unusable (its `python`
+    is an empty file, left from a Windows venv), so a venv was built outside the repo; `env/` was
+    not touched. `web/frontend/node_modules` had been installed on Windows (missing the macOS
+    rollup binary), so `npm ci` was run. The root `package-lock.json` is a 101-byte stub with no
+    packages; it is now gitignored, not deleted (a delete was refused by the sandbox).
+  - **Access control (`web/auth.py`, `web/server.py`).** An auditor token needs
+    `ACCOUNTABILITY_ADMIN_KEY` in an `X-Admin-Key` header and is refused when none is configured.
+    Without `ACCOUNTABILITY_SECRET` the signing secret is random per process, so the public
+    constant can no longer forge a token. A read with no token is served as an investor.
+    `POST /api/config`, replay, `GET .../flags` and `DELETE /api/runs` need an auditor token;
+    `DELETE` also needs `ACCOUNTABILITY_ALLOW_CLEAR=1`; `/mcp` needs the admin key as a Bearer.
+    `ACCOUNTABILITY_INSECURE_DEV=1` restores the old open behaviour. `scripts/start-server.sh`
+    writes a key into `.env` when there is none (the value is never printed). The review app
+    asks for the key once when the server refuses an auditor token, keeps it in `sessionStorage`,
+    and replaces a token the server rejects once. README, `.env.example`, the reference site and
+    the ledger (`audit-criticals`, `session-scope-leak`, `clear-all-runs-not-in-ui`, `no-route-tests`)
+    were updated with appended UPDATE lines; no earlier wording was edited.
+  - **Found and fixed while testing: a leak.** The live response of `POST /api/chat` and
+    `POST /api/compare` to an investor carried the nested session at full detail (thought logs,
+    raw output, directive text) unless the run was awaiting a decision. Both now go through
+    `redact_for_scope`; one test per route.
+  - **Found and fixed while testing: an echo gap.** The retry loop checks a second attempt for
+    directive echo against its own generic corrective text, so an analysis reply that repeats the
+    directive passed the retry. The analysis adapter now checks against the real directive.
+  - **Tests.** `tests/test_auth_matrix.py` (35: token issue, secret, every route for none /
+    investor / auditor, clear-all, what a read carries, the routes the ledger listed as untested);
+    `tests/test_adapter_tool_limits.py` (8: the 4-turn tool cap, no search key);
+    `tests/test_fa_agent.py` (38); `web/frontend/tests/auth.test.ts` (4) and `analysis.test.tsx` (15).
+    With the read-scope default and the flags guard reverted, ten tests in the matrix fail.
+  - **The feature, backend.** `financial_agent/prompts.py`, `financial_agent/agent.py`,
+    `unavailable_reason()` in `prices.py`, and `POST /api/analysis/stream`, `GET /api/analysis`,
+    `GET /api/analysis/{id}`. A message becomes a ticker and horizon (the default horizon is
+    labelled as one), the data is frozen, a model calls the recorded data tools, and the
+    three-block reply goes through the existing retry-then-halt loop. A record keeps every
+    attempt, every numbered tool call with its result's hash, and the signal. An investor read
+    withholds the thought log and raw replies. Nothing checks that the signal is right.
+  - **The feature, frontend.** The Analysis page (`#/analysis`): composer, steps as they happen,
+    the signal card with "Not verified", reference chips, working notes, attempts, history.
+  - **Looked at in the browser, with a scripted model.** The real server was started with the model
+    and the price/filing data replaced by scripted stand-ins (a script in the session scratchpad,
+    isolated database). A normal request, a request whose first reply is broken (shown under
+    "Attempts (2)") and a halted request each rendered correctly, with no console errors. A
+    scripted answer is not evidence about any real model.
+  - **Final counts:** 705 backend tests, 0 failures; 140 frontend tests; typecheck and build clean;
+    docs build with 0 problems.
+- **Result:** the Week 1 items are built and tested. **Observed on something real:** only the page
+  rendering above (against scripted stand-ins). **Not observed:** the access-control changes on a
+  restarted server, any real model producing a signal or passing the format, a live price fetch,
+  and `/mcp` with a real Claude Code, Codex or Cursor session using the new Bearer header.
+- **Corrections to my own earlier statements (this session's plan, not a prior log entry):** the
+  stray `=2.8.0` file is not empty (it is pip output) and is already gitignored; the `package-lock.json`
+  at the root was an empty stub, not a document needing an entry.
+- **Open issues:**
+  - nothing is committed; about 130 paths are uncommitted;
+  - `env/` is still broken and was left alone; the test runs used a venv outside the repo, which
+    does not survive a restart (a restart wiped it once during this work);
+  - storage-time redaction is unchanged: a run is stored at full detail and redacted when read;
+  - a stream uses the cached token as is, so a run started right after a server restart fails once
+    with its HTTP error before the next request refreshes the token;
+  - the admin key is one shared secret in `.env` and `sessionStorage`, not a login;
+  - `/api/runs/live`, `/api/runs/drift` and `/api/facts/excerpt` are public on purpose;
+  - a model that can't be reached ends an analysis with an error and records nothing;
+  - "nvidia" in lower case isn't found as a company;
+  - the format pass rate of any real model on the analysis directive is unmeasured (Week 2).
+
+## 2026-10-26 (continued) -- Running the real server: three things the tests missed, and a live price call I didn't intend
+
+- **Recipe:** none. Requested: "run the server and let's test the changes."
+- **Inputs:** the Week 1 changes above; the real server (`web.server:app`, unmodified) on port 8012
+  with a throwaway database seeded with the recorded gated run `ec1a3b44`, an admin key set for the
+  session, no model and no Tavily key.
+- **Commands:** 20 curl probes of the access rules (`probe.sh` in the session scratchpad), then the
+  review app in the browser pane: no key, a wrong key, the right key, the gated run at auditor
+  and at investor scope, and the Analysis page.
+- **Outputs:**
+  - **A security bug I introduced, found by this run, fixed.** The first probe with the correct admin
+    key was refused. Cause: `web/self_report.py` counts the suite by importing the test modules
+    (the first time `GET /api/self-report` is read, which the app does on load), and
+    `tests/support.py` set `ACCOUNTABILITY_ADMIN_KEY` to the constant `test-admin-key` as it was
+    imported. The running server's own key was replaced by a string that sits in the repository, and
+    that string then issued auditor tokens (probe: 200). The earlier entry's claim that auditor
+    tokens needed the admin key was true in the tests and false in a server that had served
+    `/api/self-report`. Fixed two ways: `_discover_test_counts()` restores `os.environ` exactly after
+    discovery, and the test key is random per process. Tests: a fresh process checks that counting
+    the tests leaves a configured key alone (it fails with the restore removed), and that the test
+    key is not a string in the repo. The same hazard was recorded on 2026-09-26 for a suite-wide
+    guard; the lesson wasn't applied to the key.
+  - **`window.prompt()` is refused by the browser pane**, so the first version of the admin-key flow
+    showed "prompt() is not supported". It is replaced by an in-page dialog
+    (`AdminKeyDialog.tsx`), shared by every request waiting on the key, with plain messages for a
+    declined and a wrong key. 7 new frontend tests; the old prompt tests were rewritten.
+  - **A live Alpha Vantage call I did not intend.** My first launcher removed
+    `ALPHAVANTAGE_API_KEY` from the environment before the server started, and the server then
+    re-read it from `.env` (python-dotenv keeps a variable that is already set, even to an empty
+    string, but not one that is absent). My probe of the analysis route for AAPL therefore fetched
+    real prices: 2 requests against the key's 25 a day, and `web/data/price_cache/AAPL_2026-10-26.json`
+    (as of 2026-10-23, fetched 04:31 UTC) now exists. No other live call was made. The launcher now
+    blanks the key and the probes use a ticker with no cached snapshot. The cache file is a normal
+    artifact of the price fetch and was left in place.
+  - **Results against the real server after the fixes (20 probes):** investor token without a key
+    200; auditor token without a key, with a wrong key and with the old test key 403; with the
+    server's key 200; a token forged with the old public secret 401; `POST /api/config` 401 / 403 /
+    200 for none / investor / auditor; `DELETE /api/runs` 401 / 403 / 403 (flag off); flags 403
+    investor, 200 auditor; `/mcp` 401 without the key and with an investor token, past the guard
+    with the key (400 for an empty body); analysis stream 401 without a token, 422 for no
+    company, 503 with the price key blank. The gated run read with no token or an investor token
+    shows neither 1998 nor 1996 and no internal-tier key; the auditor sees both.
+  - **In the browser:** no key gives the dialog; a wrong key gives "That admin key was not
+    accepted"; the right key loads the run at auditor scope, showing 1998 and 1996; switching to
+    Investor shows "Withheld" and "Pending human review"; the Analysis page shows the 503 in words
+    and keeps the question typed.
+  - **Counts now:** 707 backend tests, 0 failures; 147 frontend tests; docs build with 0 problems.
+- **Result:** the access rules now hold on a real server, which the tests alone had not shown.
+  Still **not observed**: any real model producing a signal, a live price fetch used on purpose, and
+  `/mcp` with a real Claude Code, Codex or Cursor session.
+- **Open issues:**
+  - the top bar hides the scope toggle at 800 px width (seen while testing; not changed, and not
+    from this work);
+  - the dialog has no focus trap beyond autofocus and Escape;
+  - nothing is committed;
+  - the earlier Week 1 entry's "Result" should be read together with this one.
