@@ -1,13 +1,16 @@
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { api } from "../api/client";
 import { streamAnalysis, type StreamEvent } from "../api/stream";
-import type { AnalysisRecord, AnalysisStep, AnalysisSummary, Scope } from "../api/types";
-import { SIGNAL_LETTERS, SIGNAL_WORDS, STEP_MARK, evidenceLabel, headline, stepLine } from "../lib/analysis";
+import type { AnalysisRecord, AnalysisStep, AnalysisSummary, EvidenceRef, MeasurementsResponse, Scope } from "../api/types";
+import {
+  FIGURE_MARK, SIGNAL_LETTERS, SIGNAL_WORDS, STEP_MARK, evidenceLabel, figureText, groundedLabel, groundedTone, headline, measurementLine, stepLine,
+} from "../lib/analysis";
 
 // Ask for a signal (financial_agent/PLAN.md phase 2). One request is one run over one frozen
 // bundle of data. The page shows the steps as they happen, then the stored record as a card.
-// Nothing here says the signal is right or that its figures were checked: the card says
-// "Not verified", and a reference only says where the model claims a figure came from.
+// Nothing here says the signal is right. Each cited figure is checked against the tool result it
+// cites (validation/analysis_checks.py, no model): that says the figure was quoted correctly, not that
+// the signal follows from it. The card still says "Not verified" until a second agent has checked it.
 
 type Phase = "idle" | "running" | "lost" | "failed";
 
@@ -20,12 +23,18 @@ export function AnalysisView({ scope }: { scope: Scope }) {
   const [record, setRecord] = useState<AnalysisRecord | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [history, setHistory] = useState<AnalysisSummary[]>([]);
+  const [measured, setMeasured] = useState<MeasurementsResponse | null>(null);
   const abort = useRef<AbortController | null>(null);
 
   const loadHistory = useCallback(() => {
     api.analyses(scope).then(setHistory).catch(() => setHistory([]));
   }, [scope]);
   useEffect(loadHistory, [loadHistory]);
+  useEffect(() => {
+    let live = true;
+    api.analysisMeasurements(scope).then((m) => { if (live) setMeasured(m); }).catch(() => { if (live) setMeasured(null); });
+    return () => { live = false; };
+  }, [scope]);
   useEffect(() => () => abort.current?.abort(), []);
 
   const onEvent = (e: StreamEvent) => {
@@ -67,6 +76,7 @@ export function AnalysisView({ scope }: { scope: Scope }) {
             through recorded tools and gives a signal with its reasons. It is a research signal from a model, not
             investment advice, and it has not been checked.
           </p>
+          {measured && <p className="model-line muted small" data-testid="model-line">{measurementLine(measured)}</p>}
           <label className="gate-field">
             Your question
             <textarea rows={3} value={message} onChange={(e) => setMessage(e.target.value)} disabled={running}
@@ -123,6 +133,50 @@ export function AnalysisView({ scope }: { scope: Scope }) {
   );
 }
 
+/** `grounded 1/3` with its tone as words too, and what the count means. */
+function GroundingSummary({ tier1 }: { tier1: NonNullable<AnalysisRecord["tier1"]> }) {
+  const tone = groundedTone(tier1);
+  const word = tone === "danger" ? "contradicted" : tone === "warning" ? "partly unfound" : tone === "success" ? "all match" : "nothing to check";
+  return (
+    <p className="grounding" data-tone={tone}>
+      <span className={`badge badge-${tone}`} data-testid="grounded-badge">{groundedLabel(tier1)}</span>{" "}
+      <span className="muted small">
+        {word}. Each figure it cites is checked against the data tool result it points at, with no model. That says the
+        figures were quoted correctly, not that the signal follows from them.
+        {tier1.user_asserted > 0 && ` ${tier1.user_asserted} from your document, not checked.`}
+        {tier1.by_value_only > 0 && ` ${tier1.by_value_only} matched by value only.`}
+      </span>
+    </p>
+  );
+}
+
+function problemFor(record: AnalysisRecord, keyPoint: number, ref: EvidenceRef): string | null {
+  if (!("call" in ref)) return null;
+  const p = record.tier1?.evidence_problems.find((e) => e.key_point === keyPoint && "call" in e.ref && e.ref.call === ref.call);
+  return p ? p.reason : null;
+}
+
+/** One line per cited figure: a mark and its words, where it came from, and why when it failed. */
+function FigureChecks({ tier1, record }: { tier1: NonNullable<AnalysisRecord["tier1"]>; record: AnalysisRecord }) {
+  return (
+    <>
+      <h3 className="small-head">Figures it cited</h3>
+      <ul className="figure-checks">
+        {tier1.checks.map((c, i) => (
+          <li key={i} data-status={c.status}>
+            <span className="figure-mark" aria-hidden="true">{FIGURE_MARK[c.status].mark}</span>
+            <span className="sr-only">{FIGURE_MARK[c.status].word}: </span>
+            <span className="figure-text">{figureText(c)}</span>
+            <span className="evidence"><span className="evidence-chip">{evidenceLabel(c.ref, record.tool_calls)}</span></span>
+            {c.status !== "GROUNDED" && <span className="muted small figure-reason"> {c.reason}</span>}
+            {c.status === "GROUNDED" && c.matched_by === "value" && <span className="muted small figure-reason"> matched by value only</span>}
+          </li>
+        ))}
+      </ul>
+    </>
+  );
+}
+
 export function AnalysisCard({ record, scope }: { record: AnalysisRecord; scope: Scope }) {
   const id = useId();
   const out = record.output;
@@ -133,6 +187,7 @@ export function AnalysisCard({ record, scope }: { record: AnalysisRecord; scope:
         <>
           <h2 id={`${id}-t`} className="signal-headline">{headline(record)}</h2>
           {record.conclusion && <p>{record.conclusion}</p>}
+          {record.tier1 && <GroundingSummary tier1={record.tier1} />}
           {out.key_points.length > 0 && (
             <>
               <h3 className="small-head">Why</h3>
@@ -142,28 +197,23 @@ export function AnalysisCard({ record, scope }: { record: AnalysisRecord; scope:
                     {p.text}
                     <span className="evidence">
                       {p.evidence.map((ref, j) => (
-                        <span key={j} className="evidence-chip">{evidenceLabel(ref, record.tool_calls)}</span>
+                        <span key={j} className="evidence-chip" data-problem={problemFor(record, i + 1, ref) ? "true" : undefined}>
+                          {evidenceLabel(ref, record.tool_calls)}
+                          {problemFor(record, i + 1, ref) && <> · <span className="chip-flag">{problemFor(record, i + 1, ref)}</span></>}
+                        </span>
                       ))}
                     </span>
                   </li>
                 ))}
               </ul>
-              <p className="muted small">
-                A reference says where the model says a figure came from. It has not been checked against the data.
-              </p>
+              {!record.tier1 && (
+                <p className="muted small">
+                  A reference says where the model says a figure came from. It has not been checked against the data.
+                </p>
+              )}
             </>
           )}
-          {out.cited_figures.length > 0 && (
-            <details>
-              <summary>Figures it cited ({out.cited_figures.length})</summary>
-              <ul className="reasons">
-                {out.cited_figures.map((f, i) => (
-                  <li key={i}>{f.name}: {f.value}{f.unit ? ` ${f.unit}` : ""}
-                    <span className="evidence"><span className="evidence-chip">{evidenceLabel(f.ref, record.tool_calls)}</span></span></li>
-                ))}
-              </ul>
-            </details>
-          )}
+          {record.tier1 && record.tier1.checks.length > 0 && <FigureChecks tier1={record.tier1} record={record} />}
           {record.issues.length > 0 && (
             <div className="alert alert-warn" role="status">
               <strong>Adjusted:</strong>

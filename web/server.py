@@ -105,6 +105,7 @@ from web.db import (
 )
 from financial_agent import agent as fa_agent
 from financial_agent.prices import unavailable_reason
+from validation.analysis_checks import check_analysis
 from web.auth import (
     ADMIN_KEY_HEADER, authorize_issue, check_admin_key, insecure_dev,
     issue_token, optional_scope, require_auditor, require_scope, ScopeT,
@@ -1825,6 +1826,9 @@ def _run_analysis(plan: dict, scope: str, emit: Emit) -> dict:
     record = fa_agent.run_analysis(
         plan, bundle=bundle, model_step=_build_analysis_step(_config), model=_model_label(_config),
         temperature=_config["temperature"], seed=_config.get("seed"), run_id=run_id, steps=steps)
+    # Tier 1 (no model): does each figure the signal cites match the tool result it cites? The agent
+    # package doesn't import validation/, so the route is where the two meet.
+    record["tier1"] = check_analysis(record)
     insert_analysis(record)
     return _serve_analysis(record, scope)
 
@@ -1840,6 +1844,23 @@ async def analysis_stream(body: AnalysisRequest, scope: ScopeT = Depends(require
 def list_analysis_runs(limit: int = Query(default=50, ge=1, le=200), scope: ScopeT = Depends(require_scope)):
     """Newest first, as summaries: the request, agent, status and signal, without tool results or replies."""
     return list_analyses(limit)
+
+
+@app.get("/api/analysis/measurements")
+def analysis_measurements(scope: ScopeT = Depends(require_scope)):
+    """
+    How the configured model has actually done on the analysis format, from the last measurement
+    (scripts/measure_analysis_format.py), and whether that measurement was made under the prompt in use now.
+    "No measurement" is an answer: nothing is guessed.
+    """
+    model = _config["model"]
+    measured = fa_agent.load_measurements()
+    return {
+        "model": model,
+        "reasoning": fa_agent.reasoning_mode(model),
+        "prompt_version": fa_agent.prompts.ANALYSIS_PROMPT_VERSION,
+        "measurement": fa_agent.measurement_for(model, measured),
+    }
 
 
 @app.get("/api/analysis/{run_id}")

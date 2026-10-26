@@ -2,9 +2,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { AnalysisCard, AnalysisView } from "../src/views/AnalysisView";
-import { headline, evidenceLabel, stepLine } from "../src/lib/analysis";
+import { headline, evidenceLabel, stepLine, groundedLabel, groundedTone, figureText, measurementLine } from "../src/lib/analysis";
 import { _resetTokens } from "../src/api/client";
-import type { AnalysisRecord, AnalysisSummary } from "../src/api/types";
+import type { AnalysisRecord, AnalysisSummary, FigureCheck, Tier1 } from "../src/api/types";
 
 const OUT = {
   signal: "buy", horizon: "3-6m", conviction: "medium",
@@ -41,13 +41,14 @@ const sse = (events: [string, unknown][]) =>
                { status: 200, headers: { "Content-Type": "text/event-stream" } });
 const json = (body: unknown, init?: ResponseInit) => new Response(JSON.stringify(body), init);
 
-function stubFetch(handlers: { stream?: () => Response; history?: AnalysisSummary[]; open?: AnalysisRecord }) {
+function stubFetch(handlers: { stream?: () => Response; history?: AnalysisSummary[]; open?: AnalysisRecord; measurements?: unknown }) {
   const calls: { url: string; init?: RequestInit }[] = [];
   vi.stubGlobal("fetch", vi.fn(async (url: string, init?: RequestInit) => {
     calls.push({ url, init });
     if (url === "/api/auth/token") return json({ access_token: "t" });
     if (url === "/api/analysis/stream") return handlers.stream!();
     if (url === "/api/analysis") return json(handlers.history ?? []);
+    if (url === "/api/analysis/measurements") return json(handlers.measurements ?? { model: "langchain:llama3.2", reasoning: "none", prompt_version: "analysis-v1", measurement: null });
     if (url.startsWith("/api/analysis/")) return handlers.open ? json(handlers.open) : json({ detail: "no" }, { status: 404 });
     return json({});
   }));
@@ -203,5 +204,147 @@ describe("AnalysisCard", () => {
     render(<AnalysisCard scope="auditor" record={record({ issues: ["conviction 'certain' is not one of low, medium, high; dropped"] })} />);
     expect(screen.getByText(/Adjusted/)).toBeInTheDocument();
     expect(screen.getByText(/conviction 'certain'/)).toBeInTheDocument();
+  });
+});
+
+
+// ── Tier 1 ──────────────────────────────────────────────────────────────────────
+
+function check(over: Partial<FigureCheck>): FigureCheck {
+  return { name: "rsi_14", value: 53.78, unit: "index", ref: { call: 2 }, status: "GROUNDED",
+           reason: "matches result.results[5].rsi.values.value in call 2", matched_by: "name", ...over };
+}
+function tier1(checks: FigureCheck[], over: Partial<Tier1> = {}): Tier1 {
+  const n = (s: string) => checks.filter((c) => c.status === s).length;
+  const grounded = n("GROUNDED"), mismatched = n("MISMATCH"), unreferenced = n("UNREFERENCED");
+  return { version: "tier1-v1", grounded, total: grounded + mismatched + unreferenced, mismatched, unreferenced,
+           user_asserted: n("USER_ASSERTED"), judgment: n("JUDGMENT"), by_value_only: 0, checks, evidence_problems: [], ...over };
+}
+
+describe("grounding wording", () => {
+  it("counts what can be checked, and says when there is nothing to count", () => {
+    expect(groundedLabel(tier1([check({}), check({ status: "MISMATCH" }), check({ status: "UNREFERENCED" })]))).toBe("grounded 1/3");
+    expect(groundedLabel(tier1([]))).toBe("no figures to check");
+  });
+
+  it("is a success only when something was checked and all of it matched; a contradiction is the loud one", () => {
+    expect(groundedTone(tier1([check({})]))).toBe("success");
+    expect(groundedTone(tier1([]))).toBe("neutral");
+    expect(groundedTone(tier1([check({}), check({ status: "UNREFERENCED" })]))).toBe("warning");
+    expect(groundedTone(tier1([check({ status: "UNREFERENCED" }), check({ status: "MISMATCH" })]))).toBe("danger");
+  });
+
+  it("writes a figure the way it was given", () => {
+    expect(figureText({ name: "rsi_14", value: 53.78, unit: "index" })).toBe("rsi_14 53.78 index");
+    expect(figureText({ name: "close", value: 332.89 })).toBe("close 332.89");
+  });
+});
+
+describe("AnalysisCard with Tier 1", () => {
+  it("shows grounded n/m, a line per figure with its mark in words, and why a figure failed", () => {
+    const checks = [
+      check({}),
+      check({ name: "macd_signal", value: 9.99, status: "MISMATCH", reason: "call 2 gives 4.5276 for this, not 9.99" }),
+      check({ name: "whatever", value: 5, ref: { call: 1 }, status: "UNREFERENCED", reason: "call 1 (describe_data) holds nothing that matches this" }),
+    ];
+    render(<AnalysisCard scope="auditor" record={record({ tier1: tier1(checks) })} />);
+    const badge = screen.getByTestId("grounded-badge");
+    expect(badge).toHaveTextContent("grounded 1/3");
+    expect(badge).toHaveClass("badge-danger");
+    expect(screen.getByText(/contradicted\./)).toBeInTheDocument();
+    expect(screen.getByText(/That says the figures were quoted correctly, not that the signal follows from them/)).toBeInTheDocument();
+    const lines = screen.getAllByRole("listitem").filter((li) => li.hasAttribute("data-status"));
+    expect(lines.map((li) => li.getAttribute("data-status"))).toEqual(["GROUNDED", "MISMATCH", "UNREFERENCED"]);
+    expect(within(lines[1]).getByText("macd_signal 9.99 index")).toBeInTheDocument();
+    expect(within(lines[1]).getByText("contradicts the data:")).toBeInTheDocument();
+    expect(within(lines[1]).getByText(/call 2 gives 4.5276 for this, not 9.99/)).toBeInTheDocument();
+    expect(within(lines[2]).getByText(/holds nothing that matches this/)).toBeInTheDocument();
+    expect(within(lines[0]).queryByText(/matches result/)).toBeNull();
+    // The cross-agent badge is a separate thing and is still honest.
+    expect(screen.getByText("Not verified")).toBeInTheDocument();
+  });
+
+  it("is a success badge when everything matched", () => {
+    render(<AnalysisCard scope="auditor" record={record({ tier1: tier1([check({}), check({ name: "sma_20", value: 332.54 })]) })} />);
+    const badge = screen.getByTestId("grounded-badge");
+    expect(badge).toHaveTextContent("grounded 2/2");
+    expect(badge).toHaveClass("badge-success");
+    expect(screen.getByText(/all match\./)).toBeInTheDocument();
+  });
+
+  it("says there was nothing to check instead of showing 0/0 as a pass", () => {
+    render(<AnalysisCard scope="auditor" record={record({ tier1: tier1([]) })} />);
+    expect(screen.getByTestId("grounded-badge")).toHaveTextContent("no figures to check");
+    expect(screen.getByTestId("grounded-badge")).toHaveClass("badge-neutral");
+  });
+
+  it("says a document figure was not checked and a value-only match was value-only", () => {
+    const checks = [check({ name: "guidance", value: 5, ref: { chunk: "d:1" }, status: "USER_ASSERTED", reason: "from your document" }),
+                    check({ name: "momentum", value: 53.78, matched_by: "value" })];
+    render(<AnalysisCard scope="auditor" record={record({ tier1: tier1(checks, { by_value_only: 1 }) })} />);
+    expect(screen.getByText(/1 from your document, not checked\./)).toBeInTheDocument();
+    expect(screen.getByText(/1 matched by value only\./)).toBeInTheDocument();
+    expect(screen.getByText("from your document, not checked:")).toBeInTheDocument();
+    expect(screen.getAllByText("your document").length).toBeGreaterThan(0);
+  });
+
+  it("flags a reason whose reference points at a call that doesn't exist", () => {
+    render(<AnalysisCard scope="auditor" record={record({
+      tier1: tier1([check({})], { evidence_problems: [{ key_point: 1, ref: { call: 2 }, reason: "call 2 (get_indicators) returned an error" }] }),
+    })} />);
+    expect(screen.getByText("call 2 (get_indicators) returned an error")).toBeInTheDocument();
+  });
+
+  it("still says references are unchecked when the record has no Tier 1 result", () => {
+    render(<AnalysisCard scope="auditor" record={record()} />);
+    expect(screen.queryByTestId("grounded-badge")).toBeNull();
+    expect(screen.getByText(/has not been checked against the data/)).toBeInTheDocument();
+  });
+
+  it("shows no grounding for a halted run", () => {
+    render(<AnalysisCard scope="auditor" record={record({ output: null, conclusion: null, status: "halted", tier1: null })} />);
+    expect(screen.queryByTestId("grounded-badge")).toBeNull();
+  });
+});
+
+
+describe("what has been measured about the model", () => {
+  const response = (measurement: unknown) => ({ model: "llama3.2", reasoning: "none", prompt_version: "analysis-v1", measurement });
+  const stats = { model: "llama3.2", runs: 10, first_attempt_passed: 4, recovered_on_retry: 2, halted: 4, first_attempt_rate: 0.4,
+                  final_rate: 0.6, measured_at: "2026-10-26T05:00:00Z", prompt_version: "analysis-v1", tickers: ["AAPL"], current_prompt: true };
+
+  it("says nobody measured it instead of implying a rate", () => {
+    expect(measurementLine(response(null) as never)).toBe("Model llama3.2 · no native reasoning · format reliability not measured.");
+  });
+
+  it("gives the counts, the date and the ticker, and no percentage that sounds like a guarantee", () => {
+    const line = measurementLine(response(stats) as never);
+    expect(line).toContain("in 10 measured runs its first reply followed the format 4 times");
+    expect(line).toContain("6 runs ended with a signal after the one retry");
+    expect(line).toContain("2026-10-26, AAPL");
+    expect(line).not.toMatch(/%/);
+    expect(line).not.toContain("older prompt");
+  });
+
+  it("uses singular nouns for a count of one", () => {
+    const line = measurementLine(response({ ...stats, runs: 1, first_attempt_passed: 1, recovered_on_retry: 0, halted: 0 }) as never);
+    expect(line).toContain("in 1 measured run its first reply followed the format 1 time, and 1 run ended");
+  });
+
+  it("says when the measurement was made under an older prompt", () => {
+    expect(measurementLine(response({ ...stats, current_prompt: false, prompt_version: "analysis-v0" }) as never))
+      .toContain("Measured under an older prompt (analysis-v0), not the one in use.");
+  });
+
+  it("shows the line on the page", async () => {
+    stubFetch({ measurements: response(stats) });
+    render(<AnalysisView scope="auditor" />);
+    expect(await screen.findByTestId("model-line")).toHaveTextContent("first reply followed the format 4 times");
+  });
+
+  it("shows 'not measured' on the page when there is no measurement", async () => {
+    stubFetch({});
+    render(<AnalysisView scope="auditor" />);
+    expect(await screen.findByTestId("model-line")).toHaveTextContent("format reliability not measured");
   });
 });

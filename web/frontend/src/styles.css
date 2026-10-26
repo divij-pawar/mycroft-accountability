@@ -223,6 +223,15 @@ button { font: inherit; cursor: pointer; }
 .history-list .btn-ghost { width: 100%; text-align: left; }
 .scrim-modal { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.45); display: grid; place-items: center; z-index: 50; padding: 16px; }
 .key-dialog { width: min(420px, 100%); display: grid; gap: 10px; }
+.grounding { margin: 8px 0; display: flex; gap: 6px; flex-wrap: wrap; align-items: baseline; }
+.figure-checks { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.figure-checks li { display: flex; gap: 6px; flex-wrap: wrap; align-items: baseline; }
+.figure-checks li[data-status="MISMATCH"] .figure-mark, .figure-checks li[data-status="MISMATCH"] .figure-text { color: var(--badge-danger-fg); font-weight: 700; }
+.figure-checks li[data-status="UNREFERENCED"] .figure-mark { color: var(--badge-warning-fg); font-weight: 700; }
+.figure-checks li[data-status="GROUNDED"] .figure-mark { color: var(--badge-success-fg); }
+.figure-mark { width: 1.2em; text-align: center; }
+.figure-text { font-variant-numeric: tabular-nums; }
+.evidence-chip[data-problem="true"] { border-color: var(--badge-danger-fg); color: var(--badge-danger-fg); }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .matrix-section, .matrix-wrap { min-width: 0; }
 .matrix-filters { padding: 0 0 8px; }

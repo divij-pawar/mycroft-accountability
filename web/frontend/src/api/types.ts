@@ -457,8 +457,59 @@ export interface AnalysisRecord {
   thought_log: string | null;
   issues: string[];
   halt_reason: string | null;
+  tier1?: Tier1 | null;
   status: "ok" | "halted" | "abstained";
   withheld?: string[];
+}
+
+// validation/analysis_checks.py: did the agent quote its data correctly? Not "is the signal right".
+export type FigureStatus = "GROUNDED" | "MISMATCH" | "UNREFERENCED" | "USER_ASSERTED" | "JUDGMENT";
+
+export interface FigureCheck {
+  name: string;
+  value: number;
+  unit?: string | null;
+  ref: EvidenceRef;
+  status: FigureStatus;
+  reason: string;
+  matched_by?: "name" | "value";
+  matched?: { path: string; value: number };
+  call_values?: { path: string; value: number }[];
+}
+
+export interface Tier1 {
+  version: string;
+  grounded: number;
+  total: number;
+  mismatched: number;
+  unreferenced: number;
+  user_asserted: number;
+  judgment: number;
+  by_value_only: number;
+  checks: FigureCheck[];
+  evidence_problems: { key_point: number; ref: EvidenceRef; reason: string }[];
+}
+
+// What scripts/measure_analysis_format.py measured for a model, and whether under today's prompt.
+export interface ModelMeasurement {
+  model: string;
+  runs: number;
+  first_attempt_passed: number;
+  recovered_on_retry: number;
+  halted: number;
+  first_attempt_rate: number | null;
+  final_rate: number | null;
+  measured_at: string;
+  prompt_version: string;
+  tickers: string[];
+  current_prompt: boolean;
+}
+
+export interface MeasurementsResponse {
+  model: string;
+  reasoning: "native" | "none";
+  prompt_version: string;
+  measurement: ModelMeasurement | null;
 }
 
 export type AnalysisSummary = Pick<AnalysisRecord,

@@ -1,6 +1,6 @@
 // How an analysis record is worded on screen. The letters are a display alias of the stored
 // five-point signal (financial_agent/PLAN.md 6.2, decided 2026-10-06): A is the most positive.
-import type { AnalysisOutput, AnalysisRecord, AnalysisStep, EvidenceRef } from "../api/types";
+import type { AnalysisOutput, AnalysisRecord, AnalysisStep, EvidenceRef, FigureCheck, FigureStatus, MeasurementsResponse, Tier1 } from "../api/types";
 
 export const SIGNAL_LETTERS: Record<AnalysisOutput["signal"], string> = {
   strong_buy: "A", buy: "B", hold: "C", sell: "D", strong_sell: "E",
@@ -54,3 +54,47 @@ export const STEP_MARK: Record<AnalysisStep["status"], { mark: string; word: str
   parse_failure: { mark: "↻", word: "retry" },
   halt: { mark: "■", word: "halted" },
 };
+
+// ── Tier 1: were the figures quoted correctly? ──────────────────────────────────
+
+export const FIGURE_MARK: Record<FigureStatus, { mark: string; word: string }> = {
+  GROUNDED: { mark: "✓", word: "matches the data" },
+  MISMATCH: { mark: "✗", word: "contradicts the data" },
+  UNREFERENCED: { mark: "?", word: "not found in the data" },
+  USER_ASSERTED: { mark: "◇", word: "from your document, not checked" },
+  JUDGMENT: { mark: "~", word: "a judgment" },
+};
+
+/** `grounded 2/3`, or why there is nothing to count. */
+export function groundedLabel(t: Tier1): string {
+  return t.total === 0 ? "no figures to check" : `grounded ${t.grounded}/${t.total}`;
+}
+
+/** The badge's tone: only a clean, non-empty result is a success; a contradiction is the loud one. */
+export function groundedTone(t: Tier1): "success" | "danger" | "warning" | "neutral" {
+  if (t.mismatched > 0) return "danger";
+  if (t.unreferenced > 0) return "warning";
+  return t.total > 0 ? "success" : "neutral";
+}
+
+/** A figure written the way a chip shows it: `rsi_14 53.78 index`. */
+export function figureText(c: Pick<FigureCheck, "name" | "value" | "unit">): string {
+  return `${c.name} ${c.value}${c.unit ? ` ${c.unit}` : ""}`;
+}
+
+// ── What has been measured about the model ──────────────────────────────────────
+
+/** One sentence on how the model has actually done on the reply format, or that nobody measured it. */
+export function measurementLine(m: MeasurementsResponse): string {
+  const mode = m.reasoning === "native" ? "thinks natively" : "no native reasoning";
+  const head = `Model ${m.model} · ${mode}`;
+  const s = m.measurement;
+  if (!s) return `${head} · format reliability not measured.`;
+  const day = s.measured_at.slice(0, 10);
+  const older = s.current_prompt ? "" : ` Measured under an older prompt (${s.prompt_version}), not the one in use.`;
+  const n = (count: number, noun: string) => `${count} ${noun}${count === 1 ? "" : "s"}`;
+  const withSignal = s.first_attempt_passed + s.recovered_on_retry;
+  return `${head} · in ${n(s.runs, "measured run")} its first reply followed the format ${n(s.first_attempt_passed, "time")}, `
+    + `and ${n(withSignal, "run")} ended with a signal after the one retry `
+    + `(${day}, ${s.tickers.join(", ")}).${older}`;
+}

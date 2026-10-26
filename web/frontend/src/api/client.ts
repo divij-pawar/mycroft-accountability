@@ -6,7 +6,7 @@
 // caller's scope, and an investor must get the decision gate's withholding
 // (validation/gate.py). With no scope, the server falls back to the stored scope.
 
-import type { AnalysisRecord, AnalysisSummary, DecisionInput, Excerpt, Flag, Gate, LiveRunSummary, Run, Scope, SelfReport, Session, Snippet } from "./types";
+import type { AnalysisRecord, AnalysisSummary, MeasurementsResponse, DecisionInput, Excerpt, Flag, Gate, LiveRunSummary, Run, Scope, SelfReport, Session, Snippet } from "./types";
 
 const tokens = new Map<Scope, string>();
 
@@ -142,6 +142,7 @@ export interface Config {
 }
 
 export const api = {
+  analysisMeasurements: (scope: Scope) => getJson<MeasurementsResponse>("/api/analysis/measurements", scope),
   analyses: (scope: Scope) => getJson<AnalysisSummary[]>("/api/analysis", scope),
   analysis: (id: string, scope: Scope) => getJson<AnalysisRecord>(`/api/analysis/${enc(id)}`, scope),
   runs: (scope?: Scope) => getJson<Run[]>("/api/runs", scope),

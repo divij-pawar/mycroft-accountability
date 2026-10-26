@@ -202,6 +202,7 @@ MATRIX: dict[tuple[str, str], tuple[str, dict, tuple]] = {
     ("DELETE", "/api/runs"): ("/api/runs", {}, (401, 403, 403)),   # an auditor still needs ACCOUNTABILITY_ALLOW_CLEAR=1
     ("POST", "/api/analysis/stream"): ("/api/analysis/stream", {"json": {"message": "Should I buy AAPL?"}}, NEEDS_TOKEN_WRITE_MODEL),
     ("GET", "/api/analysis"): ("/api/analysis", {}, (401, 200, 200)),
+    ("GET", "/api/analysis/measurements"): ("/api/analysis/measurements", {}, (401, 200, 200)),
     ("GET", "/api/analysis/{run_id}"): (f"/api/analysis/{NOPE}", {}, (401, 404, 404)),
     ("GET", "/api/directive"): ("/api/directive", {}, PUBLIC_READ),
     ("GET", "/api/self-report"): ("/api/self-report", {}, PUBLIC_READ),
