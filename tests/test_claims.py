@@ -21,9 +21,16 @@ class TestCitationExtraction(unittest.TestCase):
         self.assertEqual(citations[0].source_url, "https://www.sec.gov/x")
 
     def test_duplicate_citations_deduped(self):
-        text = "[SOURCE: 10-K, https://a] and again [SOURCE: 10-K, https://b]"
+        text = "[SOURCE: 10-K, https://a] and again [SOURCE: 10-K filing, https://a]"
         citations = [c for c in extract_claims(text) if c.claim_type == "citation"]
         self.assertEqual(len(citations), 1)
+
+    def test_one_label_for_two_pages_is_two_citations(self):
+        # Until 2026-10-05 citations were deduped by label, so a second URL under the same
+        # site name was never checked (run 03bd3ca5 cited one "MacRumors" for every fact).
+        text = "[SOURCE: 10-K, https://a] and again [SOURCE: 10-K, https://b]"
+        citations = [c for c in extract_claims(text) if c.claim_type == "citation"]
+        self.assertEqual([c.source_url for c in citations], ["https://a", "https://b"])
 
 
 class TestQuantitativeExtraction(unittest.TestCase):

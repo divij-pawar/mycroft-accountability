@@ -86,6 +86,43 @@ class TestExtraction(unittest.TestCase):
         )
 
 
+class TestRespectively(unittest.TestCase):
+    """'... and ..., respectively' pairs figures with the metrics in the order they are named."""
+
+    def test_two_metrics_two_figures_pair_in_order(self):
+        tags = _tags("The operating income loss and net income loss are $35.695 billion and $29.788 billion, respectively.")
+        self.assertEqual([(m, raw) for m, raw, _ in tags],
+                         [("operating_income", "$35.695 billion"), ("net_income", "$29.788 billion")])
+
+    def test_eps_qualifiers_name_the_two_figures(self):
+        tags = _tags("The EPS for both diluted and basic shares is $2.02 and $2.03, respectively.")
+        self.assertEqual([(m, raw) for m, raw, _ in tags], [("eps_diluted", "$2.02"), ("eps_basic", "$2.03")])
+
+    def test_counts_that_differ_leave_the_nearest_alias_rule_in_charge(self):
+        # Two figures, one metric named: no pairing, so nothing is guessed.
+        tags = _tags("Net income was $29.8 billion and $26.1 billion, respectively.")
+        self.assertEqual([m for m, _, _ in tags], ["net_income", "net_income"])
+
+    def test_without_respectively_nothing_changes(self):
+        tags = _tags("Operating income was $35.7 billion and net income was $29.8 billion.")
+        self.assertEqual([m for m, _, _ in tags], ["operating_income", "net_income"])
+
+
+class TestRoundingAgreement(unittest.TestCase):
+    """A figure written more coarsely than the other agrees if it is within one unit of its last digit."""
+
+    def test_a_rounded_figure_agrees(self):
+        self.assertEqual(_rows("Diluted EPS of $2.0.", "Diluted EPS of $2.02.")["Diluted EPS"].status, "MATCH")
+        self.assertEqual(_rows("Net income was $30 billion.", "Net income was $29.8 billion.")["Net income"].status, "MATCH")
+
+    def test_same_precision_gets_no_allowance(self):
+        self.assertEqual(_rows("Diluted EPS of $2.02.", "Diluted EPS of $2.03.")["Diluted EPS"].status, "MISMATCH")
+
+    def test_rounding_doesnt_hide_a_real_difference(self):
+        # $2.0 covers $1.9 to $2.1; $2.25 is outside it.
+        self.assertEqual(_rows("Diluted EPS of $2.0.", "Diluted EPS of $2.25.")["Diluted EPS"].status, "MISMATCH")
+
+
 class TestPeriods(unittest.TestCase):
 
     def test_period_expressions(self):

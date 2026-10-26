@@ -19,6 +19,7 @@ No network, no live model.
 
 from __future__ import annotations
 
+from tests.support import ADMIN_HEADERS
 import json
 import shutil
 import sqlite3
@@ -53,6 +54,34 @@ def _by_key(result):
 
 
 # ── B2 ──────────────────────────────────────────────────────────────────────────
+
+class TestCoverageFix(unittest.TestCase):
+    """2026-10-05 coverage fix: plain EPS checked against the filing; rounding is not an arithmetic error."""
+
+    def _plain_eps(self, text):
+        return _by_key(run_checks(None, text, given_facts=_GIVEN)).get("source:agent_b:eps")
+
+    def test_plain_eps_matching_a_filed_eps_passes(self):
+        # Given diluted $2.02 and basic $2.03; either reading is acceptable.
+        self.assertEqual(self._plain_eps("EPS was $2.03 this quarter.")["outcome"], "pass")
+
+    def test_plain_eps_matching_neither_fails_and_gates(self):
+        c = self._plain_eps("EPS was $2.23 this quarter.")
+        self.assertEqual(c["outcome"], "fail")
+        self.assertTrue(c["gates"])
+
+    def test_no_plain_eps_means_no_plain_eps_check(self):
+        self.assertIsNone(self._plain_eps("Diluted EPS was $2.02."))
+
+    def test_a_rounded_basic_eps_beside_a_precise_diluted_one_passes(self):
+        c = _by_key(run_checks("Basic EPS was $2.0 and diluted EPS $2.02.", None))["check:agent_a:eps_basic_ge_diluted"]
+        self.assertEqual(c["outcome"], "pass")
+        self.assertIn("within the rounding", c["math"])
+
+    def test_rounding_doesnt_excuse_a_real_break(self):
+        c = _by_key(run_checks("Basic EPS was $1.9 and diluted EPS $2.02.", None))["check:agent_a:eps_basic_ge_diluted"]
+        self.assertEqual(c["outcome"], "fail")
+
 
 class TestOverlappingLenses(unittest.TestCase):
 
@@ -334,7 +363,7 @@ class TestRoute(_TempDb):
         super().tearDown()
 
     def test_ticker_run_records_lenses_checks_and_gates_on_a_misquote(self):
-        tok = self.client.post("/api/auth/token", json={"scope": "auditor"}).json()["access_token"]
+        tok = self.client.post("/api/auth/token", json={"scope": "auditor"}, headers=ADMIN_HEADERS).json()["access_token"]
         data = self.client.post("/api/compare", json={"ticker": "AAPL"},
                                 headers={"Authorization": f"Bearer {tok}"}).json()
         self.assertEqual(data["producers"]["shared_concepts"], ["EarningsPerShareDiluted", "NetIncomeLoss"])

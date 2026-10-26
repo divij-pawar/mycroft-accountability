@@ -51,7 +51,10 @@ import re
 # "13,971,000,000.0" is taken whole rather than truncated to its last group.
 QUANTITATIVE_RE = re.compile(
     r'(?:'
-    r'\$[\d,]+(?:\.\d+)?(?:\s*(?:million|billion|trillion|M|B|T))?'
+    # The magnitude suffix must end a word: without the boundary, "$2.03 this quarter" read as
+    # $2.03 trillion, "$10 total" as $10 trillion and "$2.02 basic" as $2.02 billion (found by the
+    # 2026-10-05 coverage fix). "bn", "tn" and "mn" are listed so they keep working on purpose.
+    r'\$[\d,]+(?:\.\d+)?(?:\s*(?:million|billion|trillion|bn|tn|mn|M|B|T)\b)?'
     r'|[\d,]+(?:\.\d+)?\s*%'
     r'|[\d,]+(?:\.\d+)?x'           # multiples e.g. 2.3x
     r'|[\d,]+(?:\.\d+)?\s*bps'      # basis points
@@ -72,9 +75,9 @@ QUANTITATIVE_RE = re.compile(
 # Order-of-magnitude suffixes, shared by every caller that has to compare a prose
 # figure against a raw source value.
 SUFFIX_MAP: dict[str, float] = {
-    "trillion": 1e12, "t": 1e12,
-    "billion":  1e9,  "b": 1e9,
-    "million":  1e6,  "m": 1e6,
+    "trillion": 1e12, "tn": 1e12, "t": 1e12,
+    "billion":  1e9,  "bn": 1e9,  "b": 1e9,
+    "million":  1e6,  "mn": 1e6,  "m": 1e6,
 }
 
 

@@ -55,6 +55,7 @@ from validation.facts import (
     CanonicalFact,
     Period,
     extract_facts,
+    precision_of,
 )
 
 CHECKS_POLICY = "b3-v1"
@@ -237,9 +238,21 @@ def _agent_rules(facts: list[CanonicalFact], scope: Scope) -> list[CheckResult]:
         # Any consistent reading passes; only if every reading fails is it a failure.
         results = [rule.check({m: f.value for m, f in zip(rule.metrics, c)}) for c in combos]
         holds, math = next(((h, m) for h, m in results if h), results[0])
+        if not holds and any(_holds_within_rounding(rule, c) for c in combos):
+            # "$2.0" for basic EPS beside "$2.02" diluted: within the digits written, they're consistent.
+            holds, math = True, f"{math} (consistent within the rounding of the figures as written)"
         out.append(CheckResult(key, rule.id, rule.kind, scope, "pass" if holds else "fail", plain, math,
                                None if holds or rule.kind == "hard" else rule.rationale, list(rule.metrics)))
     return out
+
+
+def _holds_within_rounding(rule: Rule, combo: tuple[CanonicalFact, ...]) -> bool:
+    """True if some reading of each figure within one unit of its last written digit satisfies the
+    rule. Rounding is not an arithmetic error: the same allowance the source check and the
+    comparison make (precision_of in validation/facts.py)."""
+    choices = [(f.value - precision_of(f.raw, f.value), f.value, f.value + precision_of(f.raw, f.value))
+               for f in combo]
+    return any(rule.check(dict(zip(rule.metrics, reading)))[0] for reading in itertools.product(*choices))
 
 
 # ── Pass 2: an agent's figures against what it was given ───────────────────────
@@ -257,14 +270,8 @@ def _given_period(fact: dict[str, Any]) -> Period | None:
 
 
 def _precision(raw: str, value: float) -> float:
-    """One unit of the last digit the agent wrote, in the figure's own scale ($94.9B → $0.1B)."""
-    m = re.search(r"\d[\d,]*(?:\.(\d+))?", raw)
-    if not m:
-        return 0.0
-    mantissa = float(m.group(0).replace(",", ""))
-    decimals = len(m.group(1) or "")
-    scale = value / mantissa if mantissa else 1.0
-    return abs(10 ** -decimals * scale)
+    """One unit of the last digit the agent wrote ($94.9B → $0.1B). Shared with the comparison."""
+    return precision_of(raw, value)
 
 
 def _agrees_with_source(f: CanonicalFact, given: float) -> bool:
@@ -306,7 +313,33 @@ def _claims_vs_source(facts: list[CanonicalFact], given: list[dict[str, Any]], s
         others = "" if holds or len(comparable) == 1 else f" (also cited: {', '.join(f.raw for f in comparable[1:])})"
         out.append(CheckResult(key, "matches_source", "hard", scope, "pass" if holds else "fail", plain,
                                f"cited {shown.raw}{others}; given {stated}", None, [metric]))
+    out += _plain_eps_vs_source(facts, given, scope)
     return out
+
+
+def _plain_eps_vs_source(facts: list[CanonicalFact], given: list[dict[str, Any]], scope: Scope) -> list[CheckResult]:
+    """
+    "EPS of $2.02" with basic or diluted unstated maps to no filed concept, so it used to go
+    unchecked. It is checked against every EPS figure the agent was given: it passes if it agrees
+    with one of them (the agent may mean either), and fails if it agrees with none.
+    """
+    plain_eps = [f for f in facts if f.metric == "eps"]
+    filed = [g for g in given if not g.get("missing") and g.get("value") is not None
+             and CONCEPT_METRIC.get(g.get("concept", "")) in ("eps_diluted", "eps_basic")]
+    if not plain_eps or not filed:
+        return []
+    comparable = [(f, g) for f in plain_eps for g in filed
+                  if (gp := _given_period(g)) is None or not f.period.known or f.period.compatible(gp)]
+    key, plain = f"source:{scope}:eps", "EPS matches one of the filed EPS values the agent was given"
+    stated = "; ".join(f"{_LABEL.get(CONCEPT_METRIC[g['concept']], 'EPS')} {_eps(g['value'])}" for g in filed)
+    if not comparable:
+        return [CheckResult(key, "matches_source", "hard", scope, "skipped", plain,
+                            f"cited {', '.join(f.raw for f in plain_eps)}; given {stated}",
+                            "Not checked: the agent states a different period than the one it was given.", ["eps"])]
+    holds = any(_agrees_with_source(f, g["value"]) for f, g in comparable)
+    shown = next((f for f, g in comparable if _agrees_with_source(f, g["value"])), comparable[0][0])
+    return [CheckResult(key, "matches_source", "hard", scope, "pass" if holds else "fail", plain,
+                        f"cited {shown.raw}; given {stated}", None, ["eps"])]
 
 
 # ── Pass 3: the filing itself ──────────────────────────────────────────────────

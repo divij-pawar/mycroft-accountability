@@ -60,6 +60,9 @@ class ExtractedClaim:
     source_label: str | None  = None
     source_url:   str | None  = None
     verified:     bool | None = None   # True=confirmed, False=not found, None=unattainable/unchecked
+    # Why `verified` is what it is, for a citation (validation/verification.py's CHECK_*
+    # values): set only once the claim has been checked, so None means "never checked".
+    check:        str | None  = None
 
     def to_dict(self) -> dict:
         d: dict = {
@@ -72,6 +75,8 @@ class ExtractedClaim:
             d["source_label"] = self.source_label
         if self.source_url is not None:
             d["source_url"] = self.source_url
+        if self.check is not None:
+            d["check"] = self.check
         return d
 
 
@@ -118,7 +123,9 @@ def extract_claims(thought_log: str | None) -> list[ExtractedClaim]:
     for m in _CITATION_RE.finditer(thought_log):
         label = m.group("label").strip()
         url   = m.group("url").strip()
-        key   = ("citation", label.lower())
+        # Keyed by URL, not label: a model that cites one site name for two different
+        # pages (seen 2026-10-05, run 03bd3ca5) has made two citations, and each is checked.
+        key   = ("citation", url.lower())
         if key in seen:
             continue
         seen.add(key)

@@ -104,5 +104,22 @@ class TestPatternBehaviour(unittest.TestCase):
             self.assertIn(word, SUFFIX_MAP)
 
 
+class TestSuffixBoundary(unittest.TestCase):
+    """A magnitude suffix must end a word (2026-10-05). Without the boundary, the first letter of the
+    next word was read as trillion, billion or million."""
+
+    def test_a_following_word_is_not_a_magnitude(self):
+        for text, token in (("EPS was $2.03 this quarter.", "$2.03"), ("$10 total", "$10"),
+                            ("$2.02 basic", "$2.02"), ("revenue of $5 thousand", "$5")):
+            self.assertEqual(extract_numbers(text), [token.lower()], text)
+
+    def test_real_suffixes_still_scale(self):
+        from core.numeric import normalize_number
+        for text, value in (("$94.9B in Q3", 94.9e9), ("$5M, up", 5e6), ("$1.2 tn", 1.2e12),
+                            ("$4 bn and", 4e9), ("$29.79 billion.", 29.79e9), ("$3 trillion", 3e12)):
+            (token,) = extract_numbers(text)
+            self.assertAlmostEqual(normalize_number(token), value, delta=value * 1e-9, msg=text)
+
+
 if __name__ == "__main__":
     unittest.main()

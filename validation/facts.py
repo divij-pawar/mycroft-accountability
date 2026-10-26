@@ -325,6 +325,44 @@ def _metric_for(sentence: str, start: int, end: int, *, years: bool) -> MetricDe
     return None
 
 
+_RESPECTIVELY = re.compile(r"\brespectively\b")
+_EPS_QUALIFIER = re.compile(r"\b(diluted|basic)\b")
+
+
+def _respectively(sentence: str, figures: list[tuple[int, int]]) -> dict[int, MetricDef]:
+    """
+    "Operating income and net income were $35.7 billion and $29.8 billion, respectively": the first
+    figure is operating income, not the net income named nearest to it. When a sentence says
+    "respectively" and names exactly as many metrics before its first figure as it has figures,
+    pair them in order (figure start → metric). "EPS for diluted and basic shares was $2.02 and
+    $2.03, respectively" names one EPS metric with two qualifiers; the qualifiers name the two.
+    Anything else (counts that differ, no metric named) leaves the nearest-alias rule in charge.
+    """
+    if len(figures) < 2 or not _RESPECTIVELY.search(sentence):
+        return {}
+    first = figures[0][0]
+    found = []
+    for metric, alias, pattern in _ALIAS_PATTERNS:
+        if metric.family == "year":
+            continue
+        for m in pattern.finditer(sentence, 0, first):
+            found.append((m.start(), m.end(), metric))
+    # Keep the longest alias where matches overlap ("total assets" over "assets").
+    found.sort(key=lambda t: (t[0], -(t[1] - t[0])))
+    mentions: list[tuple[int, int, MetricDef]] = []
+    for s, e, metric in found:
+        if mentions and s < mentions[-1][1]:
+            continue
+        mentions.append((s, e, metric))
+    metrics = [m for _, _, m in mentions]
+    if len(metrics) == 1 and metrics[0].name == "eps":
+        qualifiers = [q.group(1) for q in _EPS_QUALIFIER.finditer(sentence, 0, first)]
+        metrics = [_BY_NAME[f"eps_{q}"] for q in qualifiers]
+    if len(metrics) != len(figures):
+        return {}
+    return {start: metric for (start, _), metric in zip(figures, metrics)}
+
+
 def _nearest_period(periods: list[tuple[int, int, Period]], start: int, end: int) -> Period:
     if not periods:
         return UNKNOWN
@@ -357,11 +395,12 @@ def extract_facts(conclusion: str, *, include_years: bool = False) -> list[Canon
                 if not any(s < m.end() and m.start() < e for s, e in taken):
                     candidates.append((m.start(), m.end(), m.group(0), True))
 
+        in_order = _respectively(lower, [(s, e) for s, e, _, y in candidates if not y])
         for start, end, raw, is_year in candidates:
             value = float(raw) if is_year else normalize_number(raw)
             if value is None:
                 continue
-            metric = _metric_for(lower, start, end, years=is_year) or (_YEAR if is_year else _UNTAGGED)
+            metric = in_order.get(start) or _metric_for(lower, start, end, years=is_year) or (_YEAR if is_year else _UNTAGGED)
             if metric.family == "self_report":
                 continue
             if not is_year and _PER_SHARE_AFTER.match(lower, end) and metric.family != "per_share":
@@ -419,6 +458,37 @@ def _within(family: str, a: float, b: float) -> bool:
     return abs(a - b) <= amount + 1e-12 if kind == "abs" else close_enough(a, b, amount)
 
 
+def precision_of(raw: str, value: float) -> float:
+    """One unit of the last digit written, in the figure's own scale ($94.9B → $0.1B; $2.0 → $0.1)."""
+    m = re.search(r"\d[\d,]*(?:\.(\d+))?", raw)
+    if not m:
+        return 0.0
+    mantissa = float(m.group(0).replace(",", ""))
+    decimals = len(m.group(1) or "")
+    scale = value / mantissa if mantissa else 1.0
+    return abs(10 ** -decimals * scale)
+
+
+# Families whose figures are quoted from filings, where an agent rounds to the digits it writes.
+_ROUNDED_FAMILIES = ("currency", "per_share")
+
+
+def _agree(family: str, a: CanonicalFact, b: CanonicalFact) -> bool:
+    """Within tolerance, or, when one figure is written more coarsely than the other, within one unit
+    of the coarser figure's last digit: an agent that writes $2.0 for $2.02, or $30 billion for
+    $29.8 billion, rounded; it didn't disagree. The source check in validation/constraints.py has
+    always allowed this. Two figures written to the same precision get no allowance: $2.02 and $2.03
+    do disagree."""
+    if _within(family, a.value, b.value):
+        return True
+    if family not in _ROUNDED_FAMILIES:
+        return False
+    ua, ub = precision_of(a.raw, a.value), precision_of(b.raw, b.value)
+    if abs(ua - ub) <= 1e-9 * max(ua, ub, 1e-12):
+        return False
+    return abs(a.value - b.value) <= max(ua, ub) + 1e-9
+
+
 def _variance_pct(a: float, b: float) -> float | None:
     denom = max(abs(a), abs(b))
     return round(abs(a - b) / denom * 100, 2) if denom else None
@@ -459,14 +529,14 @@ def _pair(metric: str, label: str, family: Family,
         note = None
     if pairs:
         a, b = min(pairs, key=lambda p: abs(p[0].value - p[1].value) / (max(abs(p[0].value), abs(p[1].value)) or 1))
-        status: Status = "MATCH" if _within(family, a.value, b.value) else "MISMATCH"
+        status: Status = "MATCH" if _agree(family, a, b) else "MISMATCH"
         return _row(metric, label, family, status, a, b, note)
     a, b = a_facts[0], b_facts[0]
     if a_known != b_known:
         # Equal values with the period stated on one side only are the same figure,
         # said once with its period. Unequal ones can't be told apart from a
         # period difference, so they are not called a mismatch.
-        agreeing = [(x, y) for x in a_facts for y in b_facts if _within(family, x.value, y.value)]
+        agreeing = [(x, y) for x in a_facts for y in b_facts if _agree(family, x, y)]
         if agreeing:
             x, y = agreeing[0]
             stated = x.period.label() or y.period.label()
