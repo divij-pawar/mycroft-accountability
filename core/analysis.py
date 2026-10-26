@@ -142,6 +142,7 @@ class AnalysisRecord(TypedDict, total=False):
     thought_log: str | None
     issues: list[str]        # what validate_signal() dropped or what was filled in, in words
     halt_reason: str | None
+    tier1: dict | None       # validation/analysis_checks.py check_analysis(); None when halted
     status: str
 
 
