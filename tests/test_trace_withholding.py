@@ -12,6 +12,7 @@ the full trace. No network, no live model.
 
 from __future__ import annotations
 
+from tests.support import ADMIN_HEADERS
 import json
 import shutil
 import tempfile
@@ -63,7 +64,7 @@ class _Db(unittest.TestCase):
         shutil.rmtree(self._tmpdir, ignore_errors=True)
 
     def auth(self, scope):
-        tok = self.client.post("/api/auth/token", json={"scope": scope}).json()["access_token"]
+        tok = self.client.post("/api/auth/token", json={"scope": scope}, headers=ADMIN_HEADERS).json()["access_token"]
         return {"Authorization": f"Bearer {tok}"}
 
 

@@ -19,6 +19,8 @@ web/data/*.json
 web/data/*.json.migrated
 # BP: filings fetched from SEC on demand (datasources/filings.py) — regenerable.
 web/data/filing_cache/
+# The financial agent's day cache of end-of-day prices (financial_agent/prices.py), regenerable.
+web/data/price_cache/
 
 # Local-only bulk that must never enter version control
 /env
@@ -43,3 +45,9 @@ web/frontend/*.tsbuildinfo
 # Packaging output: pyproject.toml makes `pip install .` possible, which leaves these behind.
 *.egg-info/
 /build/
+
+# Personal planning notes (local only)
+/october plan.md
+
+# A stray empty npm lockfile at the repo root: the only npm project is web/frontend/
+/package-lock.json

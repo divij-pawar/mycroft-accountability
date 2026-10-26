@@ -22,6 +22,9 @@ Why this exists, and why it is not a "mock feature" of the product:
 
 from __future__ import annotations
 
+import os
+import secrets
+
 from core.contracts import AgentAdapter
 from core.parsing import AgentResponse, StructuralParseError, _parse_response
 from core.directive import DirectiveVersion
@@ -112,3 +115,14 @@ def no_model_extraction():
         return call
 
     return patch("web.server._build_model_call", side_effect=build)
+
+
+# Route tests mint auditor tokens through /api/auth/token, which now needs the admin key
+# (web/auth.py). Importing this module configures one for the test process and exposes the
+# header a test sends; investor tokens ignore it.
+# Random per test process, never a string that sits in the repo: if this module is ever imported
+# inside a running server (web/self_report.py counts tests by importing them, and restores the
+# environment afterwards), a leaked key is not one anyone could know.
+ADMIN_KEY = secrets.token_hex(16)
+os.environ["ACCOUNTABILITY_ADMIN_KEY"] = ADMIN_KEY
+ADMIN_HEADERS = {"X-Admin-Key": ADMIN_KEY}

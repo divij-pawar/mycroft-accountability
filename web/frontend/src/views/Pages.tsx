@@ -55,6 +55,7 @@ export function ChatView({ live, scope }: { live: LiveRunControls; scope: Scope 
             {line.kind === "thinking" && <><span className="spinner" aria-hidden="true" /> {line.attempt > 1 ? `Retrying (attempt ${line.attempt})` : "Thinking"}… {secs(line.since)}s</>}
             {line.kind === "searching" && <><span className="spinner" aria-hidden="true" /> Searching{line.query ? <>: <q>{line.query}</q></> : ""}… {secs(line.since)}s</>}
             {line.kind === "extracting" && <><span className="spinner" aria-hidden="true" /> Reading its answer… {secs(line.since)}s</>}
+            {line.kind === "probing" && <><span className="spinner" aria-hidden="true" /> Asking again to check consistency… {secs(line.since)}s</>}
             {line.kind === "between" && <span className="muted">{line.label}</span>}
           </p>
           {searches.length > 0 && (

@@ -81,7 +81,16 @@ export function RunDetailView({ run, flags, scope, onFlagged, onDecided }: {
       {!compare && (
         <dl className="kv">
           <div><dt><RolePill role="verifier" /> Confidence</dt>
-            <dd>{run.confidence_score ?? "—"} <span className="badge-neutral">{run.confidence_classification ?? "—"}</span></dd></div>
+            <dd>{run.confidence_score ?? "—"} <span className="badge-neutral">{run.confidence_classification ?? "—"}</span>
+              {!!run.confidence_adjustments?.length && (
+                <ul className="plain-list small" aria-label="What lowered the confidence">
+                  <li className="muted">From {run.confidence_before_checks} before the checks:</li>
+                  {run.confidence_adjustments.map((a) => (
+                    <li key={a.reason}>−{a.penalty} {a.reason}</li>
+                  ))}
+                </ul>
+              )}
+            </dd></div>
           {run.consistency && (
             <div><dt><RolePill role="verifier" /> Consistency</dt>
               <dd><span className="badge-neutral">{run.consistency.agreement}</span> {run.consistency.score}</dd></div>
@@ -209,7 +218,7 @@ export function RunDetail({ runId, scope, onChanged }: { runId: string; scope: S
     if (shown.current !== key) setRun(null);
     shown.current = key;
     setError(null);
-    Promise.all([api.run(runId, scope), api.flags(runId).catch(() => [])])
+    Promise.all([api.run(runId, scope), scope === "auditor" ? api.flags(runId).catch(() => []) : Promise.resolve([] as Flag[])])
       .then(([r, f]) => { if (live) { setRun(r); setFlags(f); } })
       .catch((err: Error) => { if (live) setError(err.message); });
     return () => { live = false; };

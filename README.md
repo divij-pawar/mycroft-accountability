@@ -14,8 +14,10 @@ decision gate when they disagree, keeping an append-only record of every attempt
      matrix -> the decision gate) and embed it with ![demo](docs/demo.gif). -->
 
 > [!IMPORTANT]
-> **Research prototype. Localhost only.** Several routes are unauthenticated and the token endpoint
-> issues any scope to anyone ([Honest Ledger: `audit-criticals`](https://divij-pawar.github.io/mycroft-accountability/ledger.html#audit-criticals)).
+> **Research prototype. Localhost only.** An auditor token now needs an admin key and the write
+> routes need a token, but runs are still stored at full detail and redacted only when read, and the
+> reviewer's name is typed, not authenticated
+> ([Honest Ledger: `audit-criticals`](https://divij-pawar.github.io/mycroft-accountability/ledger.html#audit-criticals)).
 > Don't expose it to a network.
 
 > [!NOTE]
@@ -149,6 +151,8 @@ with the note *"Pending human review: this run has an open decision (a disputed 
 check or the grade)."* A reviewer decides through the API (or the review app):
 
 ```bash
+AUDITOR_TOKEN=$(curl -s -X POST localhost:8000/api/auth/token -H "content-type: application/json" \
+  -H "x-admin-key: $ACCOUNTABILITY_ADMIN_KEY" -d '{"scope": "auditor"}' | python -c 'import sys,json; print(json.load(sys.stdin)["access_token"])')
 curl -X POST localhost:8000/api/runs/<run_id>/decisions \
   -H "authorization: Bearer $AUDITOR_TOKEN" -H "content-type: application/json" \
   -d '{"decision": "accept_a", "decided_by": "A. Reviewer", "cited_items": ["release_year"],
@@ -267,6 +271,38 @@ docker run --rm -p 127.0.0.1:8000:8000 --env-file .env mycroft-accountability
 The image holds the server and the built review app; the model stays outside (Ollama on the host,
 through `host.docker.internal`). Publish the port on `127.0.0.1` only.
 
+## Use your own agent: Claude Code, Codex or Cursor
+
+No API key needed: the agent runs in your own session, with your own login, and the
+verification layer connects to it as an MCP server. The layer never calls the model; it checks,
+records and gates what your agent submits, through exactly the same contract, retry, comparison,
+checks and gate as a run it drives itself.
+
+```bash
+scripts/start-server.sh                                              # the server, with /mcp
+claude mcp add --transport http mycroft http://localhost:8000/mcp \
+  --header "Authorization: Bearer $ACCOUNTABILITY_ADMIN_KEY"          # Claude Code
+```
+
+`/mcp` needs the admin key as a Bearer token. `scripts/start-server.sh` saves one in `.env` the first
+time it runs (`ACCOUNTABILITY_ADMIN_KEY`); load it into your shell before the command above. Codex and
+Cursor take the same URL and header in their MCP settings (not yet tried with either). Then ask your agent something like
+*"Use the mycroft tools to run a compare on AAPL"*:
+
+1. `start_compare(ticker="AAPL")` creates the run, and your session is agent A. Agent B is the
+   local model (`partner="ollama"`, the default) or a second session (`partner="session"`, which
+   another agent joins with `join_compare`).
+2. Your agent reads the instructions and the filing figures it's given, researches with the
+   layer's `search` tool (recorded) or its own web search, and calls `submit` with its reply.
+3. The server checks the format. A broken reply comes back as a retry with the reason; a second
+   one halts that side. Then it asks for the grade JSON, and the run is compared, checked and
+   gated as usual.
+4. Watch it live in the review app under **Live runs** (`#/live`), or at the `watch` link every
+   tool reply carries.
+
+The session's name is what the MCP client reports about itself: recorded as given, not
+verified. Keep the server on localhost.
+
 ## Resilience and edge cases
 
 What goes wrong with agents, what the system does about it, and the evidence it works. "Tested"
@@ -277,9 +313,9 @@ means covered by the suites; "observed" means seen on a real model, with the rec
 | **Malformed output** (missing blocks, text outside them) | One retry with a corrective directive, then halt; every attempt kept ([ADR-07](https://divij-pawar.github.io/mycroft-accountability/f-validation-loop.html)) | Observed: 13 retries in 48 real-model agent runs, 4 recovered, 9 halted (2026-09-22 to 2026-09-24) |
 | **The model parrots its instructions** | A conclusion copying 8+ consecutive words of the directive, or an empty one, is a structural failure | Observed: 7 of 10 stored v1.5.0 conclusions had echoed it before the check existed |
 | **The model server stalls** | `MODEL_TIMEOUT_S` (default 120 s with nothing received) abandons the call; the run is recorded as halted with the reason | Tested against a stub server; Ollama hung 4 times in compares before it existed |
-| **An agent loops on tool calls** | At most 4 tool round trips per call | In the code (`_MAX_TOOL_ITERATIONS`); not covered by a test |
+| **An agent loops on tool calls** | At most 4 tool round trips per call | Tested with a fake model that never stops: exactly 4 round trips, each traced, the last reply returned (`tests/test_adapter_tool_limits.py`); not observed on a real model |
 | **Placeholder tool arguments** (`"None"`, `"N/A"`) | One retry with only the query; a second failure is shown to the model as a tool error, never a fake result | Observed live, then tested |
-| **No search key** | The call runs without tools, and the server warns when a message contains a URL it can't check | In the code; not covered by a test |
+| **No search key** | The call runs without tools, and the server warns when a message contains a URL it can't check | Tested with the key unset: no tool is bound, and the server warns about a URL it can't check (`tests/test_adapter_tool_limits.py`) |
 | **Invented or misquoted figures** | Cross-agent `MISMATCH` gates; `UNCORROBORATED` flags one-sided figures; each figure is checked against the filing value the agent was given; citations are fetched and checked | Tested; a fabricated AAPL debt-to-equity figure is the corpus's confirmed true positive |
 | **Two agents at once** | Thread-safe step trace; unique, gap-free sequence numbers | Tested; observed overlapping model calls of 39.4 s and 16.9 s |
 | **The browser closes mid-run** | The run keeps going and is stored anyway: "a closed browser tab must not be able to delete" the record | In the code; not covered by a test |
@@ -292,7 +328,8 @@ means covered by the suites; "observed" means seen on a real model, with the rec
 core/          contracts (AgentAdapter, ModelCall, JsonFetcher), versioned directives, parser, schemas, assessment vocabulary
 adapters/      the LangChain adapter (Ollama or Gemini, Tavily tool loop, stall timeout) and the provider registry
 pipeline/      the retry-then-halt validation loop; LangFuse tracing
-datasources/   SEC EDGAR companyfacts; inline-XBRL filing excerpts (the only data egress)
+datasources/   SEC EDGAR companyfacts; inline-XBRL filing excerpts
+financial_agent/  the user-facing financial agent (in progress, see its PLAN.md): Alpha Vantage prices, indicators, frozen bundles
 producers/     concept lenses: financial, earnings, bull, bear; the two pairings
 validation/    figure comparison, accounting checks, decision gate and redaction, synthesis, audit export
 web/           FastAPI server, SQLite store, scope tokens, step trace, Honest Ledger; web/frontend/ is the React review app

@@ -33,7 +33,8 @@ afterEach(() => vi.restoreAllMocks());
 describe("Settings", () => {
   it("shows the server's settings and saves a change", async () => {
     const posted: unknown[] = [];
-    vi.stubGlobal("fetch", vi.fn(async (_url: string, init?: RequestInit) => {
+    vi.stubGlobal("fetch", vi.fn(async (url: string, init?: RequestInit) => {
+      if (url === "/api/auth/token") return json({ access_token: "t" });
       if (init?.method === "POST") { posted.push(JSON.parse(init.body as string)); return json({ ...CONFIG, seed: 7 }); }
       return json(CONFIG);
     }));
@@ -162,7 +163,7 @@ describe("App navigation", () => {
     const nav = screen.getByRole("navigation", { name: "Pages" });
     expect(await within(nav).findByText("Honest Ledger (1 open)")).toBeInTheDocument();
     expect(await within(nav).findByText("Directive v1.5.2")).toBeInTheDocument();
-    expect(within(nav).getAllByRole("link").map((a) => a.getAttribute("href"))).toEqual(["#/chat", "#/ledger", "#/directive", "#/settings"]);
+    expect(within(nav).getAllByRole("link").map((a) => a.getAttribute("href"))).toEqual(["#/analysis", "#/chat", "#/live", "#/ledger", "#/directive", "#/settings"]);
     expect(screen.queryByText("Server unreachable")).toBeNull();
   });
 

@@ -18,6 +18,7 @@ route's import site (same convention as tests/test_compare_route.py).
 
 from __future__ import annotations
 
+from tests.support import ADMIN_HEADERS
 import json
 import os
 import shutil
@@ -288,7 +289,7 @@ class TestStreamRoutes(unittest.TestCase):
         shutil.rmtree(self._tmpdir, ignore_errors=True)
 
     def _headers(self, scope="auditor"):
-        token = self.client.post("/api/auth/token", json={"scope": scope}).json()["access_token"]
+        token = self.client.post("/api/auth/token", json={"scope": scope}, headers=ADMIN_HEADERS).json()["access_token"]
         return {"Authorization": f"Bearer {token}"}
 
     def _stream(self, path, body):
@@ -331,6 +332,22 @@ class TestStreamRoutes(unittest.TestCase):
         self.assertEqual(events[-1][0], "result")
         self.assertFalse(events[-1][1]["halted"])
         self.assertTrue(any(d.get("kind") == "llm" for e, d in events if e.startswith("step_")))
+
+    def test_chat_consistency_probe_is_traced_as_a_probe_not_a_retry(self):
+        # The probe asks the same question again. It used to share the agent's traced
+        # adapter, so its call was recorded as "LLM attempt 2" and shown as a retry that
+        # never happened (ledger consistency-probe-shown-as-retry; chat run 3f1b0f89).
+        events = self._stream("/api/chat/stream", {"message": "What was revenue?", "context": ""})
+        result = events[-1][1]
+        self.assertIsNotNone(result.get("consistency"), "the probe should run for a non-Gemini model")
+        steps = {d["seq"]: d for e, d in events if e == "step_finished"}.values()
+        llm = [s for s in steps if s.get("kind") == "llm"]
+        probe = [s for s in steps if s.get("kind") == "probe"]
+        self.assertTrue(probe, "the probe's call should be its own step")
+        self.assertTrue(all(s["label"].startswith("Consistency probe, attempt") for s in probe))
+        # Every "LLM attempt" step is a real attempt of the agent's answer, one per reasoning object.
+        self.assertEqual(len(llm), len(result["reasoning_objects"]))
+        self.assertEqual([s["attempt"] for s in llm], [ro["attempt_number"] for ro in result["reasoning_objects"]])
 
 
 if __name__ == "__main__":

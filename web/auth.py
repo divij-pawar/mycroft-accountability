@@ -10,10 +10,11 @@ Token issuance:
   POST /api/auth/token  { "scope": "auditor"|"investor" }
   Returns { "access_token": "<jwt>", "token_type": "bearer", "scope": "..." }
 
-  In production the endpoint should require an admin credential (e.g. API key).
-  For the Phase 1 prototype it accepts any request so the test UI can self-serve
-  a token without a separate identity system.  The placeholder is clearly marked
-  with a TODO so it can't be accidentally shipped.
+  An investor token is open to anyone: it is the most restricted scope. An auditor
+  token needs the admin key (`ACCOUNTABILITY_ADMIN_KEY`) in an `X-Admin-Key` header.
+  With no admin key configured, auditor issuance is refused, never silently open.
+  `ACCOUNTABILITY_INSECURE_DEV=1` restores the old open behaviour (and the old public
+  signing secret) for a throwaway local session; it is never the default.
 
 Validation:
   FastAPI dependency  require_scope()  is injected into protected routes.
@@ -21,13 +22,16 @@ Validation:
   the decoded scope string.  Missing / invalid / expired tokens → 401.
 
 Secret:
-  Read from ACCOUNTABILITY_SECRET env var.  Falls back to a hard-coded dev
-  secret that is intentionally obvious so it cannot be mistaken for production.
+  `ACCOUNTABILITY_SECRET` if set. Otherwise a random per-process secret, so no
+  token can be forged from the source code; tokens then stop working when the
+  server restarts, and the review app fetches a new one.
 """
 
 from __future__ import annotations
 
+import hmac
 import os
+import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Literal
 
@@ -46,19 +50,72 @@ ScopeT = Literal["auditor", "investor"]
 _bearer_scheme = HTTPBearer(auto_error=False)
 
 
+_process_secret: str | None = None
+
+
+def insecure_dev() -> bool:
+    """`ACCOUNTABILITY_INSECURE_DEV=1`: the pre-hardening behaviour, for a throwaway local session."""
+    return os.environ.get("ACCOUNTABILITY_INSECURE_DEV") == "1"
+
+
 def _secret() -> str:
-    return os.environ.get("ACCOUNTABILITY_SECRET", _DEV_SECRET)
+    global _process_secret
+    configured = os.environ.get("ACCOUNTABILITY_SECRET")
+    if configured:
+        return configured
+    if insecure_dev():
+        return _DEV_SECRET
+    if _process_secret is None:
+        _process_secret = secrets.token_urlsafe(32)
+    return _process_secret
+
+
+# ── The admin key ──────────────────────────────────────────────────────────────
+
+ADMIN_KEY_HEADER = "X-Admin-Key"
+
+
+def admin_key() -> str | None:
+    return os.environ.get("ACCOUNTABILITY_ADMIN_KEY") or None
+
+
+def check_admin_key(provided: str | None) -> bool:
+    """True if `provided` is the admin key (or the server is in insecure-dev mode)."""
+    if insecure_dev():
+        return True
+    configured = admin_key()
+    if configured is None or not provided:
+        return False
+    return hmac.compare_digest(provided.encode(), configured.encode())
+
+
+def authorize_issue(scope: str, provided_key: str | None) -> None:
+    """
+    Raise 403 unless `provided_key` may be issued a `scope` token. Investor is open;
+    auditor needs the admin key, and without a configured key it is refused.
+    """
+    if scope != "auditor" or insecure_dev():
+        return
+    if admin_key() is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=("Auditor tokens need an admin key, and none is configured. Set "
+                    "ACCOUNTABILITY_ADMIN_KEY on the server (scripts/start-server.sh does it), "
+                    f"then send it in the {ADMIN_KEY_HEADER} header."),
+        )
+    if not check_admin_key(provided_key):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"A valid {ADMIN_KEY_HEADER} is required for an auditor token.",
+        )
 
 
 # ── Issue ──────────────────────────────────────────────────────────────────────
 
 def issue_token(scope: ScopeT) -> str:
     """
-    Create a signed JWT carrying the requested scope.
-
-    TODO (SEC-02 production hardening): verify caller identity before issuing
-    an auditor-scoped token.  In production, require an admin API key or SSO
-    credential in the request before calling this function.
+    Create a signed JWT carrying the requested scope. Whether the caller may have it
+    is decided by `authorize_issue`, before this is called.
     """
     now = datetime.now(timezone.utc)
     payload = {
@@ -130,3 +187,13 @@ def optional_scope(
     if credentials is None:
         return None
     return require_scope(credentials)
+
+
+def require_auditor(scope: ScopeT = Depends(require_scope)) -> ScopeT:
+    """A route only an auditor token may use (writes, replays, admin)."""
+    if scope != "auditor":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="This route needs an auditor-scoped token.",
+        )
+    return scope

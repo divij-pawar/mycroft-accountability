@@ -17,6 +17,7 @@ No network, no live model (tests/__init__.py makes a real model call impossible)
 
 from __future__ import annotations
 
+from tests.support import ADMIN_HEADERS
 import json
 import shutil
 import sqlite3
@@ -314,7 +315,7 @@ class TestRoute(_Db):
         super().tearDown()
 
     def auth(self, scope):
-        return {"Authorization": "Bearer " + self.client.post("/api/auth/token", json={"scope": scope}).json()["access_token"]}
+        return {"Authorization": "Bearer " + self.client.post("/api/auth/token", json={"scope": scope}, headers=ADMIN_HEADERS).json()["access_token"]}
 
     def test_extract_classify_gate_decide(self):
         d = self.client.post("/api/compare", json={"ticker": "AAPL"}, headers=self.auth("auditor")).json()

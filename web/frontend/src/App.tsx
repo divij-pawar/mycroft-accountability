@@ -3,22 +3,28 @@ import type { Run, Scope } from "./api/types";
 import { HistoryPanel, type Tab } from "./views/HistoryPanel";
 import { RunDetail } from "./views/RunDetail";
 import { CompareView } from "./views/CompareView";
+import { AnalysisView } from "./views/AnalysisView";
 import { ChatView, DirectiveView, LedgerView, SettingsView } from "./views/Pages";
-import { api } from "./api/client";
+import { LiveList, WatchView } from "./views/WatchView";
+import { api, setAdminKeyRequester } from "./api/client";
+import { AdminKeyDialog } from "./components/AdminKeyDialog";
 import { useLiveRun } from "./state/useLiveRun";
 
 // Workspace shell. The route lives in the URL hash so a view is linkable and the
 // back button works: #/runs/{id} a stored record, #/new a compare run, #/chat a
 // chat run, and #/settings, #/directive, #/ledger the pages that used to be the
-// classic UI's panels and modals (U9: this app now serves "/").
+// classic UI's panels and modals (U9: this app now serves "/"). #/live lists the runs in
+// progress and #/live/{id} watches one, including runs an agent session started over MCP.
 
-type Page = "new" | "chat" | "settings" | "directive" | "ledger";
-type Route = { view: "run"; id: string } | { view: Page } | { view: "empty" };
-const PAGES: Page[] = ["new", "chat", "settings", "directive", "ledger"];
+type Page = "analysis" | "new" | "chat" | "settings" | "directive" | "ledger" | "live";
+type Route = { view: "run"; id: string } | { view: "watch"; id: string } | { view: Page } | { view: "empty" };
+const PAGES: Page[] = ["analysis", "new", "chat", "settings", "directive", "ledger", "live"];
 
 function readRoute(): Route {
   const run = window.location.hash.match(/^#\/runs\/([\w-]+)/);
   if (run) return { view: "run", id: run[1] };
+  const watched = window.location.hash.match(/^#\/live\/([\w-]+)/);
+  if (watched) return { view: "watch", id: watched[1] };
   const page = PAGES.find((p) => window.location.hash.startsWith(`#/${p}`));
   return page ? { view: page } : { view: "empty" };
 }
@@ -48,6 +54,19 @@ export function App() {
   const [ledgerOpen, setLedgerOpen] = useState<number | null>(null);
   const [directiveVersion, setDirectiveVersion] = useState<string | null>(null);
   const [online, setOnline] = useState<boolean | null>(null);
+  // The server asks for its admin key before it issues auditor access; one dialog answers every
+  // request waiting on it.
+  const [keyAsk, setKeyAsk] = useState<{ resolve: (key: string | null) => void } | null>(null);
+  useEffect(() => {
+    let waiting: Promise<string | null> | null = null;
+    setAdminKeyRequester(() => {
+      waiting ??= new Promise<string | null>((resolve) => {
+        setKeyAsk({ resolve: (key) => { waiting = null; setKeyAsk(null); resolve(key); } });
+      });
+      return waiting;
+    });
+    return () => setAdminKeyRequester(null);
+  }, []);
   // The classic UI's status dot and badges: is the server up, which directive, how many open issues.
   useEffect(() => {
     api.directive().then((d) => { setDirectiveVersion(d.version); setOnline(true); }).catch(() => setOnline(false));
@@ -82,6 +101,7 @@ export function App() {
   return (
     <div className="app">
       <div className="sr-only" aria-live="polite" aria-atomic="true" data-testid="announcer">{announcement}</div>
+      {keyAsk && <AdminKeyDialog onSubmit={(k) => keyAsk.resolve(k)} onCancel={() => keyAsk.resolve(null)} />}
       <header className="topbar">
         <div className="topbar-left">
           <span className="logo" aria-hidden="true">⬡</span>
@@ -114,7 +134,7 @@ export function App() {
             New compare
           </button>
           <nav className={`topnav ${menuOpen ? "open" : ""}`} aria-label="Pages" id="topnav">
-            {([["chat", "Chat"], ["ledger", `Honest Ledger${ledgerOpen !== null ? ` (${ledgerOpen} open)` : ""}`],
+            {([["analysis", "Analysis"], ["chat", "Chat"], ["live", "Live runs"], ["ledger", `Honest Ledger${ledgerOpen !== null ? ` (${ledgerOpen} open)` : ""}`],
                ["directive", `Directive${directiveVersion ? ` ${directiveVersion}` : ""}`], ["settings", "Settings"]] as const).map(([p, label]) => (
               <a key={p} href={`#/${p}`} className="btn-ghost" aria-current={route.view === p ? "page" : undefined}
                  onClick={() => setMenuOpen(false)}>{label}</a>
@@ -134,11 +154,14 @@ export function App() {
           {route.view === "run" && (
             <RunDetail runId={route.id} scope={scope} onChanged={() => setRefreshKey((k) => k + 1)} />
           )}
+          {route.view === "analysis" && <AnalysisView scope={scope} />}
           {route.view === "new" && <CompareView live={live} scope={scope} />}
           {route.view === "chat" && <ChatView live={live} scope={scope} />}
           {route.view === "settings" && <SettingsView scope={scope} />}
           {route.view === "directive" && <DirectiveView />}
           {route.view === "ledger" && <LedgerView onCount={setLedgerOpen} />}
+          {route.view === "live" && <LiveList />}
+          {route.view === "watch" && <WatchView runId={route.id} live={live} scope={scope} />}
           {route.view === "empty" && (
             <div className="empty-state">
               <h1>Pick a run to review</h1>
@@ -147,7 +170,8 @@ export function App() {
                 did — in that order. Or start a run.
               </p>
               <div className="gate-actions" style={{ justifyContent: "center" }}>
-                <button type="button" className="btn" onClick={() => go("/new")}>New compare</button>
+                <button type="button" className="btn" onClick={() => go("/analysis")}>Ask for a signal</button>
+                <button type="button" className="btn-ghost" onClick={() => go("/new")}>New compare</button>
                 <button type="button" className="btn-ghost" onClick={() => go("/chat")}>Ask one agent</button>
               </div>
             </div>

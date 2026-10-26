@@ -17,6 +17,7 @@ tests/test_compare_route.py uses.
 
 from __future__ import annotations
 
+from tests.support import ADMIN_HEADERS
 import copy
 import shutil
 import sqlite3
@@ -259,7 +260,7 @@ class TestGateRoutes(_TempDb):
         super().tearDown()
 
     def _auth(self, scope):
-        tok = self.client.post("/api/auth/token", json={"scope": scope}).json()["access_token"]
+        tok = self.client.post("/api/auth/token", json={"scope": scope}, headers=ADMIN_HEADERS).json()["access_token"]
         return {"Authorization": f"Bearer {tok}"}
 
     def _compare(self, scope="auditor"):

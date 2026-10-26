@@ -28,6 +28,7 @@ Keeping it honest
 
 from __future__ import annotations
 
+import os
 import unittest
 from pathlib import Path
 from typing import Any
@@ -199,7 +200,11 @@ KNOWN_ISSUES: list[dict[str, Any]] = [
                   "UPDATE 2026-09-25 (BG): reads sent with an investor token now strip the internal tier from the nested "
                   "session too (validation/gate.py redact_for_scope, on /api/runs, /api/runs/{id}, /api/sessions). "
                   "Storage is unchanged (still full), and a read with no token is served at the scope the run was "
-                  "stored under, so this stays open.",
+                  "stored under, so this stays open. "
+                  "UPDATE 2026-10-26 (Week 1): a read with no token is now served at the investor scope, not the stored one, so an unauthenticated "
+                  "caller can no longer read an auditor-stored run in full. Also found and fixed that day by tests/test_auth_matrix.py: the live response of POST /api/chat "
+                  "and /api/compare to an investor caller still carried the nested session at full detail (thought logs, raw output, directive text) unless the gate was "
+                  "awaiting a decision; both now go through redact_for_scope. Storage is still full detail; still open for that reason.",
         "status": "OPEN",
         "source": "logs/RUN_LOG.md 2026-08-28 HTTP-route entry; status doc §1.3",
     },
@@ -208,7 +213,14 @@ KNOWN_ISSUES: list[dict[str, Any]] = [
         "severity": "critical",
         "area": "Security",
         "title": "Four original CRITICAL audit findings still open",
-        "detail": "Investor redaction bypassed at storage time; 14 of 16 routes unauthenticated; unauthenticated DELETE /api/runs drops the audit tables; anyone can mint an auditor token. Localhost only — this is not deployable.",
+        "detail": "Investor redaction bypassed at storage time; 14 of 16 routes unauthenticated; unauthenticated DELETE /api/runs drops the audit tables; anyone can mint an auditor token. Localhost only — this is not deployable. "
+                  "UPDATE 2026-10-26 (Week 1, built and tested, not yet observed on a restarted server): three of the four are addressed in code. "
+                  "An auditor token needs the admin key (ACCOUNTABILITY_ADMIN_KEY, X-Admin-Key header) and is refused when none is configured; "
+                  "tokens are signed with a random per-process secret unless ACCOUNTABILITY_SECRET is set, so none can be forged from the source; "
+                  "POST /api/config, POST /replay, GET flags and DELETE /api/runs need an auditor token, DELETE also needs ACCOUNTABILITY_ALLOW_CLEAR=1, "
+                  "and /mcp needs the admin key as a Bearer token. Still open: storage-time redaction (a run is stored at full detail and redacted when read), "
+                  "and routes left public on purpose (/api/config GET, /api/directive, /api/self-report, /api/runs/live, /api/facts/excerpt, /api/runs/drift). "
+                  "The reviewer name at the gate is still typed, not authenticated (gate-identity-self-declared).",
         "status": "OPEN",
         "source": "accountability-layer-audit.md §2 (audit of commit fe45eb4)",
     },
@@ -237,7 +249,8 @@ KNOWN_ISSUES: list[dict[str, Any]] = [
                   "with scripted agents, and route tests now also cover /api/compare/stream, /api/chat/stream, /api/runs reads, "
                   "decisions, source-snippet, facts/excerpt, audit, export.md, sessions and \"/\" (test_concurrency_and_stream, "
                   "test_trace_withholding, test_gate, test_audit, test_cutover). Still without a route test: the plain "
-                  "/api/chat, /api/config, DELETE /api/runs, replay, contradictions, /api/self-report and /api/directive.",
+                  "/api/chat, /api/config, DELETE /api/runs, replay, contradictions, /api/self-report and /api/directive. "
+                  "UPDATE 2026-10-26: tests/test_auth_matrix.py covers every one of those, and walks app.routes so a route added without an auth decision fails the suite.",
         "status": "RESOLVED",
         "source": "status doc §3.3; tests/test_compare_route.py; logs/RUN_LOG.md 2026-09-27 ledger refresh entry",
     },
@@ -296,9 +309,16 @@ KNOWN_ISSUES: list[dict[str, Any]] = [
                   "'EPS diluted and basic are $2.02 and $2.03, respectively' yields only the first figure (seen live on AAPL, 2026-09-25). A check "
                   "that doesn't run is not shown, so absence of a failure is not evidence of a correct figure. Source-sanity checks use the latest "
                   "period all a rule's figures share, which can differ from the period the agents were given (MSFT, 2026-09-25: agents given Q3, "
-                  "filing checks on the fiscal year).",
+                  "filing checks on the fiscal year). "
+                  "UPDATE 2026-10-05: narrowed, not closed. Plain EPS is now checked against the filed EPS figures the agent "
+                  "was given; '..., respectively' lists are paired in order; the comparison and the agent rules allow a "
+                  "figure's rounding as the source check does; and a number-parsing bug that read '$2.03 this quarter' as "
+                  "$2.03 trillion is fixed. Measured by scripts/planted_errors.py on the five recorded runs: planted errors "
+                  "stopped went from 37 of 60 to 50 of 60, and controls wrongly stopped from 3 of 34 to 0. Still open: an "
+                  "unrecognised phrasing is never checked; one agreeing figure passes the source check; a run where one "
+                  "agent answered has nothing to compare against; and the source-sanity period mismatch above.",
         "status": "OPEN",
-        "source": "logs/RUN_LOG.md 2026-09-25 B2 + B3 entry",
+        "source": "logs/RUN_LOG.md 2026-09-25 B2 + B3 entry; 2026-10-05 coverage fix entry; logs/planted-errors-audit.md",
     },
     {
         "id": "ollama-hangs-under-compare",
@@ -413,7 +433,8 @@ KNOWN_ISSUES: list[dict[str, Any]] = [
         "detail": "The classic UI had a button for DELETE /api/runs, which drops every table — runs, the append-only decisions "
                   "and flags. That contradicts the repository's never-delete rule, so the React app that replaced it on "
                   "2026-09-27 has no such button. The route itself is unchanged (admin/test use) and still unauthenticated "
-                  "(see audit-criticals).",
+                  "(see audit-criticals). "
+                  "UPDATE 2026-10-26 (Week 1): the route now needs an auditor token and ACCOUNTABILITY_ALLOW_CLEAR=1 on the server, and refuses with 403 otherwise.",
         "status": "BY_DESIGN",
         "source": "archive/web-static-legacy/README.md; logs/RUN_LOG.md 2026-09-27 B6 + U9 entry",
     },
@@ -439,10 +460,29 @@ KNOWN_ISSUES: list[dict[str, Any]] = [
                   "says \"Retrying (attempt 2)\". Found 2026-09-27 on chat run 3f1b0f89: the trace has LLM attempts 1 and 2, "
                   "while its reasoning objects hold one attempt (SUCCESS) and its consistency block holds the probe's answer. "
                   "The RUN_LOG's 2026-09-27 B6 + U9 entry reported that as a retry; it was not. A reviewer reading the trace "
-                  "sees a retry that never happened (P6: the trace and the record disagree). Not fixed yet.",
-        "status": "OPEN",
+                  "sees a retry that never happened (P6: the trace and the record disagree). "
+                  "RESOLVED 2026-10-05: the probe now runs through its own traced adapter (kind \"probe\", label "
+                  "\"Consistency probe, attempt N\"), so \"LLM attempt\" steps are only the agent's own attempts and the "
+                  "chat lane says \"Asking again to check consistency\" while it runs. Tested "
+                  "(tests/test_concurrency_and_stream.py, web/frontend/tests/live.test.tsx); not yet seen on a live "
+                  "chat run. Traces stored before the fix (3f1b0f89) still carry the old label.",
+        "status": "RESOLVED",
         "source": "web/server.py chat route (run_consistency_probe with the wrapped adapter); web/step_trace.py wrap_adapter; "
                   "logs/RUN_LOG.md 2026-09-27 ledger refresh entry",
+    },
+    {
+        "id": "session-identity-self-reported",
+        "severity": "low",
+        "area": "Agents",
+        "title": "An MCP agent session's identity is what the client says it is",
+        "detail": "When an agent session (Claude Code, Codex, Cursor) drives a run over MCP (web/mcp_server.py), the "
+                  "agent is recorded as 'session: <label>', where the label is the MCP client's own clientInfo or the "
+                  "agent_label argument. Neither is verified, so a record can't prove which tool or model answered. "
+                  "The layer also can't see an agent's own web searches: only searches through its 'search' tool are "
+                  "recorded (citations are still fetched and checked). Built and tested 2026-10-05 with the test "
+                  "suite standing in for the session; not yet run with a real Claude Code, Codex or Cursor session.",
+        "status": "OPEN",
+        "source": "web/agent_sessions.py; web/mcp_server.py; logs/RUN_LOG.md 2026-10-05 MCP entry",
     },
     {
         "id": "gate-identity-self-declared",
@@ -477,11 +517,20 @@ def _discover_test_counts() -> dict[str, Any]:
     Returns counts per module plus a total. On failure, returns an explicit error
     rather than a plausible-looking zero.
     """
+    # Importing the test modules runs their module-level setup, and tests/support.py sets an admin
+    # key there for the route tests. In a server process that would overwrite the server's own key
+    # (found 2026-10-26: a configured key was replaced by the test one), so the environment is put
+    # back exactly as it was, whatever discovery did to it.
+    before = dict(os.environ)
     try:
         loader = unittest.TestLoader()
         suite = loader.discover(str(_TESTS_DIR), top_level_dir=str(_TESTS_DIR.parent))
     except Exception as exc:  # noqa: BLE001 - report the failure, never fake a count
         return {"error": f"{type(exc).__name__}: {exc}", "modules": [], "total": None}
+    finally:
+        for key in set(os.environ) - set(before):
+            del os.environ[key]
+        os.environ.update(before)
 
     per_module: dict[str, int] = {}
 

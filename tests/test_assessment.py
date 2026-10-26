@@ -15,6 +15,7 @@ Pinned here:
 
 from __future__ import annotations
 
+from tests.support import ADMIN_HEADERS
 import json
 import shutil
 import tempfile
@@ -238,7 +239,7 @@ class TestBullBearRoute(unittest.TestCase):
         shutil.rmtree(self._tmpdir, ignore_errors=True)
 
     def test_same_figures_opposite_briefs_and_each_sides_assessment(self):
-        tok = self.client.post("/api/auth/token", json={"scope": "auditor"}).json()["access_token"]
+        tok = self.client.post("/api/auth/token", json={"scope": "auditor"}, headers=ADMIN_HEADERS).json()["access_token"]
         d = self.client.post("/api/compare", json={"ticker": "AAPL", "pairing": "bull_bear"},
                              headers={"Authorization": f"Bearer {tok}"}).json()
         self.assertEqual((d["producers"]["a"]["role"], d["producers"]["b"]["role"]), ("BULL", "BEAR"))
@@ -256,7 +257,7 @@ class TestBullBearRoute(unittest.TestCase):
 
     def test_under_the_active_directive_no_assessment_is_asked_for(self):
         with patch("core.directive.ACTIVE_DIRECTIVE", DIRECTIVE_V1_5_2):
-            tok = self.client.post("/api/auth/token", json={"scope": "auditor"}).json()["access_token"]
+            tok = self.client.post("/api/auth/token", json={"scope": "auditor"}, headers=ADMIN_HEADERS).json()["access_token"]
             d = self.client.post("/api/compare", json={"ticker": "AAPL", "pairing": "bull_bear"},
                                  headers={"Authorization": f"Bearer {tok}"}).json()
         # The scripted agents still append a block; under v1.5.2 that is text outside the
@@ -265,7 +266,7 @@ class TestBullBearRoute(unittest.TestCase):
         self.assertTrue(all(o.get("assessment_status") is None for o in d["reasoning_objects"]))
 
     def test_the_original_pairing_is_unchanged(self):
-        tok = self.client.post("/api/auth/token", json={"scope": "auditor"}).json()["access_token"]
+        tok = self.client.post("/api/auth/token", json={"scope": "auditor"}, headers=ADMIN_HEADERS).json()["access_token"]
         d = self.client.post("/api/compare", json={"ticker": "AAPL"}, headers={"Authorization": f"Bearer {tok}"}).json()
         self.assertEqual((d["producers"]["a"]["role"], d["producers"]["pairing"]), ("PRODUCER A", "lenses"))
         self.assertEqual(d["cross_agent_comparison"]["contradiction_rule"], "concept_aware")

@@ -26,6 +26,7 @@ No network, no live model
 
 from __future__ import annotations
 
+from tests.support import ADMIN_HEADERS
 import shutil
 import tempfile
 import unittest
@@ -83,7 +84,7 @@ class TestCompareRoute(unittest.TestCase):
         shutil.rmtree(self._tmpdir, ignore_errors=True)
 
     def _token(self, scope: str) -> str:
-        resp = self.client.post("/api/auth/token", json={"scope": scope})
+        resp = self.client.post("/api/auth/token", json={"scope": scope}, headers=ADMIN_HEADERS)
         return resp.json()["access_token"]
 
     def _compare(self, scope: str = "auditor"):
@@ -157,8 +158,16 @@ class TestCompareRoute(unittest.TestCase):
         self.assertEqual(data["claims"], {"a": [], "b": []})
         self.assertIsInstance(data["verification_rate"]["a"], float)
         self.assertIsInstance(data["verification_rate"]["b"], float)
+
         for ro in data["reasoning_objects"]:
             self.assertNotIn("thought_log", ro)
+
+    def test_the_investor_response_carries_no_internal_tier_anywhere_not_even_the_nested_session(self):
+        # Until 2026-10-26 the live response of an ungated run went out with its nested session
+        # copy at full detail (thought logs, raw output, directive text). Ledger: session-scope-leak.
+        from tests.test_auth_matrix import _internal_tier_found
+        self.assertEqual(_internal_tier_found(self._compare(scope="investor").json()), [])
+        self.assertNotEqual(_internal_tier_found(self._compare(scope="auditor").json()), [])
 
 
 if __name__ == "__main__":

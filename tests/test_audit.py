@@ -14,6 +14,7 @@ export never changes the stored record.
 
 from __future__ import annotations
 
+from tests.support import ADMIN_HEADERS
 import json
 import shutil
 import tempfile
@@ -95,7 +96,7 @@ class TestRoutes(unittest.TestCase):
         shutil.rmtree(self._tmpdir, ignore_errors=True)
 
     def auth(self, scope):
-        return {"Authorization": "Bearer " + self.client.post("/api/auth/token", json={"scope": scope}).json()["access_token"]}
+        return {"Authorization": "Bearer " + self.client.post("/api/auth/token", json={"scope": scope}, headers=ADMIN_HEADERS).json()["access_token"]}
 
     def test_markdown_is_the_default_export_and_downloads_as_a_file(self):
         r = self.client.get(f"/api/runs/{self.rid}/export.md", headers=self.auth("auditor"))
