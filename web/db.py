@@ -18,18 +18,27 @@ Design decisions:
 from __future__ import annotations
 
 import json
-import re
 import sqlite3
 import uuid
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
+from datasources.tickers import ticker_for
+
 
 def _extract_ticker(subject: str) -> str:
-    """Mirror the _ticker() logic in server.py: first word, alphanumeric only, upper, ≤10 chars."""
-    cleaned = re.sub(r"[^a-zA-Z0-9]", "", (subject.split() or ["CHAT"])[0])
-    return (cleaned.upper()[:10]) or "CHAT"
+    """
+    The same rule as server.py's _ticker(): the company the subject names, or CHAT. Used
+    when a payload doesn't say its ticker (see _payload_ticker). Until 2026-10-06 both
+    took the subject's first word, so rows stored before then may read WHAT or HOW.
+    """
+    return ticker_for(subject) or "CHAT"
+
+
+def _payload_ticker(payload: dict) -> str:
+    """The ticker a run says it is about (compare and chat payloads carry one), else from its subject."""
+    return str(payload.get("ticker") or "").upper()[:10] or _extract_ticker(payload.get("subject", ""))
 
 DB_PATH        = Path(__file__).parent / "data" / "accountability.db"
 RETENTION_DAYS = 90
@@ -121,6 +130,57 @@ BEFORE DELETE ON gate_decisions
 BEGIN
     SELECT RAISE(ABORT, 'gate_decisions is append-only: deletes are forbidden');
 END;
+
+-- The financial agent (financial_agent/PLAN.md 4.5, 6.1, 6.4). All three are append-only.
+-- A bundle is the frozen data of one analysis, keyed by its content hash: the same data
+-- stored twice is one row. An analysis run references its bundle; a verdict references its run.
+CREATE TABLE IF NOT EXISTS analysis_bundles (
+    bundle_hash  TEXT PRIMARY KEY CHECK(bundle_hash LIKE 'sha256:%'),
+    ticker       TEXT NOT NULL,
+    as_of        TEXT NOT NULL,
+    payload_json TEXT NOT NULL,
+    created_at   TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
+);
+
+CREATE TABLE IF NOT EXISTS analysis_runs (
+    run_id        TEXT PRIMARY KEY,
+    parent_run_id TEXT,
+    ticker        TEXT NOT NULL,
+    bundle_hash   TEXT NOT NULL,
+    agent_kind    TEXT NOT NULL CHECK(agent_kind IN ('builtin','session','byo')),
+    status        TEXT NOT NULL CHECK(status IN ('ok','halted','abstained')),
+    payload_json  TEXT NOT NULL,
+    created_at    TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
+    FOREIGN KEY (bundle_hash) REFERENCES analysis_bundles(bundle_hash)
+);
+
+CREATE INDEX IF NOT EXISTS idx_analysis_ticker  ON analysis_runs(ticker);
+CREATE INDEX IF NOT EXISTS idx_analysis_created ON analysis_runs(created_at);
+
+CREATE TABLE IF NOT EXISTS analysis_verdicts (
+    verdict_id   TEXT PRIMARY KEY,
+    run_id       TEXT NOT NULL,
+    verdict      TEXT NOT NULL CHECK(verdict IN
+                     ('CONSISTENT','ADJACENT','DIVERGENT','UNGROUNDED','INCONCLUSIVE')),
+    payload_json TEXT NOT NULL,
+    created_at   TEXT NOT NULL,
+    FOREIGN KEY (run_id) REFERENCES analysis_runs(run_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_verdicts_run_id ON analysis_verdicts(run_id);
+
+CREATE TRIGGER IF NOT EXISTS analysis_bundles_no_update BEFORE UPDATE ON analysis_bundles
+BEGIN SELECT RAISE(ABORT, 'analysis_bundles is append-only: updates are forbidden'); END;
+CREATE TRIGGER IF NOT EXISTS analysis_bundles_no_delete BEFORE DELETE ON analysis_bundles
+BEGIN SELECT RAISE(ABORT, 'analysis_bundles is append-only: deletes are forbidden'); END;
+CREATE TRIGGER IF NOT EXISTS analysis_runs_no_update BEFORE UPDATE ON analysis_runs
+BEGIN SELECT RAISE(ABORT, 'analysis_runs is append-only: updates are forbidden'); END;
+CREATE TRIGGER IF NOT EXISTS analysis_runs_no_delete BEFORE DELETE ON analysis_runs
+BEGIN SELECT RAISE(ABORT, 'analysis_runs is append-only: deletes are forbidden'); END;
+CREATE TRIGGER IF NOT EXISTS analysis_verdicts_no_update BEFORE UPDATE ON analysis_verdicts
+BEGIN SELECT RAISE(ABORT, 'analysis_verdicts is append-only: updates are forbidden'); END;
+CREATE TRIGGER IF NOT EXISTS analysis_verdicts_no_delete BEFORE DELETE ON analysis_verdicts
+BEGIN SELECT RAISE(ABORT, 'analysis_verdicts is append-only: deletes are forbidden'); END;
 """
 
 
@@ -251,7 +311,7 @@ def insert_run(payload: dict) -> None:
             """,
             (
                 payload["run_id"],
-                _extract_ticker(payload.get("subject", "")),
+                _payload_ticker(payload),
                 payload.get("scope", "auditor"),
                 "HALTED" if payload.get("halted") else "COMPLETE",
                 payload.get("session", {}).get("initiated_at") if payload.get("session") else None,
@@ -425,6 +485,119 @@ def get_decisions_for(run_ids: list[str]) -> dict[str, list[dict]]:
     return out
 
 
+# ── Financial agent: bundles, analysis runs, verdicts ──────────────────────────
+# The rows hold JSON exactly as given. Whether a bundle is intact is checked by whoever
+# reads it (financial_agent/replay.py), not trusted because it came from this store.
+
+def _now_us() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+
+
+def insert_bundle(bundle: dict) -> bool:
+    """Store a bundle. False if one with this hash is already stored (same data, nothing to add)."""
+    data = bundle["data"]
+    with _connect() as conn:
+        cur = conn.execute(
+            "INSERT INTO analysis_bundles (bundle_hash, ticker, as_of, payload_json)"
+            " VALUES (?, ?, ?, ?) ON CONFLICT(bundle_hash) DO NOTHING",  # not OR IGNORE: that skips CHECKs too
+            (bundle["bundle_hash"], data["ticker"], data["as_of"], json.dumps(bundle)),
+        )
+        return cur.rowcount == 1
+
+
+def get_bundle(bundle_hash: str) -> dict | None:
+    with _connect() as conn:
+        row = conn.execute("SELECT payload_json FROM analysis_bundles WHERE bundle_hash = ?",
+                           (bundle_hash,)).fetchone()
+    return json.loads(row["payload_json"]) if row else None
+
+
+def insert_analysis(record: dict) -> None:
+    """Append an analysis record (core/analysis.py AnalysisRecord). Its bundle must be stored first."""
+    with _connect() as conn:
+        conn.execute(
+            "INSERT INTO analysis_runs (run_id, parent_run_id, ticker, bundle_hash, agent_kind, status,"
+            " payload_json, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (record["run_id"], record.get("parent_run_id"), record["request"]["ticker"],
+             record["bundle_hash"], record["agent"]["kind"], record["status"],
+             json.dumps(record), record.get("created_at") or _now_us()),
+        )
+
+
+def get_analysis(run_id: str) -> dict | None:
+    with _connect() as conn:
+        row = conn.execute("SELECT payload_json FROM analysis_runs WHERE run_id = ?", (run_id,)).fetchone()
+    return json.loads(row["payload_json"]) if row else None
+
+
+def list_analyses(limit: int = 50, ticker: str | None = None) -> list[dict]:
+    """Newest first, as summaries (no tool results), so a long history stays cheap to list."""
+    sql = "SELECT payload_json FROM analysis_runs"
+    args: list[Any] = []
+    if ticker:
+        sql += " WHERE ticker = ?"
+        args.append(ticker.upper())
+    sql += " ORDER BY created_at DESC, rowid DESC LIMIT ?"
+    args.append(limit)
+    with _connect() as conn:
+        rows = conn.execute(sql, args).fetchall()
+    out = []
+    for r in rows:
+        rec = json.loads(r["payload_json"])
+        out.append({k: rec.get(k) for k in ("run_id", "parent_run_id", "created_at", "request", "agent",
+                                             "bundle_hash", "inputs_captured", "status", "output")})
+    return out
+
+
+def insert_verdict(verdict: dict) -> dict:
+    """Append a verdict (core/analysis.py VerdictRecord); returns it with its id and time."""
+    stored = {**verdict, "verdict_id": verdict.get("verdict_id") or str(uuid.uuid4()),
+              "created_at": verdict.get("created_at") or _now_us()}
+    with _connect() as conn:
+        conn.execute(
+            "INSERT INTO analysis_verdicts (verdict_id, run_id, verdict, payload_json, created_at)"
+            " VALUES (?, ?, ?, ?, ?)",
+            (stored["verdict_id"], stored["run_id"], stored["verdict"], json.dumps(stored), stored["created_at"]),
+        )
+    return stored
+
+
+def get_verdicts(run_id: str) -> list[dict]:
+    """Oldest first; the last one is the current verdict."""
+    with _connect() as conn:
+        rows = conn.execute("SELECT payload_json FROM analysis_verdicts WHERE run_id = ? ORDER BY rowid ASC",
+                            (run_id,)).fetchall()
+    return [json.loads(r["payload_json"]) for r in rows]
+
+
+def purge_old_analyses(retention_days: int = RETENTION_DAYS) -> int:
+    """
+    The same 90-day TTL as purge_old_runs, for the financial agent's tables: expired runs with
+    their verdicts, then bundles no remaining run references. Returns the number of runs removed.
+    The no-delete triggers are lifted only inside this transaction and always put back.
+    """
+    cutoff = (datetime.now(timezone.utc) - timedelta(days=retention_days)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    with _connect() as conn:
+        try:
+            expired = [r["run_id"] for r in conn.execute(
+                "SELECT run_id FROM analysis_runs WHERE created_at < ?", (cutoff,)).fetchall()]
+            for t in ("analysis_verdicts", "analysis_runs", "analysis_bundles"):
+                conn.execute(f"DROP TRIGGER IF EXISTS {t}_no_delete")
+            if expired:
+                marks = ",".join("?" * len(expired))
+                conn.execute(f"DELETE FROM analysis_verdicts WHERE run_id IN ({marks})", expired)
+                conn.execute(f"DELETE FROM analysis_runs WHERE run_id IN ({marks})", expired)
+            conn.execute("DELETE FROM analysis_bundles WHERE created_at < ? AND bundle_hash NOT IN"
+                         " (SELECT bundle_hash FROM analysis_runs)", (cutoff,))
+            conn.commit()
+            return len(expired)
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            conn.executescript(_SCHEMA_SQL)  # never leave a no-delete trigger dropped
+
+
 # ── Admin / test helpers ───────────────────────────────────────────────────────
 
 def clear_all() -> None:
@@ -434,6 +607,9 @@ def clear_all() -> None:
     """
     with _connect() as conn:
         conn.executescript(
+            "DROP TABLE IF EXISTS analysis_verdicts;"
+            "DROP TABLE IF EXISTS analysis_runs;"
+            "DROP TABLE IF EXISTS analysis_bundles;"
             "DROP TABLE IF EXISTS gate_decisions;"
             "DROP TABLE IF EXISTS gate_decisions_pre_b3;"
             "DROP TABLE IF EXISTS reviewer_flags;"
@@ -457,7 +633,7 @@ def migrate_from_json(runs: list[dict], sessions: dict) -> int:
             ).fetchone()
             if existing:
                 continue
-            ticker = _extract_ticker(payload.get("subject", ""))
+            ticker = _payload_ticker(payload)
             conn.execute(
                 """
                 INSERT INTO runs

@@ -25,7 +25,8 @@ _ROOT = pathlib.Path(__file__).resolve().parent.parent
 
 # Internal top-level packages, in dependency order. A package may import from the
 # packages listed as its allowed set and from stdlib/third-party; anything else fails.
-_INTERNAL = {"core", "adapters", "pipeline", "datasources", "producers", "validation", "web", "scripts", "tests"}
+_INTERNAL = {"core", "adapters", "pipeline", "datasources", "producers", "validation", "financial_agent", "web",
+             "scripts", "tests"}
 
 _ALLOWED: dict[str, set[str]] = {
     # The innermost layer. Nothing internal, which is what makes it depend-on-able.
@@ -41,8 +42,12 @@ _ALLOWED: dict[str, set[str]] = {
     # The verification stack scores and compares; it persists via a lazy web.db
     # import, asserted separately below.
     "validation": {"core", "pipeline", "web"},
+    # The financial agent is a separate component (financial_agent/PLAN.md, D1): it and the
+    # verification layer share only core/analysis.py, so neither may import the other.
+    # validation/ not listing financial_agent above is the other half of that rule.
+    "financial_agent": {"core", "adapters", "pipeline", "datasources"},
     # The delivery layer may use everything.
-    "web": {"core", "adapters", "pipeline", "datasources", "producers", "validation", "web"},
+    "web": {"core", "adapters", "pipeline", "datasources", "producers", "validation", "financial_agent", "web"},
     # Entry points wire the whole thing together.
     "scripts": _INTERNAL,
     "tests": _INTERNAL,
@@ -141,7 +146,7 @@ class TestLayering(unittest.TestCase):
         """
         allowed_prefixes = ("datasources/", "adapters/")
         offenders = []
-        for package in ("core", "pipeline", "producers", "validation", "web"):
+        for package in ("core", "pipeline", "producers", "validation", "financial_agent", "web"):
             for path in _source_files(package):
                 rel = path.relative_to(_ROOT).as_posix()
                 if rel.startswith(allowed_prefixes):
@@ -149,11 +154,12 @@ class TestLayering(unittest.TestCase):
                 source = path.read_text(encoding="utf-8")
                 if "urllib.request" in source or "import requests" in source:
                     offenders.append(rel)
-        # validation/verification.py fetches the source document it verifies against;
-        # that is the one known exception and it is named here rather than excused.
+        # validation/verification.py fetches the source document it verifies against, and
+        # financial_agent/prices.py fetches end-of-day prices (2026-10-06; it lives with the
+        # agent so the component can move out whole). Both are named here rather than excused.
         self.assertEqual(
-            offenders,
-            ["validation/verification.py"],
+            sorted(offenders),
+            ["financial_agent/prices.py", "validation/verification.py"],
             "network access outside datasources/ and adapters/ changed — if this is "
             "intentional, name the new egress point here",
         )
@@ -175,7 +181,8 @@ class TestNoLooseRootModules(unittest.TestCase):
         self.assertEqual(loose, [], f"loose modules at the subsystem root: {loose}")
 
     def test_every_package_is_importable_as_a_package(self):
-        for package in ("core", "adapters", "pipeline", "datasources", "producers", "validation", "web", "scripts"):
+        for package in ("core", "adapters", "pipeline", "datasources", "producers", "validation", "financial_agent",
+                        "web", "scripts"):
             with self.subTest(package=package):
                 self.assertTrue(
                     (_ROOT / package / "__init__.py").is_file(),
