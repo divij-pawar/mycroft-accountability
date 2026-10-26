@@ -1,0 +1,4235 @@
+{
+ "bundle_hash": "sha256:1961b487fb3a3c715db064ec9ac1103e25603003dfc10c57c30d7e682b203faf",
+ "as_of": "2026-10-05",
+ "figures": 34,
+ "figures_usable": 34,
+ "figures_not_readable": [],
+ "trials": [
+  {
+   "kind": "plus_1pct",
+   "group": "indicator",
+   "name": "last_close_close",
+   "true_value": 332.89,
+   "altered": {
+    "value": 336.22,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 332.89 for this, not 336.22 USD"
+  },
+  {
+   "kind": "plus_10pct",
+   "group": "indicator",
+   "name": "last_close_close",
+   "true_value": 332.89,
+   "altered": {
+    "value": 366.18,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 332.89 for this, not 366.18 USD"
+  },
+  {
+   "kind": "minus_10pct",
+   "group": "indicator",
+   "name": "last_close_close",
+   "true_value": 332.89,
+   "altered": {
+    "value": 299.6,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 332.89 for this, not 299.6 USD"
+  },
+  {
+   "kind": "digit_swap",
+   "group": "indicator",
+   "name": "last_close_close",
+   "true_value": 332.89,
+   "altered": {
+    "value": 323.89,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 332.89 for this, not 323.89 USD"
+  },
+  {
+   "kind": "wrong_call",
+   "group": "indicator",
+   "name": "last_close_close",
+   "true_value": 332.89,
+   "altered": {
+    "value": 332.89,
+    "unit": "USD",
+    "call": 1
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "call 1 (describe_data) holds nothing that matches this"
+  },
+  {
+   "kind": "missing_call",
+   "group": "indicator",
+   "name": "last_close_close",
+   "true_value": 332.89,
+   "altered": {
+    "value": 332.89,
+    "unit": "USD",
+    "call": 99
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "there is no call 99"
+  },
+  {
+   "kind": "same_value",
+   "group": "indicator",
+   "name": "last_close_close",
+   "true_value": 332.89,
+   "altered": {
+    "value": 332.89,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result.results[0].last_close.values.close in call 2"
+  },
+  {
+   "kind": "rounded",
+   "group": "indicator",
+   "name": "last_close_close",
+   "true_value": 332.89,
+   "altered": {
+    "value": 332.9,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result.results[0].last_close.values.close in call 2"
+  },
+  {
+   "kind": "plus_1pct",
+   "group": "indicator",
+   "name": "sma_20",
+   "true_value": 332.541,
+   "altered": {
+    "value": 335.866,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 332.541 for this, not 335.866 USD"
+  },
+  {
+   "kind": "plus_10pct",
+   "group": "indicator",
+   "name": "sma_20",
+   "true_value": 332.541,
+   "altered": {
+    "value": 365.795,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 332.541 for this, not 365.795 USD"
+  },
+  {
+   "kind": "minus_10pct",
+   "group": "indicator",
+   "name": "sma_20",
+   "true_value": 332.541,
+   "altered": {
+    "value": 299.287,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 332.541 for this, not 299.287 USD"
+  },
+  {
+   "kind": "digit_swap",
+   "group": "indicator",
+   "name": "sma_20",
+   "true_value": 332.541,
+   "altered": {
+    "value": 323.541,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 332.541 for this, not 323.541 USD"
+  },
+  {
+   "kind": "wrong_call",
+   "group": "indicator",
+   "name": "sma_20",
+   "true_value": 332.541,
+   "altered": {
+    "value": 332.541,
+    "unit": "USD",
+    "call": 1
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "call 1 (describe_data) holds nothing that matches this"
+  },
+  {
+   "kind": "missing_call",
+   "group": "indicator",
+   "name": "sma_20",
+   "true_value": 332.541,
+   "altered": {
+    "value": 332.541,
+    "unit": "USD",
+    "call": 99
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "there is no call 99"
+  },
+  {
+   "kind": "neighbour_value",
+   "group": "indicator",
+   "name": "sma_20",
+   "true_value": 332.541,
+   "altered": {
+    "value": 322.4136,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 332.541 for this, not 322.4136 USD"
+  },
+  {
+   "kind": "same_value",
+   "group": "indicator",
+   "name": "sma_20",
+   "true_value": 332.541,
+   "altered": {
+    "value": 332.541,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result.results[1].sma.values.value in call 2"
+  },
+  {
+   "kind": "rounded",
+   "group": "indicator",
+   "name": "sma_20",
+   "true_value": 332.541,
+   "altered": {
+    "value": 332.54,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result.results[1].sma.values.value in call 2"
+  },
+  {
+   "kind": "plus_1pct",
+   "group": "indicator",
+   "name": "sma_50",
+   "true_value": 322.4136,
+   "altered": {
+    "value": 325.6377,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 322.4136 for this, not 325.6377 USD"
+  },
+  {
+   "kind": "plus_10pct",
+   "group": "indicator",
+   "name": "sma_50",
+   "true_value": 322.4136,
+   "altered": {
+    "value": 354.655,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 322.4136 for this, not 354.655 USD"
+  },
+  {
+   "kind": "minus_10pct",
+   "group": "indicator",
+   "name": "sma_50",
+   "true_value": 322.4136,
+   "altered": {
+    "value": 290.1722,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 322.4136 for this, not 290.1722 USD"
+  },
+  {
+   "kind": "digit_swap",
+   "group": "indicator",
+   "name": "sma_50",
+   "true_value": 322.4136,
+   "altered": {
+    "value": 232.4136,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 322.4136 for this, not 232.4136 USD"
+  },
+  {
+   "kind": "wrong_call",
+   "group": "indicator",
+   "name": "sma_50",
+   "true_value": 322.4136,
+   "altered": {
+    "value": 322.4136,
+    "unit": "USD",
+    "call": 1
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "call 1 (describe_data) holds nothing that matches this"
+  },
+  {
+   "kind": "missing_call",
+   "group": "indicator",
+   "name": "sma_50",
+   "true_value": 322.4136,
+   "altered": {
+    "value": 322.4136,
+    "unit": "USD",
+    "call": 99
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "there is no call 99"
+  },
+  {
+   "kind": "neighbour_value",
+   "group": "indicator",
+   "name": "sma_50",
+   "true_value": 322.4136,
+   "altered": {
+    "value": 332.541,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 322.4136 for this, not 332.541 USD"
+  },
+  {
+   "kind": "same_value",
+   "group": "indicator",
+   "name": "sma_50",
+   "true_value": 322.4136,
+   "altered": {
+    "value": 322.4136,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result.results[2].sma.values.value in call 2"
+  },
+  {
+   "kind": "rounded",
+   "group": "indicator",
+   "name": "sma_50",
+   "true_value": 322.4136,
+   "altered": {
+    "value": 322.414,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result.results[2].sma.values.value in call 2"
+  },
+  {
+   "kind": "plus_1pct",
+   "group": "indicator",
+   "name": "ema_12",
+   "true_value": 333.3298,
+   "altered": {
+    "value": 336.6631,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 333.3298 for this, not 336.6631 USD"
+  },
+  {
+   "kind": "plus_10pct",
+   "group": "indicator",
+   "name": "ema_12",
+   "true_value": 333.3298,
+   "altered": {
+    "value": 366.6628,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 333.3298 for this, not 366.6628 USD"
+  },
+  {
+   "kind": "minus_10pct",
+   "group": "indicator",
+   "name": "ema_12",
+   "true_value": 333.3298,
+   "altered": {
+    "value": 299.9968,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 333.3298 for this, not 299.9968 USD"
+  },
+  {
+   "kind": "digit_swap",
+   "group": "indicator",
+   "name": "ema_12",
+   "true_value": 333.3298,
+   "altered": {
+    "value": 333.2398,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 333.3298 for this, not 333.2398 USD"
+  },
+  {
+   "kind": "wrong_call",
+   "group": "indicator",
+   "name": "ema_12",
+   "true_value": 333.3298,
+   "altered": {
+    "value": 333.3298,
+    "unit": "USD",
+    "call": 1
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "call 1 (describe_data) holds nothing that matches this"
+  },
+  {
+   "kind": "missing_call",
+   "group": "indicator",
+   "name": "ema_12",
+   "true_value": 333.3298,
+   "altered": {
+    "value": 333.3298,
+    "unit": "USD",
+    "call": 99
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "there is no call 99"
+  },
+  {
+   "kind": "neighbour_value",
+   "group": "indicator",
+   "name": "ema_12",
+   "true_value": 333.3298,
+   "altered": {
+    "value": 329.8631,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 333.3298 for this, not 329.8631 USD"
+  },
+  {
+   "kind": "same_value",
+   "group": "indicator",
+   "name": "ema_12",
+   "true_value": 333.3298,
+   "altered": {
+    "value": 333.3298,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result.results[3].ema.values.value in call 2"
+  },
+  {
+   "kind": "rounded",
+   "group": "indicator",
+   "name": "ema_12",
+   "true_value": 333.3298,
+   "altered": {
+    "value": 333.33,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result.results[3].ema.values.value in call 2"
+  },
+  {
+   "kind": "plus_1pct",
+   "group": "indicator",
+   "name": "ema_26",
+   "true_value": 329.8631,
+   "altered": {
+    "value": 333.1617,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 329.8631 for this, not 333.1617 USD"
+  },
+  {
+   "kind": "plus_10pct",
+   "group": "indicator",
+   "name": "ema_26",
+   "true_value": 329.8631,
+   "altered": {
+    "value": 362.8494,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 329.8631 for this, not 362.8494 USD"
+  },
+  {
+   "kind": "minus_10pct",
+   "group": "indicator",
+   "name": "ema_26",
+   "true_value": 329.8631,
+   "altered": {
+    "value": 296.8768,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 329.8631 for this, not 296.8768 USD"
+  },
+  {
+   "kind": "digit_swap",
+   "group": "indicator",
+   "name": "ema_26",
+   "true_value": 329.8631,
+   "altered": {
+    "value": 239.8631,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 329.8631 for this, not 239.8631 USD"
+  },
+  {
+   "kind": "wrong_call",
+   "group": "indicator",
+   "name": "ema_26",
+   "true_value": 329.8631,
+   "altered": {
+    "value": 329.8631,
+    "unit": "USD",
+    "call": 1
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "call 1 (describe_data) holds nothing that matches this"
+  },
+  {
+   "kind": "missing_call",
+   "group": "indicator",
+   "name": "ema_26",
+   "true_value": 329.8631,
+   "altered": {
+    "value": 329.8631,
+    "unit": "USD",
+    "call": 99
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "there is no call 99"
+  },
+  {
+   "kind": "neighbour_value",
+   "group": "indicator",
+   "name": "ema_26",
+   "true_value": 329.8631,
+   "altered": {
+    "value": 333.3298,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 329.8631 for this, not 333.3298 USD"
+  },
+  {
+   "kind": "same_value",
+   "group": "indicator",
+   "name": "ema_26",
+   "true_value": 329.8631,
+   "altered": {
+    "value": 329.8631,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result.results[4].ema.values.value in call 2"
+  },
+  {
+   "kind": "rounded",
+   "group": "indicator",
+   "name": "ema_26",
+   "true_value": 329.8631,
+   "altered": {
+    "value": 329.863,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result.results[4].ema.values.value in call 2"
+  },
+  {
+   "kind": "plus_1pct",
+   "group": "indicator",
+   "name": "rsi_14",
+   "true_value": 53.7839,
+   "altered": {
+    "value": 54.3217,
+    "unit": "index",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 53.7839 for this, not 54.3217 index"
+  },
+  {
+   "kind": "plus_10pct",
+   "group": "indicator",
+   "name": "rsi_14",
+   "true_value": 53.7839,
+   "altered": {
+    "value": 59.1623,
+    "unit": "index",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 53.7839 for this, not 59.1623 index"
+  },
+  {
+   "kind": "minus_10pct",
+   "group": "indicator",
+   "name": "rsi_14",
+   "true_value": 53.7839,
+   "altered": {
+    "value": 48.4055,
+    "unit": "index",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 53.7839 for this, not 48.4055 index"
+  },
+  {
+   "kind": "digit_swap",
+   "group": "indicator",
+   "name": "rsi_14",
+   "true_value": 53.7839,
+   "altered": {
+    "value": 35.7839,
+    "unit": "index",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 53.7839 for this, not 35.7839 index"
+  },
+  {
+   "kind": "wrong_call",
+   "group": "indicator",
+   "name": "rsi_14",
+   "true_value": 53.7839,
+   "altered": {
+    "value": 53.7839,
+    "unit": "index",
+    "call": 1
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "call 1 (describe_data) holds nothing that matches this"
+  },
+  {
+   "kind": "missing_call",
+   "group": "indicator",
+   "name": "rsi_14",
+   "true_value": 53.7839,
+   "altered": {
+    "value": 53.7839,
+    "unit": "index",
+    "call": 99
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "there is no call 99"
+  },
+  {
+   "kind": "same_value",
+   "group": "indicator",
+   "name": "rsi_14",
+   "true_value": 53.7839,
+   "altered": {
+    "value": 53.7839,
+    "unit": "index",
+    "call": 2
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result.results[5].rsi.values.value in call 2"
+  },
+  {
+   "kind": "rounded",
+   "group": "indicator",
+   "name": "rsi_14",
+   "true_value": 53.7839,
+   "altered": {
+    "value": 53.784,
+    "unit": "index",
+    "call": 2
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result.results[5].rsi.values.value in call 2"
+  },
+  {
+   "kind": "plus_1pct",
+   "group": "indicator",
+   "name": "macd_12_26_9_macd",
+   "true_value": 3.4667,
+   "altered": {
+    "value": 3.5014,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives -1.061, 3.4667, 4.5276 for this, not 3.5014 USD"
+  },
+  {
+   "kind": "plus_10pct",
+   "group": "indicator",
+   "name": "macd_12_26_9_macd",
+   "true_value": 3.4667,
+   "altered": {
+    "value": 3.8134,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives -1.061, 3.4667, 4.5276 for this, not 3.8134 USD"
+  },
+  {
+   "kind": "minus_10pct",
+   "group": "indicator",
+   "name": "macd_12_26_9_macd",
+   "true_value": 3.4667,
+   "altered": {
+    "value": 3.12,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives -1.061, 3.4667, 4.5276 for this, not 3.12 USD"
+  },
+  {
+   "kind": "digit_swap",
+   "group": "indicator",
+   "name": "macd_12_26_9_macd",
+   "true_value": 3.4667,
+   "altered": {
+    "value": 3.6467,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives -1.061, 3.4667, 4.5276 for this, not 3.6467 USD"
+  },
+  {
+   "kind": "wrong_call",
+   "group": "indicator",
+   "name": "macd_12_26_9_macd",
+   "true_value": 3.4667,
+   "altered": {
+    "value": 3.4667,
+    "unit": "USD",
+    "call": 1
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "call 1 (describe_data) holds nothing that matches this"
+  },
+  {
+   "kind": "missing_call",
+   "group": "indicator",
+   "name": "macd_12_26_9_macd",
+   "true_value": 3.4667,
+   "altered": {
+    "value": 3.4667,
+    "unit": "USD",
+    "call": 99
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "there is no call 99"
+  },
+  {
+   "kind": "neighbour_value",
+   "group": "indicator",
+   "name": "macd_12_26_9_macd",
+   "true_value": 3.4667,
+   "altered": {
+    "value": 4.5276,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "GROUNDED",
+   "outcome": "missed",
+   "reason": "matches result.results[6].macd.values.signal in call 2"
+  },
+  {
+   "kind": "same_value",
+   "group": "indicator",
+   "name": "macd_12_26_9_macd",
+   "true_value": 3.4667,
+   "altered": {
+    "value": 3.4667,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result.results[6].macd.values.macd in call 2"
+  },
+  {
+   "kind": "rounded",
+   "group": "indicator",
+   "name": "macd_12_26_9_macd",
+   "true_value": 3.4667,
+   "altered": {
+    "value": 3.467,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result.results[6].macd.values.macd in call 2"
+  },
+  {
+   "kind": "plus_1pct",
+   "group": "indicator",
+   "name": "macd_12_26_9_signal",
+   "true_value": 4.5276,
+   "altered": {
+    "value": 4.5729,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives -1.061, 3.4667, 4.5276 for this, not 4.5729 USD"
+  },
+  {
+   "kind": "plus_10pct",
+   "group": "indicator",
+   "name": "macd_12_26_9_signal",
+   "true_value": 4.5276,
+   "altered": {
+    "value": 4.9804,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives -1.061, 3.4667, 4.5276 for this, not 4.9804 USD"
+  },
+  {
+   "kind": "minus_10pct",
+   "group": "indicator",
+   "name": "macd_12_26_9_signal",
+   "true_value": 4.5276,
+   "altered": {
+    "value": 4.0748,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives -1.061, 3.4667, 4.5276 for this, not 4.0748 USD"
+  },
+  {
+   "kind": "digit_swap",
+   "group": "indicator",
+   "name": "macd_12_26_9_signal",
+   "true_value": 4.5276,
+   "altered": {
+    "value": 4.2576,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives -1.061, 3.4667, 4.5276 for this, not 4.2576 USD"
+  },
+  {
+   "kind": "wrong_call",
+   "group": "indicator",
+   "name": "macd_12_26_9_signal",
+   "true_value": 4.5276,
+   "altered": {
+    "value": 4.5276,
+    "unit": "USD",
+    "call": 1
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "call 1 (describe_data) holds nothing that matches this"
+  },
+  {
+   "kind": "missing_call",
+   "group": "indicator",
+   "name": "macd_12_26_9_signal",
+   "true_value": 4.5276,
+   "altered": {
+    "value": 4.5276,
+    "unit": "USD",
+    "call": 99
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "there is no call 99"
+  },
+  {
+   "kind": "neighbour_value",
+   "group": "indicator",
+   "name": "macd_12_26_9_signal",
+   "true_value": 4.5276,
+   "altered": {
+    "value": 3.4667,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "GROUNDED",
+   "outcome": "missed",
+   "reason": "matches result.results[6].macd.values.macd in call 2"
+  },
+  {
+   "kind": "same_value",
+   "group": "indicator",
+   "name": "macd_12_26_9_signal",
+   "true_value": 4.5276,
+   "altered": {
+    "value": 4.5276,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result.results[6].macd.values.signal in call 2"
+  },
+  {
+   "kind": "rounded",
+   "group": "indicator",
+   "name": "macd_12_26_9_signal",
+   "true_value": 4.5276,
+   "altered": {
+    "value": 4.528,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result.results[6].macd.values.signal in call 2"
+  },
+  {
+   "kind": "plus_1pct",
+   "group": "indicator",
+   "name": "macd_12_26_9_histogram",
+   "true_value": -1.061,
+   "altered": {
+    "value": -1.072,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives -1.061 for this, not -1.072 USD"
+  },
+  {
+   "kind": "plus_10pct",
+   "group": "indicator",
+   "name": "macd_12_26_9_histogram",
+   "true_value": -1.061,
+   "altered": {
+    "value": -1.167,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives -1.061 for this, not -1.167 USD"
+  },
+  {
+   "kind": "minus_10pct",
+   "group": "indicator",
+   "name": "macd_12_26_9_histogram",
+   "true_value": -1.061,
+   "altered": {
+    "value": -0.955,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives -1.061 for this, not -0.955 USD"
+  },
+  {
+   "kind": "digit_swap",
+   "group": "indicator",
+   "name": "macd_12_26_9_histogram",
+   "true_value": -1.061,
+   "altered": {
+    "value": -1.601,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives -1.061 for this, not -1.601 USD"
+  },
+  {
+   "kind": "sign_flip",
+   "group": "indicator",
+   "name": "macd_12_26_9_histogram",
+   "true_value": -1.061,
+   "altered": {
+    "value": 1.061,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives -1.061 for this, not 1.061 USD"
+  },
+  {
+   "kind": "wrong_call",
+   "group": "indicator",
+   "name": "macd_12_26_9_histogram",
+   "true_value": -1.061,
+   "altered": {
+    "value": -1.061,
+    "unit": "USD",
+    "call": 1
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "call 1 (describe_data) holds nothing that matches this"
+  },
+  {
+   "kind": "missing_call",
+   "group": "indicator",
+   "name": "macd_12_26_9_histogram",
+   "true_value": -1.061,
+   "altered": {
+    "value": -1.061,
+    "unit": "USD",
+    "call": 99
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "there is no call 99"
+  },
+  {
+   "kind": "neighbour_value",
+   "group": "indicator",
+   "name": "macd_12_26_9_histogram",
+   "true_value": -1.061,
+   "altered": {
+    "value": 3.4667,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives -1.061 for this, not 3.4667 USD"
+  },
+  {
+   "kind": "same_value",
+   "group": "indicator",
+   "name": "macd_12_26_9_histogram",
+   "true_value": -1.061,
+   "altered": {
+    "value": -1.061,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result.results[6].macd.values.histogram in call 2"
+  },
+  {
+   "kind": "rounded",
+   "group": "indicator",
+   "name": "macd_12_26_9_histogram",
+   "true_value": -1.061,
+   "altered": {
+    "value": -1.06,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result.results[6].macd.values.histogram in call 2"
+  },
+  {
+   "kind": "plus_1pct",
+   "group": "indicator",
+   "name": "atr_14",
+   "true_value": 6.8573,
+   "altered": {
+    "value": 6.9259,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 6.8573 for this, not 6.9259 USD"
+  },
+  {
+   "kind": "plus_10pct",
+   "group": "indicator",
+   "name": "atr_14",
+   "true_value": 6.8573,
+   "altered": {
+    "value": 7.543,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 6.8573 for this, not 7.543 USD"
+  },
+  {
+   "kind": "minus_10pct",
+   "group": "indicator",
+   "name": "atr_14",
+   "true_value": 6.8573,
+   "altered": {
+    "value": 6.1716,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 6.8573 for this, not 6.1716 USD"
+  },
+  {
+   "kind": "digit_swap",
+   "group": "indicator",
+   "name": "atr_14",
+   "true_value": 6.8573,
+   "altered": {
+    "value": 6.5873,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 6.8573 for this, not 6.5873 USD"
+  },
+  {
+   "kind": "wrong_call",
+   "group": "indicator",
+   "name": "atr_14",
+   "true_value": 6.8573,
+   "altered": {
+    "value": 6.8573,
+    "unit": "USD",
+    "call": 1
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "call 1 (describe_data) holds nothing that matches this"
+  },
+  {
+   "kind": "missing_call",
+   "group": "indicator",
+   "name": "atr_14",
+   "true_value": 6.8573,
+   "altered": {
+    "value": 6.8573,
+    "unit": "USD",
+    "call": 99
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "there is no call 99"
+  },
+  {
+   "kind": "same_value",
+   "group": "indicator",
+   "name": "atr_14",
+   "true_value": 6.8573,
+   "altered": {
+    "value": 6.8573,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result.results[7].atr.values.value in call 2"
+  },
+  {
+   "kind": "rounded",
+   "group": "indicator",
+   "name": "atr_14",
+   "true_value": 6.8573,
+   "altered": {
+    "value": 6.857,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result.results[7].atr.values.value in call 2"
+  },
+  {
+   "kind": "plus_1pct",
+   "group": "indicator",
+   "name": "volatility_30",
+   "true_value": 21.0589,
+   "altered": {
+    "value": 21.2695,
+    "unit": "pct_annualized",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 21.0589 for this, not 21.2695 pct_annualized"
+  },
+  {
+   "kind": "plus_10pct",
+   "group": "indicator",
+   "name": "volatility_30",
+   "true_value": 21.0589,
+   "altered": {
+    "value": 23.1648,
+    "unit": "pct_annualized",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 21.0589 for this, not 23.1648 pct_annualized"
+  },
+  {
+   "kind": "minus_10pct",
+   "group": "indicator",
+   "name": "volatility_30",
+   "true_value": 21.0589,
+   "altered": {
+    "value": 18.953,
+    "unit": "pct_annualized",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 21.0589 for this, not 18.953 pct_annualized"
+  },
+  {
+   "kind": "digit_swap",
+   "group": "indicator",
+   "name": "volatility_30",
+   "true_value": 21.0589,
+   "altered": {
+    "value": 12.0589,
+    "unit": "pct_annualized",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 21.0589 for this, not 12.0589 pct_annualized"
+  },
+  {
+   "kind": "wrong_call",
+   "group": "indicator",
+   "name": "volatility_30",
+   "true_value": 21.0589,
+   "altered": {
+    "value": 21.0589,
+    "unit": "pct_annualized",
+    "call": 1
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "call 1 (describe_data) holds nothing that matches this"
+  },
+  {
+   "kind": "missing_call",
+   "group": "indicator",
+   "name": "volatility_30",
+   "true_value": 21.0589,
+   "altered": {
+    "value": 21.0589,
+    "unit": "pct_annualized",
+    "call": 99
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "there is no call 99"
+  },
+  {
+   "kind": "neighbour_value",
+   "group": "indicator",
+   "name": "volatility_30",
+   "true_value": 21.0589,
+   "altered": {
+    "value": 29.5368,
+    "unit": "pct_annualized",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 21.0589 for this, not 29.5368 pct_annualized"
+  },
+  {
+   "kind": "same_value",
+   "group": "indicator",
+   "name": "volatility_30",
+   "true_value": 21.0589,
+   "altered": {
+    "value": 21.0589,
+    "unit": "pct_annualized",
+    "call": 2
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result.results[8].volatility.values.value in call 2"
+  },
+  {
+   "kind": "rounded",
+   "group": "indicator",
+   "name": "volatility_30",
+   "true_value": 21.0589,
+   "altered": {
+    "value": 21.059,
+    "unit": "pct_annualized",
+    "call": 2
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result.results[8].volatility.values.value in call 2"
+  },
+  {
+   "kind": "plus_1pct",
+   "group": "indicator",
+   "name": "volatility_90",
+   "true_value": 29.5368,
+   "altered": {
+    "value": 29.8322,
+    "unit": "pct_annualized",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 29.5368 for this, not 29.8322 pct_annualized"
+  },
+  {
+   "kind": "plus_10pct",
+   "group": "indicator",
+   "name": "volatility_90",
+   "true_value": 29.5368,
+   "altered": {
+    "value": 32.4905,
+    "unit": "pct_annualized",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 29.5368 for this, not 32.4905 pct_annualized"
+  },
+  {
+   "kind": "minus_10pct",
+   "group": "indicator",
+   "name": "volatility_90",
+   "true_value": 29.5368,
+   "altered": {
+    "value": 26.5831,
+    "unit": "pct_annualized",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 29.5368 for this, not 26.5831 pct_annualized"
+  },
+  {
+   "kind": "digit_swap",
+   "group": "indicator",
+   "name": "volatility_90",
+   "true_value": 29.5368,
+   "altered": {
+    "value": 92.5368,
+    "unit": "pct_annualized",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 29.5368 for this, not 92.5368 pct_annualized"
+  },
+  {
+   "kind": "wrong_call",
+   "group": "indicator",
+   "name": "volatility_90",
+   "true_value": 29.5368,
+   "altered": {
+    "value": 29.5368,
+    "unit": "pct_annualized",
+    "call": 1
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "call 1 (describe_data) holds nothing that matches this"
+  },
+  {
+   "kind": "missing_call",
+   "group": "indicator",
+   "name": "volatility_90",
+   "true_value": 29.5368,
+   "altered": {
+    "value": 29.5368,
+    "unit": "pct_annualized",
+    "call": 99
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "there is no call 99"
+  },
+  {
+   "kind": "neighbour_value",
+   "group": "indicator",
+   "name": "volatility_90",
+   "true_value": 29.5368,
+   "altered": {
+    "value": 21.0589,
+    "unit": "pct_annualized",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 29.5368 for this, not 21.0589 pct_annualized"
+  },
+  {
+   "kind": "same_value",
+   "group": "indicator",
+   "name": "volatility_90",
+   "true_value": 29.5368,
+   "altered": {
+    "value": 29.5368,
+    "unit": "pct_annualized",
+    "call": 2
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result.results[9].volatility.values.value in call 2"
+  },
+  {
+   "kind": "rounded",
+   "group": "indicator",
+   "name": "volatility_90",
+   "true_value": 29.5368,
+   "altered": {
+    "value": 29.537,
+    "unit": "pct_annualized",
+    "call": 2
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result.results[9].volatility.values.value in call 2"
+  },
+  {
+   "kind": "plus_1pct",
+   "group": "indicator",
+   "name": "return_21",
+   "true_value": 1.4259,
+   "altered": {
+    "value": 1.4402,
+    "unit": "pct",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 1.4259 for this, not 1.4402 pct"
+  },
+  {
+   "kind": "plus_10pct",
+   "group": "indicator",
+   "name": "return_21",
+   "true_value": 1.4259,
+   "altered": {
+    "value": 1.5685,
+    "unit": "pct",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 1.4259 for this, not 1.5685 pct"
+  },
+  {
+   "kind": "minus_10pct",
+   "group": "indicator",
+   "name": "return_21",
+   "true_value": 1.4259,
+   "altered": {
+    "value": 1.2833,
+    "unit": "pct",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 1.4259 for this, not 1.2833 pct"
+  },
+  {
+   "kind": "digit_swap",
+   "group": "indicator",
+   "name": "return_21",
+   "true_value": 1.4259,
+   "altered": {
+    "value": 1.2459,
+    "unit": "pct",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 1.4259 for this, not 1.2459 pct"
+  },
+  {
+   "kind": "wrong_call",
+   "group": "indicator",
+   "name": "return_21",
+   "true_value": 1.4259,
+   "altered": {
+    "value": 1.4259,
+    "unit": "pct",
+    "call": 1
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "call 1 (describe_data) holds nothing that matches this"
+  },
+  {
+   "kind": "missing_call",
+   "group": "indicator",
+   "name": "return_21",
+   "true_value": 1.4259,
+   "altered": {
+    "value": 1.4259,
+    "unit": "pct",
+    "call": 99
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "there is no call 99"
+  },
+  {
+   "kind": "neighbour_value",
+   "group": "indicator",
+   "name": "return_21",
+   "true_value": 1.4259,
+   "altered": {
+    "value": 7.1557,
+    "unit": "pct",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 1.4259 for this, not 7.1557 pct"
+  },
+  {
+   "kind": "same_value",
+   "group": "indicator",
+   "name": "return_21",
+   "true_value": 1.4259,
+   "altered": {
+    "value": 1.4259,
+    "unit": "pct",
+    "call": 2
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result.results[10].return.values.value in call 2"
+  },
+  {
+   "kind": "rounded",
+   "group": "indicator",
+   "name": "return_21",
+   "true_value": 1.4259,
+   "altered": {
+    "value": 1.426,
+    "unit": "pct",
+    "call": 2
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result.results[10].return.values.value in call 2"
+  },
+  {
+   "kind": "plus_1pct",
+   "group": "indicator",
+   "name": "return_63",
+   "true_value": 7.1557,
+   "altered": {
+    "value": 7.2273,
+    "unit": "pct",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 7.1557 for this, not 7.2273 pct"
+  },
+  {
+   "kind": "plus_10pct",
+   "group": "indicator",
+   "name": "return_63",
+   "true_value": 7.1557,
+   "altered": {
+    "value": 7.8713,
+    "unit": "pct",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 7.1557 for this, not 7.8713 pct"
+  },
+  {
+   "kind": "minus_10pct",
+   "group": "indicator",
+   "name": "return_63",
+   "true_value": 7.1557,
+   "altered": {
+    "value": 6.4401,
+    "unit": "pct",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 7.1557 for this, not 6.4401 pct"
+  },
+  {
+   "kind": "digit_swap",
+   "group": "indicator",
+   "name": "return_63",
+   "true_value": 7.1557,
+   "altered": {
+    "value": 7.5157,
+    "unit": "pct",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 7.1557 for this, not 7.5157 pct"
+  },
+  {
+   "kind": "wrong_call",
+   "group": "indicator",
+   "name": "return_63",
+   "true_value": 7.1557,
+   "altered": {
+    "value": 7.1557,
+    "unit": "pct",
+    "call": 1
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "call 1 (describe_data) holds nothing that matches this"
+  },
+  {
+   "kind": "missing_call",
+   "group": "indicator",
+   "name": "return_63",
+   "true_value": 7.1557,
+   "altered": {
+    "value": 7.1557,
+    "unit": "pct",
+    "call": 99
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "there is no call 99"
+  },
+  {
+   "kind": "neighbour_value",
+   "group": "indicator",
+   "name": "return_63",
+   "true_value": 7.1557,
+   "altered": {
+    "value": 1.4259,
+    "unit": "pct",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 7.1557 for this, not 1.4259 pct"
+  },
+  {
+   "kind": "same_value",
+   "group": "indicator",
+   "name": "return_63",
+   "true_value": 7.1557,
+   "altered": {
+    "value": 7.1557,
+    "unit": "pct",
+    "call": 2
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result.results[11].return.values.value in call 2"
+  },
+  {
+   "kind": "rounded",
+   "group": "indicator",
+   "name": "return_63",
+   "true_value": 7.1557,
+   "altered": {
+    "value": 7.156,
+    "unit": "pct",
+    "call": 2
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result.results[11].return.values.value in call 2"
+  },
+  {
+   "kind": "plus_1pct",
+   "group": "indicator",
+   "name": "return_26_weekly",
+   "true_value": 27.7987,
+   "altered": {
+    "value": 28.0767,
+    "unit": "pct",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 27.7987 for this, not 28.0767 pct"
+  },
+  {
+   "kind": "plus_10pct",
+   "group": "indicator",
+   "name": "return_26_weekly",
+   "true_value": 27.7987,
+   "altered": {
+    "value": 30.5786,
+    "unit": "pct",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 27.7987 for this, not 30.5786 pct"
+  },
+  {
+   "kind": "minus_10pct",
+   "group": "indicator",
+   "name": "return_26_weekly",
+   "true_value": 27.7987,
+   "altered": {
+    "value": 25.0188,
+    "unit": "pct",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 27.7987 for this, not 25.0188 pct"
+  },
+  {
+   "kind": "digit_swap",
+   "group": "indicator",
+   "name": "return_26_weekly",
+   "true_value": 27.7987,
+   "altered": {
+    "value": 72.7987,
+    "unit": "pct",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 27.7987 for this, not 72.7987 pct"
+  },
+  {
+   "kind": "wrong_call",
+   "group": "indicator",
+   "name": "return_26_weekly",
+   "true_value": 27.7987,
+   "altered": {
+    "value": 27.7987,
+    "unit": "pct",
+    "call": 1
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "call 1 (describe_data) holds nothing that matches this"
+  },
+  {
+   "kind": "missing_call",
+   "group": "indicator",
+   "name": "return_26_weekly",
+   "true_value": 27.7987,
+   "altered": {
+    "value": 27.7987,
+    "unit": "pct",
+    "call": 99
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "there is no call 99"
+  },
+  {
+   "kind": "neighbour_value",
+   "group": "indicator",
+   "name": "return_26_weekly",
+   "true_value": 27.7987,
+   "altered": {
+    "value": 1.4259,
+    "unit": "pct",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 27.7987 for this, not 1.4259 pct"
+  },
+  {
+   "kind": "same_value",
+   "group": "indicator",
+   "name": "return_26_weekly",
+   "true_value": 27.7987,
+   "altered": {
+    "value": 27.7987,
+    "unit": "pct",
+    "call": 2
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result.results[12].return.values.value in call 2"
+  },
+  {
+   "kind": "rounded",
+   "group": "indicator",
+   "name": "return_26_weekly",
+   "true_value": 27.7987,
+   "altered": {
+    "value": 27.799,
+    "unit": "pct",
+    "call": 2
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result.results[12].return.values.value in call 2"
+  },
+  {
+   "kind": "plus_1pct",
+   "group": "indicator",
+   "name": "return_52_weekly",
+   "true_value": 35.7239,
+   "altered": {
+    "value": 36.0811,
+    "unit": "pct",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 35.7239 for this, not 36.0811 pct"
+  },
+  {
+   "kind": "plus_10pct",
+   "group": "indicator",
+   "name": "return_52_weekly",
+   "true_value": 35.7239,
+   "altered": {
+    "value": 39.2963,
+    "unit": "pct",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 35.7239 for this, not 39.2963 pct"
+  },
+  {
+   "kind": "minus_10pct",
+   "group": "indicator",
+   "name": "return_52_weekly",
+   "true_value": 35.7239,
+   "altered": {
+    "value": 32.1515,
+    "unit": "pct",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 35.7239 for this, not 32.1515 pct"
+  },
+  {
+   "kind": "digit_swap",
+   "group": "indicator",
+   "name": "return_52_weekly",
+   "true_value": 35.7239,
+   "altered": {
+    "value": 53.7239,
+    "unit": "pct",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 35.7239 for this, not 53.7239 pct"
+  },
+  {
+   "kind": "wrong_call",
+   "group": "indicator",
+   "name": "return_52_weekly",
+   "true_value": 35.7239,
+   "altered": {
+    "value": 35.7239,
+    "unit": "pct",
+    "call": 1
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "call 1 (describe_data) holds nothing that matches this"
+  },
+  {
+   "kind": "missing_call",
+   "group": "indicator",
+   "name": "return_52_weekly",
+   "true_value": 35.7239,
+   "altered": {
+    "value": 35.7239,
+    "unit": "pct",
+    "call": 99
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "there is no call 99"
+  },
+  {
+   "kind": "neighbour_value",
+   "group": "indicator",
+   "name": "return_52_weekly",
+   "true_value": 35.7239,
+   "altered": {
+    "value": 1.4259,
+    "unit": "pct",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 35.7239 for this, not 1.4259 pct"
+  },
+  {
+   "kind": "same_value",
+   "group": "indicator",
+   "name": "return_52_weekly",
+   "true_value": 35.7239,
+   "altered": {
+    "value": 35.7239,
+    "unit": "pct",
+    "call": 2
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result.results[13].return.values.value in call 2"
+  },
+  {
+   "kind": "rounded",
+   "group": "indicator",
+   "name": "return_52_weekly",
+   "true_value": 35.7239,
+   "altered": {
+    "value": 35.724,
+    "unit": "pct",
+    "call": 2
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result.results[13].return.values.value in call 2"
+  },
+  {
+   "kind": "plus_1pct",
+   "group": "indicator",
+   "name": "sma_40_weekly",
+   "true_value": 291.648,
+   "altered": {
+    "value": 294.564,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 291.648 for this, not 294.564 USD"
+  },
+  {
+   "kind": "plus_10pct",
+   "group": "indicator",
+   "name": "sma_40_weekly",
+   "true_value": 291.648,
+   "altered": {
+    "value": 320.813,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 291.648 for this, not 320.813 USD"
+  },
+  {
+   "kind": "minus_10pct",
+   "group": "indicator",
+   "name": "sma_40_weekly",
+   "true_value": 291.648,
+   "altered": {
+    "value": 262.483,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 291.648 for this, not 262.483 USD"
+  },
+  {
+   "kind": "digit_swap",
+   "group": "indicator",
+   "name": "sma_40_weekly",
+   "true_value": 291.648,
+   "altered": {
+    "value": 921.648,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 291.648 for this, not 921.648 USD"
+  },
+  {
+   "kind": "wrong_call",
+   "group": "indicator",
+   "name": "sma_40_weekly",
+   "true_value": 291.648,
+   "altered": {
+    "value": 291.648,
+    "unit": "USD",
+    "call": 1
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "call 1 (describe_data) holds nothing that matches this"
+  },
+  {
+   "kind": "missing_call",
+   "group": "indicator",
+   "name": "sma_40_weekly",
+   "true_value": 291.648,
+   "altered": {
+    "value": 291.648,
+    "unit": "USD",
+    "call": 99
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "there is no call 99"
+  },
+  {
+   "kind": "neighbour_value",
+   "group": "indicator",
+   "name": "sma_40_weekly",
+   "true_value": 291.648,
+   "altered": {
+    "value": 332.541,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 291.648 for this, not 332.541 USD"
+  },
+  {
+   "kind": "same_value",
+   "group": "indicator",
+   "name": "sma_40_weekly",
+   "true_value": 291.648,
+   "altered": {
+    "value": 291.648,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result.results[14].sma.values.value in call 2"
+  },
+  {
+   "kind": "rounded",
+   "group": "indicator",
+   "name": "sma_40_weekly",
+   "true_value": 291.648,
+   "altered": {
+    "value": 291.65,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result.results[14].sma.values.value in call 2"
+  },
+  {
+   "kind": "plus_1pct",
+   "group": "indicator",
+   "name": "range_52_high_weekly",
+   "true_value": 345.34,
+   "altered": {
+    "value": 348.79,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives -3.6051, 345.34 for this, not 348.79 USD"
+  },
+  {
+   "kind": "plus_10pct",
+   "group": "indicator",
+   "name": "range_52_high_weekly",
+   "true_value": 345.34,
+   "altered": {
+    "value": 379.87,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives -3.6051, 345.34 for this, not 379.87 USD"
+  },
+  {
+   "kind": "minus_10pct",
+   "group": "indicator",
+   "name": "range_52_high_weekly",
+   "true_value": 345.34,
+   "altered": {
+    "value": 310.81,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives -3.6051, 345.34 for this, not 310.81 USD"
+  },
+  {
+   "kind": "digit_swap",
+   "group": "indicator",
+   "name": "range_52_high_weekly",
+   "true_value": 345.34,
+   "altered": {
+    "value": 435.34,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives -3.6051, 345.34 for this, not 435.34 USD"
+  },
+  {
+   "kind": "wrong_call",
+   "group": "indicator",
+   "name": "range_52_high_weekly",
+   "true_value": 345.34,
+   "altered": {
+    "value": 345.34,
+    "unit": "USD",
+    "call": 1
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "call 1 (describe_data) holds nothing that matches this"
+  },
+  {
+   "kind": "missing_call",
+   "group": "indicator",
+   "name": "range_52_high_weekly",
+   "true_value": 345.34,
+   "altered": {
+    "value": 345.34,
+    "unit": "USD",
+    "call": 99
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "there is no call 99"
+  },
+  {
+   "kind": "neighbour_value",
+   "group": "indicator",
+   "name": "range_52_high_weekly",
+   "true_value": 345.34,
+   "altered": {
+    "value": 243.42,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives -3.6051, 345.34 for this, not 243.42 USD"
+  },
+  {
+   "kind": "same_value",
+   "group": "indicator",
+   "name": "range_52_high_weekly",
+   "true_value": 345.34,
+   "altered": {
+    "value": 345.34,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result.results[15].range.values.high in call 2"
+  },
+  {
+   "kind": "rounded",
+   "group": "indicator",
+   "name": "range_52_high_weekly",
+   "true_value": 345.34,
+   "altered": {
+    "value": 345.3,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result.results[15].range.values.high in call 2"
+  },
+  {
+   "kind": "plus_1pct",
+   "group": "indicator",
+   "name": "range_52_low_weekly",
+   "true_value": 243.42,
+   "altered": {
+    "value": 245.85,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 36.7554, 243.42 for this, not 245.85 USD"
+  },
+  {
+   "kind": "plus_10pct",
+   "group": "indicator",
+   "name": "range_52_low_weekly",
+   "true_value": 243.42,
+   "altered": {
+    "value": 267.76,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 36.7554, 243.42 for this, not 267.76 USD"
+  },
+  {
+   "kind": "minus_10pct",
+   "group": "indicator",
+   "name": "range_52_low_weekly",
+   "true_value": 243.42,
+   "altered": {
+    "value": 219.08,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 36.7554, 243.42 for this, not 219.08 USD"
+  },
+  {
+   "kind": "digit_swap",
+   "group": "indicator",
+   "name": "range_52_low_weekly",
+   "true_value": 243.42,
+   "altered": {
+    "value": 423.42,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 36.7554, 243.42 for this, not 423.42 USD"
+  },
+  {
+   "kind": "wrong_call",
+   "group": "indicator",
+   "name": "range_52_low_weekly",
+   "true_value": 243.42,
+   "altered": {
+    "value": 243.42,
+    "unit": "USD",
+    "call": 1
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "call 1 (describe_data) holds nothing that matches this"
+  },
+  {
+   "kind": "missing_call",
+   "group": "indicator",
+   "name": "range_52_low_weekly",
+   "true_value": 243.42,
+   "altered": {
+    "value": 243.42,
+    "unit": "USD",
+    "call": 99
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "there is no call 99"
+  },
+  {
+   "kind": "neighbour_value",
+   "group": "indicator",
+   "name": "range_52_low_weekly",
+   "true_value": 243.42,
+   "altered": {
+    "value": 345.34,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 36.7554, 243.42 for this, not 345.34 USD"
+  },
+  {
+   "kind": "same_value",
+   "group": "indicator",
+   "name": "range_52_low_weekly",
+   "true_value": 243.42,
+   "altered": {
+    "value": 243.42,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result.results[15].range.values.low in call 2"
+  },
+  {
+   "kind": "rounded",
+   "group": "indicator",
+   "name": "range_52_low_weekly",
+   "true_value": 243.42,
+   "altered": {
+    "value": 243.4,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result.results[15].range.values.low in call 2"
+  },
+  {
+   "kind": "plus_1pct",
+   "group": "indicator",
+   "name": "range_52_pct_from_high_weekly",
+   "true_value": -3.6051,
+   "altered": {
+    "value": -3.6412,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives -3.6051 for this, not -3.6412 USD"
+  },
+  {
+   "kind": "plus_10pct",
+   "group": "indicator",
+   "name": "range_52_pct_from_high_weekly",
+   "true_value": -3.6051,
+   "altered": {
+    "value": -3.9656,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives -3.6051 for this, not -3.9656 USD"
+  },
+  {
+   "kind": "minus_10pct",
+   "group": "indicator",
+   "name": "range_52_pct_from_high_weekly",
+   "true_value": -3.6051,
+   "altered": {
+    "value": -3.2446,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives -3.6051 for this, not -3.2446 USD"
+  },
+  {
+   "kind": "digit_swap",
+   "group": "indicator",
+   "name": "range_52_pct_from_high_weekly",
+   "true_value": -3.6051,
+   "altered": {
+    "value": -3.0651,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives -3.6051 for this, not -3.0651 USD"
+  },
+  {
+   "kind": "sign_flip",
+   "group": "indicator",
+   "name": "range_52_pct_from_high_weekly",
+   "true_value": -3.6051,
+   "altered": {
+    "value": 3.6051,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives -3.6051 for this, not 3.6051 USD"
+  },
+  {
+   "kind": "wrong_call",
+   "group": "indicator",
+   "name": "range_52_pct_from_high_weekly",
+   "true_value": -3.6051,
+   "altered": {
+    "value": -3.6051,
+    "unit": "USD",
+    "call": 1
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "call 1 (describe_data) holds nothing that matches this"
+  },
+  {
+   "kind": "missing_call",
+   "group": "indicator",
+   "name": "range_52_pct_from_high_weekly",
+   "true_value": -3.6051,
+   "altered": {
+    "value": -3.6051,
+    "unit": "USD",
+    "call": 99
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "there is no call 99"
+  },
+  {
+   "kind": "neighbour_value",
+   "group": "indicator",
+   "name": "range_52_pct_from_high_weekly",
+   "true_value": -3.6051,
+   "altered": {
+    "value": 345.34,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives -3.6051 for this, not 345.34 USD"
+  },
+  {
+   "kind": "same_value",
+   "group": "indicator",
+   "name": "range_52_pct_from_high_weekly",
+   "true_value": -3.6051,
+   "altered": {
+    "value": -3.6051,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result.results[15].range.values.pct_from_high in call 2"
+  },
+  {
+   "kind": "rounded",
+   "group": "indicator",
+   "name": "range_52_pct_from_high_weekly",
+   "true_value": -3.6051,
+   "altered": {
+    "value": -3.605,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result.results[15].range.values.pct_from_high in call 2"
+  },
+  {
+   "kind": "plus_1pct",
+   "group": "indicator",
+   "name": "range_52_pct_from_low_weekly",
+   "true_value": 36.7554,
+   "altered": {
+    "value": 37.123,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 36.7554 for this, not 37.123 USD"
+  },
+  {
+   "kind": "plus_10pct",
+   "group": "indicator",
+   "name": "range_52_pct_from_low_weekly",
+   "true_value": 36.7554,
+   "altered": {
+    "value": 40.4309,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 36.7554 for this, not 40.4309 USD"
+  },
+  {
+   "kind": "minus_10pct",
+   "group": "indicator",
+   "name": "range_52_pct_from_low_weekly",
+   "true_value": 36.7554,
+   "altered": {
+    "value": 33.0799,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 36.7554 for this, not 33.0799 USD"
+  },
+  {
+   "kind": "digit_swap",
+   "group": "indicator",
+   "name": "range_52_pct_from_low_weekly",
+   "true_value": 36.7554,
+   "altered": {
+    "value": 63.7554,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 36.7554 for this, not 63.7554 USD"
+  },
+  {
+   "kind": "wrong_call",
+   "group": "indicator",
+   "name": "range_52_pct_from_low_weekly",
+   "true_value": 36.7554,
+   "altered": {
+    "value": 36.7554,
+    "unit": "USD",
+    "call": 1
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "call 1 (describe_data) holds nothing that matches this"
+  },
+  {
+   "kind": "missing_call",
+   "group": "indicator",
+   "name": "range_52_pct_from_low_weekly",
+   "true_value": 36.7554,
+   "altered": {
+    "value": 36.7554,
+    "unit": "USD",
+    "call": 99
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "there is no call 99"
+  },
+  {
+   "kind": "neighbour_value",
+   "group": "indicator",
+   "name": "range_52_pct_from_low_weekly",
+   "true_value": 36.7554,
+   "altered": {
+    "value": 345.34,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives 36.7554 for this, not 345.34 USD"
+  },
+  {
+   "kind": "same_value",
+   "group": "indicator",
+   "name": "range_52_pct_from_low_weekly",
+   "true_value": 36.7554,
+   "altered": {
+    "value": 36.7554,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result.results[15].range.values.pct_from_low in call 2"
+  },
+  {
+   "kind": "rounded",
+   "group": "indicator",
+   "name": "range_52_pct_from_low_weekly",
+   "true_value": 36.7554,
+   "altered": {
+    "value": 36.755,
+    "unit": "USD",
+    "call": 2
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result.results[15].range.values.pct_from_low in call 2"
+  },
+  {
+   "kind": "plus_1pct",
+   "group": "indicator",
+   "name": "max_drawdown_52_weekly",
+   "true_value": -11.0669,
+   "altered": {
+    "value": -11.1776,
+    "unit": "pct",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives -11.0669 for this, not -11.1776 pct"
+  },
+  {
+   "kind": "plus_10pct",
+   "group": "indicator",
+   "name": "max_drawdown_52_weekly",
+   "true_value": -11.0669,
+   "altered": {
+    "value": -12.1736,
+    "unit": "pct",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives -11.0669 for this, not -12.1736 pct"
+  },
+  {
+   "kind": "minus_10pct",
+   "group": "indicator",
+   "name": "max_drawdown_52_weekly",
+   "true_value": -11.0669,
+   "altered": {
+    "value": -9.9602,
+    "unit": "pct",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives -11.0669 for this, not -9.9602 pct"
+  },
+  {
+   "kind": "digit_swap",
+   "group": "indicator",
+   "name": "max_drawdown_52_weekly",
+   "true_value": -11.0669,
+   "altered": {
+    "value": -11.6069,
+    "unit": "pct",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives -11.0669 for this, not -11.6069 pct"
+  },
+  {
+   "kind": "sign_flip",
+   "group": "indicator",
+   "name": "max_drawdown_52_weekly",
+   "true_value": -11.0669,
+   "altered": {
+    "value": 11.0669,
+    "unit": "pct",
+    "call": 2
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 2 gives -11.0669 for this, not 11.0669 pct"
+  },
+  {
+   "kind": "wrong_call",
+   "group": "indicator",
+   "name": "max_drawdown_52_weekly",
+   "true_value": -11.0669,
+   "altered": {
+    "value": -11.0669,
+    "unit": "pct",
+    "call": 1
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "call 1 (describe_data) holds nothing that matches this"
+  },
+  {
+   "kind": "missing_call",
+   "group": "indicator",
+   "name": "max_drawdown_52_weekly",
+   "true_value": -11.0669,
+   "altered": {
+    "value": -11.0669,
+    "unit": "pct",
+    "call": 99
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "there is no call 99"
+  },
+  {
+   "kind": "same_value",
+   "group": "indicator",
+   "name": "max_drawdown_52_weekly",
+   "true_value": -11.0669,
+   "altered": {
+    "value": -11.0669,
+    "unit": "pct",
+    "call": 2
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result.results[16].max_drawdown.values.value in call 2"
+  },
+  {
+   "kind": "rounded",
+   "group": "indicator",
+   "name": "max_drawdown_52_weekly",
+   "true_value": -11.0669,
+   "altered": {
+    "value": -11.067,
+    "unit": "pct",
+    "call": 2
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result.results[16].max_drawdown.values.value in call 2"
+  },
+  {
+   "kind": "plus_1pct",
+   "group": "filing",
+   "name": "Revenues",
+   "true_value": 109.417,
+   "altered": {
+    "value": 110.511,
+    "unit": "USD billion",
+    "call": 3
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 3 gives 109417000000.0 for this, not 110.511 USD billion"
+  },
+  {
+   "kind": "plus_10pct",
+   "group": "filing",
+   "name": "Revenues",
+   "true_value": 109.417,
+   "altered": {
+    "value": 120.359,
+    "unit": "USD billion",
+    "call": 3
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 3 gives 109417000000.0 for this, not 120.359 USD billion"
+  },
+  {
+   "kind": "minus_10pct",
+   "group": "filing",
+   "name": "Revenues",
+   "true_value": 109.417,
+   "altered": {
+    "value": 98.475,
+    "unit": "USD billion",
+    "call": 3
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 3 gives 109417000000.0 for this, not 98.475 USD billion"
+  },
+  {
+   "kind": "digit_swap",
+   "group": "filing",
+   "name": "Revenues",
+   "true_value": 109.417,
+   "altered": {
+    "value": 19.417,
+    "unit": "USD billion",
+    "call": 3
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 3 gives 109417000000.0 for this, not 19.417 USD billion"
+  },
+  {
+   "kind": "unit_slip",
+   "group": "filing",
+   "name": "Revenues",
+   "true_value": 109.417,
+   "altered": {
+    "value": 109.417,
+    "unit": "USD million",
+    "call": 3
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 3 gives 109417000000.0 for this, not 109.417 USD million"
+  },
+  {
+   "kind": "wrong_call",
+   "group": "filing",
+   "name": "Revenues",
+   "true_value": 109.417,
+   "altered": {
+    "value": 109.417,
+    "unit": "USD billion",
+    "call": 1
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "call 1 (describe_data) holds nothing that matches this"
+  },
+  {
+   "kind": "missing_call",
+   "group": "filing",
+   "name": "Revenues",
+   "true_value": 109.417,
+   "altered": {
+    "value": 109.417,
+    "unit": "USD billion",
+    "call": 99
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "there is no call 99"
+  },
+  {
+   "kind": "same_value",
+   "group": "filing",
+   "name": "Revenues",
+   "true_value": 109.417,
+   "altered": {
+    "value": 109.417,
+    "unit": "USD billion",
+    "call": 3
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result.facts[0].Revenues.value in call 3"
+  },
+  {
+   "kind": "rounded",
+   "group": "filing",
+   "name": "Revenues",
+   "true_value": 109.417,
+   "altered": {
+    "value": 109.42,
+    "unit": "USD billion",
+    "call": 3
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result.facts[0].Revenues.value in call 3"
+  },
+  {
+   "kind": "plus_1pct",
+   "group": "filing",
+   "name": "OperatingIncomeLoss",
+   "true_value": 35.695,
+   "altered": {
+    "value": 36.052,
+    "unit": "USD billion",
+    "call": 3
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 3 gives 35695000000.0 for this, not 36.052 USD billion"
+  },
+  {
+   "kind": "plus_10pct",
+   "group": "filing",
+   "name": "OperatingIncomeLoss",
+   "true_value": 35.695,
+   "altered": {
+    "value": 39.265,
+    "unit": "USD billion",
+    "call": 3
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 3 gives 35695000000.0 for this, not 39.265 USD billion"
+  },
+  {
+   "kind": "minus_10pct",
+   "group": "filing",
+   "name": "OperatingIncomeLoss",
+   "true_value": 35.695,
+   "altered": {
+    "value": 32.126,
+    "unit": "USD billion",
+    "call": 3
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 3 gives 35695000000.0 for this, not 32.126 USD billion"
+  },
+  {
+   "kind": "digit_swap",
+   "group": "filing",
+   "name": "OperatingIncomeLoss",
+   "true_value": 35.695,
+   "altered": {
+    "value": 53.695,
+    "unit": "USD billion",
+    "call": 3
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 3 gives 35695000000.0 for this, not 53.695 USD billion"
+  },
+  {
+   "kind": "unit_slip",
+   "group": "filing",
+   "name": "OperatingIncomeLoss",
+   "true_value": 35.695,
+   "altered": {
+    "value": 35.695,
+    "unit": "USD million",
+    "call": 3
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 3 gives 35695000000.0 for this, not 35.695 USD million"
+  },
+  {
+   "kind": "wrong_call",
+   "group": "filing",
+   "name": "OperatingIncomeLoss",
+   "true_value": 35.695,
+   "altered": {
+    "value": 35.695,
+    "unit": "USD billion",
+    "call": 1
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "call 1 (describe_data) holds nothing that matches this"
+  },
+  {
+   "kind": "missing_call",
+   "group": "filing",
+   "name": "OperatingIncomeLoss",
+   "true_value": 35.695,
+   "altered": {
+    "value": 35.695,
+    "unit": "USD billion",
+    "call": 99
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "there is no call 99"
+  },
+  {
+   "kind": "same_value",
+   "group": "filing",
+   "name": "OperatingIncomeLoss",
+   "true_value": 35.695,
+   "altered": {
+    "value": 35.695,
+    "unit": "USD billion",
+    "call": 3
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result.facts[1].OperatingIncomeLoss.value in call 3"
+  },
+  {
+   "kind": "rounded",
+   "group": "filing",
+   "name": "OperatingIncomeLoss",
+   "true_value": 35.695,
+   "altered": {
+    "value": 35.7,
+    "unit": "USD billion",
+    "call": 3
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result.facts[1].OperatingIncomeLoss.value in call 3"
+  },
+  {
+   "kind": "plus_1pct",
+   "group": "filing",
+   "name": "NetIncomeLoss",
+   "true_value": 29.789,
+   "altered": {
+    "value": 30.087,
+    "unit": "USD billion",
+    "call": 3
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 3 gives 29789000000.0 for this, not 30.087 USD billion"
+  },
+  {
+   "kind": "plus_10pct",
+   "group": "filing",
+   "name": "NetIncomeLoss",
+   "true_value": 29.789,
+   "altered": {
+    "value": 32.768,
+    "unit": "USD billion",
+    "call": 3
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 3 gives 29789000000.0 for this, not 32.768 USD billion"
+  },
+  {
+   "kind": "minus_10pct",
+   "group": "filing",
+   "name": "NetIncomeLoss",
+   "true_value": 29.789,
+   "altered": {
+    "value": 26.81,
+    "unit": "USD billion",
+    "call": 3
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 3 gives 29789000000.0 for this, not 26.81 USD billion"
+  },
+  {
+   "kind": "digit_swap",
+   "group": "filing",
+   "name": "NetIncomeLoss",
+   "true_value": 29.789,
+   "altered": {
+    "value": 92.789,
+    "unit": "USD billion",
+    "call": 3
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 3 gives 29789000000.0 for this, not 92.789 USD billion"
+  },
+  {
+   "kind": "unit_slip",
+   "group": "filing",
+   "name": "NetIncomeLoss",
+   "true_value": 29.789,
+   "altered": {
+    "value": 29.789,
+    "unit": "USD million",
+    "call": 3
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 3 gives 29789000000.0 for this, not 29.789 USD million"
+  },
+  {
+   "kind": "wrong_call",
+   "group": "filing",
+   "name": "NetIncomeLoss",
+   "true_value": 29.789,
+   "altered": {
+    "value": 29.789,
+    "unit": "USD billion",
+    "call": 1
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "call 1 (describe_data) holds nothing that matches this"
+  },
+  {
+   "kind": "missing_call",
+   "group": "filing",
+   "name": "NetIncomeLoss",
+   "true_value": 29.789,
+   "altered": {
+    "value": 29.789,
+    "unit": "USD billion",
+    "call": 99
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "there is no call 99"
+  },
+  {
+   "kind": "same_value",
+   "group": "filing",
+   "name": "NetIncomeLoss",
+   "true_value": 29.789,
+   "altered": {
+    "value": 29.789,
+    "unit": "USD billion",
+    "call": 3
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result.facts[2].NetIncomeLoss.value in call 3"
+  },
+  {
+   "kind": "rounded",
+   "group": "filing",
+   "name": "NetIncomeLoss",
+   "true_value": 29.789,
+   "altered": {
+    "value": 29.79,
+    "unit": "USD billion",
+    "call": 3
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result.facts[2].NetIncomeLoss.value in call 3"
+  },
+  {
+   "kind": "plus_1pct",
+   "group": "filing",
+   "name": "EarningsPerShareDiluted",
+   "true_value": 2.02,
+   "altered": {
+    "value": 2.04,
+    "unit": "USD/shares",
+    "call": 3
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 3 gives 2.02 for this, not 2.04 USD/shares"
+  },
+  {
+   "kind": "plus_10pct",
+   "group": "filing",
+   "name": "EarningsPerShareDiluted",
+   "true_value": 2.02,
+   "altered": {
+    "value": 2.22,
+    "unit": "USD/shares",
+    "call": 3
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 3 gives 2.02 for this, not 2.22 USD/shares"
+  },
+  {
+   "kind": "minus_10pct",
+   "group": "filing",
+   "name": "EarningsPerShareDiluted",
+   "true_value": 2.02,
+   "altered": {
+    "value": 1.82,
+    "unit": "USD/shares",
+    "call": 3
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 3 gives 2.02 for this, not 1.82 USD/shares"
+  },
+  {
+   "kind": "digit_swap",
+   "group": "filing",
+   "name": "EarningsPerShareDiluted",
+   "true_value": 2.02,
+   "altered": {
+    "value": 2.2,
+    "unit": "USD/shares",
+    "call": 3
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 3 gives 2.02 for this, not 2.2 USD/shares"
+  },
+  {
+   "kind": "wrong_call",
+   "group": "filing",
+   "name": "EarningsPerShareDiluted",
+   "true_value": 2.02,
+   "altered": {
+    "value": 2.02,
+    "unit": "USD/shares",
+    "call": 1
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "call 1 (describe_data) holds nothing that matches this"
+  },
+  {
+   "kind": "missing_call",
+   "group": "filing",
+   "name": "EarningsPerShareDiluted",
+   "true_value": 2.02,
+   "altered": {
+    "value": 2.02,
+    "unit": "USD/shares",
+    "call": 99
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "there is no call 99"
+  },
+  {
+   "kind": "same_value",
+   "group": "filing",
+   "name": "EarningsPerShareDiluted",
+   "true_value": 2.02,
+   "altered": {
+    "value": 2.02,
+    "unit": "USD/shares",
+    "call": 3
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result.facts[3].EarningsPerShareDiluted.value in call 3"
+  },
+  {
+   "kind": "rounded",
+   "group": "filing",
+   "name": "EarningsPerShareDiluted",
+   "true_value": 2.02,
+   "altered": {
+    "value": 2.0,
+    "unit": "USD/shares",
+    "call": 3
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result.facts[3].EarningsPerShareDiluted.value in call 3"
+  },
+  {
+   "kind": "plus_1pct",
+   "group": "filing",
+   "name": "EarningsPerShareBasic",
+   "true_value": 2.03,
+   "altered": {
+    "value": 2.05,
+    "unit": "USD/shares",
+    "call": 3
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 3 gives 2.03 for this, not 2.05 USD/shares"
+  },
+  {
+   "kind": "plus_10pct",
+   "group": "filing",
+   "name": "EarningsPerShareBasic",
+   "true_value": 2.03,
+   "altered": {
+    "value": 2.23,
+    "unit": "USD/shares",
+    "call": 3
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 3 gives 2.03 for this, not 2.23 USD/shares"
+  },
+  {
+   "kind": "minus_10pct",
+   "group": "filing",
+   "name": "EarningsPerShareBasic",
+   "true_value": 2.03,
+   "altered": {
+    "value": 1.83,
+    "unit": "USD/shares",
+    "call": 3
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 3 gives 2.03 for this, not 1.83 USD/shares"
+  },
+  {
+   "kind": "digit_swap",
+   "group": "filing",
+   "name": "EarningsPerShareBasic",
+   "true_value": 2.03,
+   "altered": {
+    "value": 2.3,
+    "unit": "USD/shares",
+    "call": 3
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 3 gives 2.03 for this, not 2.3 USD/shares"
+  },
+  {
+   "kind": "wrong_call",
+   "group": "filing",
+   "name": "EarningsPerShareBasic",
+   "true_value": 2.03,
+   "altered": {
+    "value": 2.03,
+    "unit": "USD/shares",
+    "call": 1
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "call 1 (describe_data) holds nothing that matches this"
+  },
+  {
+   "kind": "missing_call",
+   "group": "filing",
+   "name": "EarningsPerShareBasic",
+   "true_value": 2.03,
+   "altered": {
+    "value": 2.03,
+    "unit": "USD/shares",
+    "call": 99
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "there is no call 99"
+  },
+  {
+   "kind": "same_value",
+   "group": "filing",
+   "name": "EarningsPerShareBasic",
+   "true_value": 2.03,
+   "altered": {
+    "value": 2.03,
+    "unit": "USD/shares",
+    "call": 3
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result.facts[4].EarningsPerShareBasic.value in call 3"
+  },
+  {
+   "kind": "rounded",
+   "group": "filing",
+   "name": "EarningsPerShareBasic",
+   "true_value": 2.03,
+   "altered": {
+    "value": 2.0,
+    "unit": "USD/shares",
+    "call": 3
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result.facts[4].EarningsPerShareBasic.value in call 3"
+  },
+  {
+   "kind": "plus_1pct",
+   "group": "filing",
+   "name": "Assets",
+   "true_value": 383.266,
+   "altered": {
+    "value": 387.099,
+    "unit": "USD billion",
+    "call": 3
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 3 gives 383266000000.0 for this, not 387.099 USD billion"
+  },
+  {
+   "kind": "plus_10pct",
+   "group": "filing",
+   "name": "Assets",
+   "true_value": 383.266,
+   "altered": {
+    "value": 421.593,
+    "unit": "USD billion",
+    "call": 3
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 3 gives 383266000000.0 for this, not 421.593 USD billion"
+  },
+  {
+   "kind": "minus_10pct",
+   "group": "filing",
+   "name": "Assets",
+   "true_value": 383.266,
+   "altered": {
+    "value": 344.939,
+    "unit": "USD billion",
+    "call": 3
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 3 gives 383266000000.0 for this, not 344.939 USD billion"
+  },
+  {
+   "kind": "digit_swap",
+   "group": "filing",
+   "name": "Assets",
+   "true_value": 383.266,
+   "altered": {
+    "value": 833.266,
+    "unit": "USD billion",
+    "call": 3
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 3 gives 383266000000.0 for this, not 833.266 USD billion"
+  },
+  {
+   "kind": "unit_slip",
+   "group": "filing",
+   "name": "Assets",
+   "true_value": 383.266,
+   "altered": {
+    "value": 383.266,
+    "unit": "USD million",
+    "call": 3
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 3 gives 383266000000.0 for this, not 383.266 USD million"
+  },
+  {
+   "kind": "wrong_call",
+   "group": "filing",
+   "name": "Assets",
+   "true_value": 383.266,
+   "altered": {
+    "value": 383.266,
+    "unit": "USD billion",
+    "call": 1
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "call 1 (describe_data) holds nothing that matches this"
+  },
+  {
+   "kind": "missing_call",
+   "group": "filing",
+   "name": "Assets",
+   "true_value": 383.266,
+   "altered": {
+    "value": 383.266,
+    "unit": "USD billion",
+    "call": 99
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "there is no call 99"
+  },
+  {
+   "kind": "same_value",
+   "group": "filing",
+   "name": "Assets",
+   "true_value": 383.266,
+   "altered": {
+    "value": 383.266,
+    "unit": "USD billion",
+    "call": 3
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result.facts[5].Assets.value in call 3"
+  },
+  {
+   "kind": "rounded",
+   "group": "filing",
+   "name": "Assets",
+   "true_value": 383.266,
+   "altered": {
+    "value": 383.27,
+    "unit": "USD billion",
+    "call": 3
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result.facts[5].Assets.value in call 3"
+  },
+  {
+   "kind": "plus_1pct",
+   "group": "price",
+   "name": "close_2026-10-01",
+   "true_value": 330.32,
+   "altered": {
+    "value": 333.62,
+    "unit": "USD",
+    "call": 4
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 4 gives 330.32 for this, not 333.62 USD"
+  },
+  {
+   "kind": "plus_10pct",
+   "group": "price",
+   "name": "close_2026-10-01",
+   "true_value": 330.32,
+   "altered": {
+    "value": 363.35,
+    "unit": "USD",
+    "call": 4
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 4 gives 330.32 for this, not 363.35 USD"
+  },
+  {
+   "kind": "minus_10pct",
+   "group": "price",
+   "name": "close_2026-10-01",
+   "true_value": 330.32,
+   "altered": {
+    "value": 297.29,
+    "unit": "USD",
+    "call": 4
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 4 gives 330.32 for this, not 297.29 USD"
+  },
+  {
+   "kind": "digit_swap",
+   "group": "price",
+   "name": "close_2026-10-01",
+   "true_value": 330.32,
+   "altered": {
+    "value": 303.32,
+    "unit": "USD",
+    "call": 4
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 4 gives 330.32 for this, not 303.32 USD"
+  },
+  {
+   "kind": "wrong_call",
+   "group": "price",
+   "name": "close_2026-10-01",
+   "true_value": 330.32,
+   "altered": {
+    "value": 330.32,
+    "unit": "USD",
+    "call": 1
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "call 1 (describe_data) holds nothing that matches this"
+  },
+  {
+   "kind": "missing_call",
+   "group": "price",
+   "name": "close_2026-10-01",
+   "true_value": 330.32,
+   "altered": {
+    "value": 330.32,
+    "unit": "USD",
+    "call": 99
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "there is no call 99"
+  },
+  {
+   "kind": "same_value",
+   "group": "price",
+   "name": "close_2026-10-01",
+   "true_value": 330.32,
+   "altered": {
+    "value": 330.32,
+    "unit": "USD",
+    "call": 4
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result[2026-10-01].close in call 4"
+  },
+  {
+   "kind": "rounded",
+   "group": "price",
+   "name": "close_2026-10-01",
+   "true_value": 330.32,
+   "altered": {
+    "value": 330.3,
+    "unit": "USD",
+    "call": 4
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result[2026-10-01].close in call 4"
+  },
+  {
+   "kind": "plus_1pct",
+   "group": "price",
+   "name": "volume_2026-10-01",
+   "true_value": 36306346,
+   "altered": {
+    "value": 36669409.5,
+    "unit": null,
+    "call": 4
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 4 gives 36306346.0 for this, not 36669409.5"
+  },
+  {
+   "kind": "plus_10pct",
+   "group": "price",
+   "name": "volume_2026-10-01",
+   "true_value": 36306346,
+   "altered": {
+    "value": 39936980.6,
+    "unit": null,
+    "call": 4
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 4 gives 36306346.0 for this, not 39936980.6"
+  },
+  {
+   "kind": "minus_10pct",
+   "group": "price",
+   "name": "volume_2026-10-01",
+   "true_value": 36306346,
+   "altered": {
+    "value": 32675711.4,
+    "unit": null,
+    "call": 4
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 4 gives 36306346.0 for this, not 32675711.4"
+  },
+  {
+   "kind": "digit_swap",
+   "group": "price",
+   "name": "volume_2026-10-01",
+   "true_value": 36306346,
+   "altered": {
+    "value": 63306346.0,
+    "unit": null,
+    "call": 4
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 4 gives 36306346.0 for this, not 63306346.0"
+  },
+  {
+   "kind": "wrong_call",
+   "group": "price",
+   "name": "volume_2026-10-01",
+   "true_value": 36306346,
+   "altered": {
+    "value": 36306346,
+    "unit": null,
+    "call": 1
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "call 1 (describe_data) holds nothing that matches this"
+  },
+  {
+   "kind": "missing_call",
+   "group": "price",
+   "name": "volume_2026-10-01",
+   "true_value": 36306346,
+   "altered": {
+    "value": 36306346,
+    "unit": null,
+    "call": 99
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "there is no call 99"
+  },
+  {
+   "kind": "same_value",
+   "group": "price",
+   "name": "volume_2026-10-01",
+   "true_value": 36306346,
+   "altered": {
+    "value": 36306346,
+    "unit": null,
+    "call": 4
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result[2026-10-01].volume in call 4"
+  },
+  {
+   "kind": "rounded",
+   "group": "price",
+   "name": "volume_2026-10-01",
+   "true_value": 36306346,
+   "altered": {
+    "value": 36306346.0,
+    "unit": null,
+    "call": 4
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result[2026-10-01].volume in call 4"
+  },
+  {
+   "kind": "plus_1pct",
+   "group": "price",
+   "name": "close_2026-10-02",
+   "true_value": 333.69,
+   "altered": {
+    "value": 337.03,
+    "unit": "USD",
+    "call": 4
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 4 gives 333.69 for this, not 337.03 USD"
+  },
+  {
+   "kind": "plus_10pct",
+   "group": "price",
+   "name": "close_2026-10-02",
+   "true_value": 333.69,
+   "altered": {
+    "value": 367.06,
+    "unit": "USD",
+    "call": 4
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 4 gives 333.69 for this, not 367.06 USD"
+  },
+  {
+   "kind": "minus_10pct",
+   "group": "price",
+   "name": "close_2026-10-02",
+   "true_value": 333.69,
+   "altered": {
+    "value": 300.32,
+    "unit": "USD",
+    "call": 4
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 4 gives 333.69 for this, not 300.32 USD"
+  },
+  {
+   "kind": "digit_swap",
+   "group": "price",
+   "name": "close_2026-10-02",
+   "true_value": 333.69,
+   "altered": {
+    "value": 333.96,
+    "unit": "USD",
+    "call": 4
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 4 gives 333.69 for this, not 333.96 USD"
+  },
+  {
+   "kind": "wrong_call",
+   "group": "price",
+   "name": "close_2026-10-02",
+   "true_value": 333.69,
+   "altered": {
+    "value": 333.69,
+    "unit": "USD",
+    "call": 1
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "call 1 (describe_data) holds nothing that matches this"
+  },
+  {
+   "kind": "missing_call",
+   "group": "price",
+   "name": "close_2026-10-02",
+   "true_value": 333.69,
+   "altered": {
+    "value": 333.69,
+    "unit": "USD",
+    "call": 99
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "there is no call 99"
+  },
+  {
+   "kind": "same_value",
+   "group": "price",
+   "name": "close_2026-10-02",
+   "true_value": 333.69,
+   "altered": {
+    "value": 333.69,
+    "unit": "USD",
+    "call": 4
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result[2026-10-02].close in call 4"
+  },
+  {
+   "kind": "rounded",
+   "group": "price",
+   "name": "close_2026-10-02",
+   "true_value": 333.69,
+   "altered": {
+    "value": 333.7,
+    "unit": "USD",
+    "call": 4
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result[2026-10-02].close in call 4"
+  },
+  {
+   "kind": "plus_1pct",
+   "group": "price",
+   "name": "volume_2026-10-02",
+   "true_value": 33278552,
+   "altered": {
+    "value": 33611337.5,
+    "unit": null,
+    "call": 4
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 4 gives 33278552.0 for this, not 33611337.5"
+  },
+  {
+   "kind": "plus_10pct",
+   "group": "price",
+   "name": "volume_2026-10-02",
+   "true_value": 33278552,
+   "altered": {
+    "value": 36606407.2,
+    "unit": null,
+    "call": 4
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 4 gives 33278552.0 for this, not 36606407.2"
+  },
+  {
+   "kind": "minus_10pct",
+   "group": "price",
+   "name": "volume_2026-10-02",
+   "true_value": 33278552,
+   "altered": {
+    "value": 29950696.8,
+    "unit": null,
+    "call": 4
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 4 gives 33278552.0 for this, not 29950696.8"
+  },
+  {
+   "kind": "digit_swap",
+   "group": "price",
+   "name": "volume_2026-10-02",
+   "true_value": 33278552,
+   "altered": {
+    "value": 32378552.0,
+    "unit": null,
+    "call": 4
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 4 gives 33278552.0 for this, not 32378552.0"
+  },
+  {
+   "kind": "wrong_call",
+   "group": "price",
+   "name": "volume_2026-10-02",
+   "true_value": 33278552,
+   "altered": {
+    "value": 33278552,
+    "unit": null,
+    "call": 1
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "call 1 (describe_data) holds nothing that matches this"
+  },
+  {
+   "kind": "missing_call",
+   "group": "price",
+   "name": "volume_2026-10-02",
+   "true_value": 33278552,
+   "altered": {
+    "value": 33278552,
+    "unit": null,
+    "call": 99
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "there is no call 99"
+  },
+  {
+   "kind": "same_value",
+   "group": "price",
+   "name": "volume_2026-10-02",
+   "true_value": 33278552,
+   "altered": {
+    "value": 33278552,
+    "unit": null,
+    "call": 4
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result[2026-10-02].volume in call 4"
+  },
+  {
+   "kind": "rounded",
+   "group": "price",
+   "name": "volume_2026-10-02",
+   "true_value": 33278552,
+   "altered": {
+    "value": 33278552.0,
+    "unit": null,
+    "call": 4
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result[2026-10-02].volume in call 4"
+  },
+  {
+   "kind": "plus_1pct",
+   "group": "price",
+   "name": "close_2026-10-05",
+   "true_value": 332.89,
+   "altered": {
+    "value": 336.22,
+    "unit": "USD",
+    "call": 4
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 4 gives 332.89 for this, not 336.22 USD"
+  },
+  {
+   "kind": "plus_10pct",
+   "group": "price",
+   "name": "close_2026-10-05",
+   "true_value": 332.89,
+   "altered": {
+    "value": 366.18,
+    "unit": "USD",
+    "call": 4
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 4 gives 332.89 for this, not 366.18 USD"
+  },
+  {
+   "kind": "minus_10pct",
+   "group": "price",
+   "name": "close_2026-10-05",
+   "true_value": 332.89,
+   "altered": {
+    "value": 299.6,
+    "unit": "USD",
+    "call": 4
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 4 gives 332.89 for this, not 299.6 USD"
+  },
+  {
+   "kind": "digit_swap",
+   "group": "price",
+   "name": "close_2026-10-05",
+   "true_value": 332.89,
+   "altered": {
+    "value": 323.89,
+    "unit": "USD",
+    "call": 4
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 4 gives 332.89 for this, not 323.89 USD"
+  },
+  {
+   "kind": "wrong_call",
+   "group": "price",
+   "name": "close_2026-10-05",
+   "true_value": 332.89,
+   "altered": {
+    "value": 332.89,
+    "unit": "USD",
+    "call": 1
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "call 1 (describe_data) holds nothing that matches this"
+  },
+  {
+   "kind": "missing_call",
+   "group": "price",
+   "name": "close_2026-10-05",
+   "true_value": 332.89,
+   "altered": {
+    "value": 332.89,
+    "unit": "USD",
+    "call": 99
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "there is no call 99"
+  },
+  {
+   "kind": "same_value",
+   "group": "price",
+   "name": "close_2026-10-05",
+   "true_value": 332.89,
+   "altered": {
+    "value": 332.89,
+    "unit": "USD",
+    "call": 4
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result[2026-10-05].close in call 4"
+  },
+  {
+   "kind": "rounded",
+   "group": "price",
+   "name": "close_2026-10-05",
+   "true_value": 332.89,
+   "altered": {
+    "value": 332.9,
+    "unit": "USD",
+    "call": 4
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result[2026-10-05].close in call 4"
+  },
+  {
+   "kind": "plus_1pct",
+   "group": "price",
+   "name": "volume_2026-10-05",
+   "true_value": 34400850,
+   "altered": {
+    "value": 34744858.5,
+    "unit": null,
+    "call": 4
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 4 gives 34400850.0 for this, not 34744858.5"
+  },
+  {
+   "kind": "plus_10pct",
+   "group": "price",
+   "name": "volume_2026-10-05",
+   "true_value": 34400850,
+   "altered": {
+    "value": 37840935.0,
+    "unit": null,
+    "call": 4
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 4 gives 34400850.0 for this, not 37840935.0"
+  },
+  {
+   "kind": "minus_10pct",
+   "group": "price",
+   "name": "volume_2026-10-05",
+   "true_value": 34400850,
+   "altered": {
+    "value": 30960765.0,
+    "unit": null,
+    "call": 4
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 4 gives 34400850.0 for this, not 30960765.0"
+  },
+  {
+   "kind": "digit_swap",
+   "group": "price",
+   "name": "volume_2026-10-05",
+   "true_value": 34400850,
+   "altered": {
+    "value": 43400850.0,
+    "unit": null,
+    "call": 4
+   },
+   "status": "MISMATCH",
+   "outcome": "caught",
+   "reason": "call 4 gives 34400850.0 for this, not 43400850.0"
+  },
+  {
+   "kind": "wrong_call",
+   "group": "price",
+   "name": "volume_2026-10-05",
+   "true_value": 34400850,
+   "altered": {
+    "value": 34400850,
+    "unit": null,
+    "call": 1
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "call 1 (describe_data) holds nothing that matches this"
+  },
+  {
+   "kind": "missing_call",
+   "group": "price",
+   "name": "volume_2026-10-05",
+   "true_value": 34400850,
+   "altered": {
+    "value": 34400850,
+    "unit": null,
+    "call": 99
+   },
+   "status": "UNREFERENCED",
+   "outcome": "caught",
+   "reason": "there is no call 99"
+  },
+  {
+   "kind": "same_value",
+   "group": "price",
+   "name": "volume_2026-10-05",
+   "true_value": 34400850,
+   "altered": {
+    "value": 34400850,
+    "unit": null,
+    "call": 4
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result[2026-10-05].volume in call 4"
+  },
+  {
+   "kind": "rounded",
+   "group": "price",
+   "name": "volume_2026-10-05",
+   "true_value": 34400850,
+   "altered": {
+    "value": 34400850.0,
+    "unit": null,
+    "call": 4
+   },
+   "status": "GROUNDED",
+   "outcome": "kept",
+   "reason": "matches result[2026-10-05].volume in call 4"
+  }
+ ],
+ "summary": {
+  "errors": 229,
+  "caught": 227,
+  "missed": 2,
+  "controls": 68,
+  "controls_wrongly_caught": 0,
+  "by_kind": {
+   "plus_1pct": {
+    "caught": 34,
+    "total": 34
+   },
+   "plus_10pct": {
+    "caught": 34,
+    "total": 34
+   },
+   "minus_10pct": {
+    "caught": 34,
+    "total": 34
+   },
+   "digit_swap": {
+    "caught": 34,
+    "total": 34
+   },
+   "unit_slip": {
+    "caught": 4,
+    "total": 4
+   },
+   "sign_flip": {
+    "caught": 3,
+    "total": 3
+   },
+   "wrong_call": {
+    "caught": 34,
+    "total": 34
+   },
+   "missing_call": {
+    "caught": 34,
+    "total": 34
+   },
+   "neighbour_value": {
+    "caught": 16,
+    "missed": 2,
+    "total": 18
+   },
+   "same_value": {
+    "kept": 34,
+    "total": 34
+   },
+   "rounded": {
+    "kept": 34,
+    "total": 34
+   }
+  },
+  "by_group": {
+   "indicator": {
+    "caught": 151,
+    "missed": 2
+   },
+   "filing": {
+    "caught": 40,
+    "missed": 0
+   },
+   "price": {
+    "caught": 36,
+    "missed": 0
+   }
+  }
+ }
+}
