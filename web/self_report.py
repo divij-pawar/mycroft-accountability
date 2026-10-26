@@ -178,7 +178,8 @@ KNOWN_ISSUES: list[dict[str, Any]] = [
         "severity": "medium",
         "area": "Adapters",
         "title": "ollama_adapter.py's determinism claim is false as written",
-        "detail": "Seed + temperature=0 did not produce reproducible output for qwen2.5:7b: 3 distinct answers across 6 identical-input calls. The docstring's claim needs scoping or correcting, and /api/runs/{id}/replay should not assume it.",
+        "detail": "Seed + temperature=0 did not produce reproducible output for qwen2.5:7b: 3 distinct answers across 6 identical-input calls. The docstring's claim needs scoping or correcting, and /api/runs/{id}/replay should not assume it. "
+                  "UPDATE 2026-10-26: the same check on llama3.2 (6 identical calls, seed 42, temperature 0, 80 tokens, two different prompts) gave 1 distinct answer of 6 both times, so the failure is model-specific, not a property of the adapter. qwen2.5:7b is not installed on this machine, so the original finding could not be reproduced or retired. The claim still needs scoping to the models it was checked on.",
         "status": "OPEN",
         "source": "Live test 3",
     },
@@ -274,7 +275,8 @@ KNOWN_ISSUES: list[dict[str, Any]] = [
         "severity": "low",
         "area": "Config",
         "title": "GEMINI_API_KEY is configured but never confirmed working",
-        "detail": "A key was written to .env. The first live attempt returned a suspended-key 403 from Google, and no successful Gemini call has been observed since. 'Configured' and 'working' are two different facts.",
+        "detail": "A key was written to .env. The first live attempt returned a suspended-key 403 from Google, and no successful Gemini call has been observed since. 'Configured' and 'working' are two different facts. "
+                  "UPDATE 2026-10-26: one more live call (gemini-2.5-flash, a one-word prompt) returned the same 403, \"Consumer 'api_key:...' has been suspended\" (PERMISSION_DENIED). The key in .env is suspended by Google; Gemini does not work with it, and nothing built on Gemini has been observed. Needs a new key, not a code change.",
         "status": "OPEN",
         "source": "logs/RUN_LOG.md 2026-08-29 live-run entries",
     },
@@ -286,6 +288,20 @@ KNOWN_ISSUES: list[dict[str, Any]] = [
         "detail": "scripts/run_cross_agent_live.py accepts --agent-a-model / --agent-b-model so the two producers can run on genuinely different models. /api/compare uses one shared adapter for both sides, so a comparison run from this UI is same-model-twice.",
         "status": "OPEN",
         "source": "status doc §1.3, §3.3",
+    },
+    {
+        "id": "small-model-invents-tool-use",
+        "severity": "high",
+        "area": "Model",
+        "title": "A small local model writes analyses without really using the data tools, and cites figures from calls it never made",
+        "detail": "Measured 2026-10-26 on llama3.2 (3.2B), the only local model installed, through the financial agent (scripts/measure_analysis_format.py). "
+                  "Under the first prompt (analysis-v1, long) the first run passed the reply format with no tool call at all: its thought log narrated calls and invented their results (30 bars, a 2022 split, a close of 145.31), none of it in the data. "
+                  "A probe showed the same model calling the tool in 3 seconds with a short prompt, and a larger context window changed nothing, so the long directive was the cause; the prompt was rewritten short (analysis-v2). "
+                  "Under v2, 10 runs on AAPL (data as of 2026-10-23, temperature 0.7, five phrasings): 8 first replies passed the format, 2 halted, 0 were rescued by the retry; the median run made 1 data call (describe_data) and never asked for the indicators or the filing; 4 runs cited figures, 5 in all, and all 5 were UNREFERENCED, pointing at calls the model never made (for example RSI 70.0 from a \"call 2\" that did not exist). "
+                  "So the format pass rate (80%) says little: Tier 1 grounded 0 of 5. What the layer does: refuses a reply written with no data call, flags every figure that matches nothing in its call, and shows grounded 0/n on the card. What it does not do: make the model use the tools. "
+                  "Not measured: any other model (qwen2.5:7b is not installed; the Gemini key is suspended, see gemini-key-unconfirmed), any other ticker, or a larger local model.",
+        "status": "OPEN",
+        "source": "logs/analysis-format-measurements.md; logs/RUN_LOG.md 2026-10-26 (Week 2) entry",
     },
     {
         "id": "escalation-undefined",
@@ -406,7 +422,13 @@ KNOWN_ISSUES: list[dict[str, Any]] = [
         "detail": "Under the active v1.5.2 (2026-09-26, AAPL and NVDA): bear passed the format check 2 of 2, bull 0 of 2 (both "
                   "halted, ordinary structure failures). AAPL's bear said the figures don't support a bearish view but added an "
                   "unsupported 'despite the losses'; NVDA's bear argued from search results rather than the filing figures. "
-                  "Too few runs to say whether the briefs themselves hurt compliance or grounding.",
+                  "Too few runs to say whether the briefs themselves hurt compliance or grounding. "
+                  "UPDATE 2026-10-26: three more live attempts on local llama3.2, through the real /api/compare route (real EDGAR data, no web search). "
+                  "Two (AAPL and MSFT, both agents at once) never produced an answer: the model sent nothing for 120 s on the first call and the stall timeout abandoned it, "
+                  "the Ollama-under-compare problem again (ollama-hangs-under-compare), on an 8 GB machine. One (AAPL, agents one after the other, a 400 s stall limit) took 18 minutes: "
+                  "bull passed the format first time, bear failed it twice and halted, so the comparison was AGENT_B_HALTED. "
+                  "Across all six attempts that produced a reply (v1.5.2, AAPL, NVDA): bull passed 1 of 3, bear passed 2 of 3, and the two timeouts count for neither. "
+                  "Still too few to separate the briefs from chance, and nothing was run on a model other than llama3.2.",
         "status": "OPEN",
         "source": "logs/RUN_LOG.md 2026-09-26 B4 + U7 entry",
     },

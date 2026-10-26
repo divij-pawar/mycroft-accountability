@@ -357,8 +357,15 @@ Offline, open `docs/index.html` directly (it's static HTML), or rebuild it with
 ## Status
 
 - **Built and tested:** everything above. The CI badge reflects the current suites.
-- **Observed on real models:** the runs cited above, on local `llama3.2` and `qwen2.5:7b`. Gemini is
-  configured but not confirmed working.
+- **Observed on real models:** the compare runs cited above, on local `llama3.2` and `qwen2.5:7b`.
+  Gemini's key is suspended by Google (HTTP 403, rechecked 2026-10-26), so nothing has been observed
+  on it.
+- **The financial agent** (`financial_agent/`, the Analysis page): built and tested, and each figure a
+  signal cites is checked against the tool result it cites (Tier 1, no model). Measured live on one
+  local model only. `llama3.2`, 10 runs on AAPL: 8 first replies passed the reply format and **none of
+  the 5 figures cited was grounded**, because the model made one data call and then cited calls it
+  never made ([`small-model-invents-tool-use`](https://divij-pawar.github.io/mycroft-accountability/ledger.html#small-model-invents-tool-use)).
+  No other model has been measured. It does not claim that any signal is right.
 - **Known issues** are listed, with sources, in the
   [Honest Ledger](https://divij-pawar.github.io/mycroft-accountability/ledger.html), and served live
   at `GET /api/self-report`.
