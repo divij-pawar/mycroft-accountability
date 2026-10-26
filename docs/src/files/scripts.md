@@ -312,3 +312,64 @@ python scripts/planted_errors.py --stdout   # prints the report, writes nothing
 - `causes` are facts about the trial, not a diagnosis.
 
 Related: [[tests/test_planted_errors.py]], [[logs/planted-errors-audit.md]]
+
+## `scripts/measure_analysis_format.py`
+
+**Role:** how often does a real model follow the analysis reply format, call the data tools, and
+quote its data correctly? Phase 2's "done when" in [[financial_agent/PLAN.md]].
+
+```bash
+python scripts/measure_analysis_format.py --models llama3.2 --runs 10
+python scripts/measure_analysis_format.py --models llama3.2,qwen2.5:7b --runs 10 --tickers AAPL
+```
+
+It runs the real agent ([[financial_agent/agent.py]]) through the same retry-then-halt loop the app
+uses, on one frozen bundle per ticker, so ten runs cost one price fetch (two Alpha Vantage requests,
+or none when today's cache has it). Each run varies the question (five phrasings) and the seed, at
+temperature 0.7. Per run it records whether the first reply passed, whether the retry rescued it,
+whether it halted and why (failure reasons are reduced to a class so they can be counted), the tool
+calls made, the time taken and the Tier 1 result for the figures it cited. Runs are not written to
+the app's database.
+
+Outputs, rewritten after every run so an interrupted measurement keeps what it has:
+[[logs/analysis-format-measurements.json]] (every run), [[logs/analysis-format-measurements.md]]
+(the summary) and [[financial_agent/model_measurements.json]] (the compact per-model counts the
+Analysis page reads).
+
+### Limits and open issues
+- It measures format compliance and figure quoting by the models named, on the tickers and date in
+  the report, under one prompt version. Not whether any signal is right.
+- A model that can't be reached is an error row, not a crash, and is excluded from the rates.
+- The summary reports counts first. A rate over ten runs is not a promise about the eleventh.
+
+Related: [[tests/test_measure_analysis.py]]
+
+## `scripts/planted_analysis_errors.py`
+
+**Role:** the planted-error benchmark for analyses: how often does Tier 1 catch a figure known to
+be wrong?
+
+```bash
+python scripts/planted_analysis_errors.py            # writes logs/planted-analysis-errors-audit.md and .json
+python scripts/planted_analysis_errors.py --stdout   # prints the report, writes nothing
+```
+
+No real analysis had been recorded when this was written, so it starts from the other end. It takes
+the results of the real data tools over the recorded AAPL bundle, writes down every figure an agent
+could correctly cite from them (as the tool returned it, with the unit it would give), checks that
+Tier 1 passes each one, then plants one error at a time: `plus_1pct`, `plus_10pct`, `minus_10pct`,
+`digit_swap`, `unit_slip`, `sign_flip`, `wrong_call` (right value, a call that doesn't hold it),
+`missing_call` and `neighbour_value` (a sibling figure's value). Controls that should not be caught are
+`same_value` and `rounded`. An outcome is `caught` (MISMATCH or UNREFERENCED) or `missed` (still
+GROUNDED).
+
+Nothing is random and nothing calls a model or the network, so every run gives the same counts.
+
+### Limits and open issues
+- It measures the detector on figures whose truth is known. It says nothing about how often a real
+  agent makes these errors.
+- It extends the compare benchmark ([[scripts/planted_errors.py]]) in spirit but is a separate
+  script, because it starts from tool results and not from recorded agent answers. When real
+  analyses exist, a benchmark over those is the better one.
+
+Related: [[tests/test_planted_analysis_errors.py]], [[validation/analysis_checks.py]]

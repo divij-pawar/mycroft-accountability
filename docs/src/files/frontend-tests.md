@@ -133,6 +133,12 @@ What it locks in:
 - A halted record reads "No signal" with every attempt; an investor record says its notes and raw
   replies are withheld; a native-reasoning model's notes are labelled thinking, a plain one's
   working notes; adjusted fields are listed.
+- Tier 1: `grounded 1/3` with its tone, a line per figure with its mark in words and the reason a
+  figure failed, a success badge only when all matched, "no figures to check" instead of 0/0 as a pass,
+  document figures and value-only matches said to be so, a reference to a missing call flagged, no
+  badge for a halted run, and the old unchecked-references note when there is no Tier 1 result.
+- The model line: "not measured" when nobody measured it, the counts and date with no percentage,
+  singular nouns for a count of one, and a note for an older prompt; shown on the page.
 
 Stubs: `fetch`, with server-sent events as a response body.
 

@@ -976,3 +976,52 @@ Table cells escape `|` and are kept to one line (`_cell`).
   of `8ecb0922` downloaded with no agent grade (RUN_LOG 2026-09-27, "B6 + U9").
 
 Related: [[validation/gate.py]], [[validation/divergence.py]], [[web/server.py]]
+
+## `validation/analysis_checks.py`
+
+**Role:** Tier 1 grounding of an analysis: did the agent quote its data correctly?
+
+An analysis record lists the figures its signal rests on, each with the tool call it says the figure
+came from, and the tool calls are recorded with exactly what the agent was given. So whether a cited
+figure is real can be checked in code: find the call, find the number, compare. No model is involved.
+
+`check_figure(figure, record)` gives each cited figure one status:
+
+| Status | Meaning |
+|---|---|
+| `GROUNDED` | the value matches a number in the call it cites, at the precision it was written |
+| `MISMATCH` | the call holds a number the figure's name points at, and it is a different one (RSI "58.2" when the call says 53.78); also a parameter the data lacks (`sma_21` when the call has the 20 and 50 day means), and a price named for a date the call has no bar for |
+| `UNREFERENCED` | the call doesn't exist, returned an error, or holds nothing the figure matches |
+| `USER_ASSERTED` | from a user's document: shown, never counted as grounded |
+| `JUDGMENT` | a reason that rests on no figure; counted in neither direction |
+
+`check_analysis(record)` returns `{version, grounded, total, mismatched, unreferenced, user_asserted,
+judgment, by_value_only, checks[], evidence_problems[]}`, or `None` for a halted run. `total` counts
+the figures that can be checked, so `grounded 2/3` is two of three, and no figures is `0/0`, never a
+pass. `evidence_problems` lists key points whose reference points at a call that doesn't exist or
+returned an error. [[web/server.py]] runs it when an analysis finishes and stores the result in the
+record.
+
+### How a value is compared
+At the precision the agent wrote it: 53.8 matches 53.7839 (one decimal, so half a tenth either way),
+58.2 doesn't. A stated unit of thousand, million, billion or trillion scales the figure first, so
+"109.417 billion" matches 109417000000 and "109.417 million" doesn't. No unit means no scaling: a bare
+109.4 doesn't match a revenue in dollars, which is how a unit slip is caught. `numbers_in(result)`
+lists every number in a tool result with the words that say what it is (an indicator's name, series
+and parameters, a fact's concept and tag, a price row's column and date); fiscal years, day counts
+and bar counts are left out because they describe a figure, they aren't one. A figure's name is
+matched to those words, letters weighing ten times a number, so `sma_21` points at the moving
+averages and not at whatever else has a 21 in it. When the name matches nothing but the value
+matches a number in the call, the figure is `GROUNDED` with `matched_by: "value"` and the card says so.
+
+### Limits and open issues
+- It says the figure was quoted correctly. It doesn't say the signal follows from the figures, that
+  the data is right (a feed can be wrong and consistent; phase 7 recomputes indicators from raw bars),
+  or that a figure the agent didn't cite is right.
+- Names are matched by words, not understood. Measured on the recorded AAPL bundle
+  ([[logs/planted-analysis-errors-audit.md]]), a figure quoting a sibling's value under a name that
+  fits both (MACD's signal value for its MACD value) gets through.
+- It checks a figure against the call it cites, so an agent that cites the wrong call for a right
+  number gets `UNREFERENCED`, which is a stricter reading than "the number exists somewhere".
+
+Related: [[tests/test_analysis_checks.py]], [[scripts/planted_analysis_errors.py]], [[core/analysis.py]]

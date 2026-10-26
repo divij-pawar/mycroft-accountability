@@ -804,6 +804,61 @@ claim about any real model.
 
 Related: [[financial_agent/agent.py]], [[financial_agent/prompts.py]], [[web/server.py]]
 
+## `tests/test_analysis_checks.py`
+
+**Role:** Tier 1 grounding ([[validation/analysis_checks.py]]), on tool results produced by the real
+tools over the recorded AAPL bundle, never hand-typed ones, so a change to what a tool returns shows
+up as a changed check.
+
+What it locks in:
+- **How a value is compared:** at the precision it was written; a stated unit scales it; a unit slip
+  and an unscaled figure don't match; a negative keeps its sign.
+- **Each status:** a right figure is grounded (loose names for the right number too); a wrong one is a
+  mismatch that says what the call holds; a unit slip and a last-digit slip are mismatches; fiscal
+  year and day counts are not numbers a figure can mean; `sma_21` against the 20 and 50 day means is a
+  mismatch even though 50's value is right there; a price named for a date needs that day's bar; a
+  name that matches nothing but a value that matches is grounded by value and says so; a missing call
+  or one that returned an error is unreferenced; a document figure is user-asserted; a judgment is a
+  judgment.
+- **The summary:** counts what can be checked, no figures is 0 of 0 and not a pass, a halted run has
+  nothing to check, evidence pointing at a missing or failed call is listed, and the checker doesn't
+  change the record.
+
+Checked against the fixes: with unit scaling ignored three of these fail, with the tolerance too
+loose eight do.
+
+Stubs: none; the recorded fixtures through the real `ToolRecorder`.
+
+Related: [[validation/analysis_checks.py]], [[tests/test_fa_agent.py]]
+
+## `tests/test_measure_analysis.py`
+
+**Role:** the live-measurement harness ([[scripts/measure_analysis_format.py]]), driven by scripted
+models, so a rate in the log means what it says. The rates themselves come from live runs and are
+not tested here.
+
+What it locks in: each outcome is counted once (passed first, recovered, halted); figures are
+counted by how they were quoted; a model that can't be reached is an error row and not a crash;
+questions and seeds vary and the ticker is in the question; the three outputs are written after every
+run and agree with each other and say what they don't measure; several models are summarised
+separately; failure messages reduce to countable classes.
+
+Stubs: a scripted model, the recorded bundle, a temporary output folder.
+
+## `tests/test_planted_analysis_errors.py`
+
+**Role:** the analysis planted-error benchmark ([[scripts/planted_analysis_errors.py]]): that it is
+deterministic and what it counts.
+
+What it locks in: every correct figure passes as written, so each trial starts from a pass; no
+control is wrongly caught; eight kinds of error are always caught (`plus_1pct`, `plus_10pct`,
+`minus_10pct`, `digit_swap`, `unit_slip`, `sign_flip`, `wrong_call`, `missing_call`); the only
+misses are a figure quoting its sibling's value under an ambiguous name (MACD's signal for its
+MACD); the totals are those the report states; two runs are identical; the outputs are written.
+If a tool's output or the checker changes the counts, this fails and the audit is rewritten.
+
+Stubs: none; the recorded fixtures.
+
 ## `tests/fixtures/*`
 
 **Role:** real data captured from SEC EDGAR and from the subsystem's own run store, trimmed and kept byte-exact, so tests can check behaviour against what production actually saw.

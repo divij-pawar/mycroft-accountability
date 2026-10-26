@@ -1131,20 +1131,32 @@ Related: [[web/self_report.py]], [[web/frontend/tests/pages.test.tsx]]
   when `result` arrives. A refusal (422 no company, 503 no price data) is shown in the server's
   words and the question stays typed. A lost connection says the run continues on the server.
 - `AnalysisCard` is the signal card: the headline (`B · Buy · 3–6 months (default horizon) ·
-  medium conviction`), the conclusion, up to three reasons with reference chips, the cited
-  figures, anything the check adjusted, the working notes (labelled "Thinking" only for a
-  native-reasoning model), every attempt, and a footer with the model, the data calls, a
-  **Not verified** badge and the not-investment-advice line. A halted record reads "No signal".
+  medium conviction`), the conclusion, and, when the record has a Tier 1 result, a **`grounded n/m`
+  badge** (green only when something was checked and all of it matched, red for any contradiction,
+  amber for figures not found, neutral for "no figures to check", with the tone also in words), up to
+  three reasons with reference chips (a chip is flagged when its call doesn't exist or returned an
+  error), and a line per cited figure: a mark (✓ matches the data, ✗ contradicts it, ? not found, ◇
+  from your document and not checked, each also in words for a screen reader), the figure as written,
+  the call it cites, and for anything not grounded the reason ("call 2 gives 53.7839 for this, not
+  58.2"). Then anything the signal check adjusted, the working notes (labelled "Thinking" only for a
+  native-reasoning model), every attempt, and a footer with the model, the data calls, a **Not
+  verified** badge and the not-investment-advice line. A halted record reads "No signal".
+- The composer shows one line on the model: its reasoning mode and how it has actually done on the
+  reply format, from `GET /api/analysis/measurements`, or that it was never measured, or that the
+  measurement was made under an older prompt. It gives counts and a date, not a percentage.
 - At investor scope the notes and raw replies are withheld by the server and the card says so.
 
 ### Design notes
-- A reference chip says where the model says a figure came from. It is not a check, and the card
-  says so in words. Grounding is a later phase.
+- `grounded n/m` says the figures were quoted correctly (each is checked against the tool result it
+  cites, by [[validation/analysis_checks.py]], with no model). It does not say the signal follows from
+  them, and the card says so in words next to the badge. The separate **Not verified** badge is about
+  a second agent having checked the signal, which hasn't happened yet. A record with no Tier 1 result
+  (a halted run, or one stored before Tier 1) says its references are unchecked.
 - The progress list is replaced by the card when a record exists; a retry stays visible in the
   card's attempts.
 
 ### Limits and open issues
-- No model picker, evidence checks or Verify button yet (later phases of the plan).
+- No model picker and no Verify button yet (later phases of the plan). The model line is read-only.
 - The run isn't in the live registry, so another browser can't watch it.
 
 Related: [[web/frontend/src/lib/analysis.ts]], [[web/frontend/tests/analysis.test.tsx]]
@@ -1157,7 +1169,11 @@ Related: [[web/frontend/src/lib/analysis.ts]], [[web/frontend/tests/analysis.tes
 `strong_sell` E; a display alias of the stored five-point signal, PLAN.md Q1), `SIGNAL_WORDS`,
 `HORIZON_WORDS`, `headline(record)`, `evidenceLabel(ref, toolCalls)` (names the tool behind a
 call number), `stepLine(step)` (a retry is worded as a retry, a refused tool call as refused) and
-`STEP_MARK`.
+`STEP_MARK`. For Tier 1: `FIGURE_MARK` (a mark and its words per status), `groundedLabel(tier1)`
+(`grounded 2/3`, or "no figures to check"), `groundedTone(tier1)` (success only when something was
+checked and all of it matched) and `figureText`. And `measurementLine(response)`, the one sentence on
+how a model has done: counts with correct singular and plural, the date and tickers, "not measured"
+when nobody did, and a note when the measurement was under an older prompt.
 
 Related: [[web/frontend/src/views/AnalysisView.tsx]]
 

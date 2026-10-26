@@ -20,11 +20,12 @@ import `financial_agent/`. The folder sits inside this directory for now so it s
 subtree, and is expected to move out in a later update.
 
 **Built so far: phase 1 of [[financial_agent/PLAN.md]]** (2026-10-06): data, the frozen bundle,
-the tools and replay. **And the first half of phase 2** (2026-10-26): the prompt, the three-block
-reply contract, the agent that runs a model through the retry-then-halt loop, and the routes and
-Analysis page that use it. Built and tested with scripted models and recorded data; **not yet run
-against a real model**, so nothing here says how often a real model passes the format. Not built:
-Tier-1 grounding, verification verdicts, session agents, documents.
+the tools and replay. **Phase 2** (2026-10-26): the prompt, the three-block reply contract, the agent
+that runs a model through the retry-then-halt loop, the routes and Analysis page that use it, Tier-1
+grounding ([[validation/analysis_checks.py]]) and a script that measures a model's format compliance
+live. Tested with scripted models and recorded data, and measured live on one local model; what that
+measurement found is in `logs/RUN_LOG.md`. Not built: verification verdicts, session agents,
+documents.
 
 ## How the files fit together
 
@@ -223,22 +224,33 @@ retry.
 
 `ANALYSIS_PROMPT_VERSION` (`analysis-v1`) and `ANALYSIS_DIRECTIVE` travel together: a stored record
 names the version it ran under, so it never points at words that were edited later. The directive
-asks for exactly three blocks, `<thought_log>`, `<conclusion>` and `<signal>`, and says:
+asks for exactly three blocks, `<thought_log>`, `<conclusion>` and `<signal>`, each tag on its own line,
+and says:
 
-- the only source of fact is the data tools, and the agent should call `describe_data` first;
+- the only source of fact is the data tools, in a stated order (describe_data, get_indicators,
+  get_filing_facts), called through the tool interface; a reply written without calling any tool is
+  rejected;
 - every tool result starts with its call number, and a figure is cited by that number;
 - the signal is one JSON object in the closed vocabulary of [[core/analysis.py]] (signal, horizon,
   conviction, up to three key points with evidence, cited figures);
 - no investment advice, no amounts, no position sizes.
+
+The current version is `analysis-v2`. **v1 was a long, careful directive and it failed live**: on
+2026-10-26 it made `llama3.2` skip the tools altogether, writing a reply that narrated tool calls and
+invented their results (a probe with a short prompt made the same model call the tool in 3 seconds,
+and a larger context window changed nothing). v2 is short and puts the order of work first. The
+record of both is in `logs/RUN_LOG.md`.
 
 `user_prompt(request, bundle)` adds the request, ticker, horizon (labelled as the default when the
 user named none), the data's as-of date and the bundle hash. `corrective_text(reason)` is added on
 the second attempt and names what was wrong with the first reply.
 
 ### Limits and open issues
-- How well a real model follows this directive hasn't been measured; the plan's phase 2 "done
-  when" is a format pass rate over at least 10 live runs per model. The ledger already records a
-  small model passing a similar extra block 2 times in 10 (`assessment-not-produced`).
+- How well a real model follows this directive is measured by [[scripts/measure_analysis_format.py]],
+  and only for the models and dates in its report; the results are in `logs/RUN_LOG.md` and the
+  Analysis page states them. The ledger already records a small model passing a similar extra block
+  2 times in 10 (`assessment-not-produced`).
+- A small model still copies a template literally, or mimics what it saw in a tool result, when it can.
 - The directive's worked example sits in the directive text, so the echo check can reject a reply
   that copies eight words of it.
 
@@ -265,10 +277,14 @@ What it does, in order:
 The model is injected as a `ModelStep`, a function from the conversation to the model's next
 turn, so tests drive the whole path with scripted turns. The adapter lets the model call the data
 tools for up to `MAX_TOOL_ROUNDS` (8) turns per attempt through a `ToolRecorder`, so every call is
-numbered and hashed. A tool result is sent to the model as `{"call": n, "tool": ..., "result": ...}`.
+numbered and hashed. A tool result is shown to the model as `call n · tool` on a first line and the
+result as plain JSON after it, not as an object holding the result: with `{"call", "tool", "result"}`
+a small model copied that shape into the arguments of its own calls.
 `parse_analysis_response` reads the three blocks and requires the signal JSON to parse as written:
 a fenced or commented block fails, so the pass rate measures what the model did. A signal outside
-the vocabulary fails the reply and is never coerced. A reply that repeats the directive fails too:
+the vocabulary fails the reply and is never coerced. A reply written without making any data call fails too (found on the first measured run, when a reply
+passed the format with no tool call and a thought log full of invented results); its raw text is kept.
+A reply that repeats the directive fails too:
 the loop only checks that against the retry's generic corrective text, so the adapter checks it
 against the real directive (found by a test on 2026-10-26).
 
@@ -285,12 +301,35 @@ against the real directive (found by a test on 2026-10-26).
   filled in) and `halt_reason`, beyond the shape in the plan.
 
 ### Limits and open issues
-- Nothing here checks that the signal is right or that its figures match the tools' results. That
-  is Tier-1 grounding, the next phase; until then a card can say "Not verified" and no more.
+- Nothing here checks that the signal is right. Whether its figures match the tools' results is
+  [[validation/analysis_checks.py]] (Tier 1), which the route runs when the analysis finishes: the
+  agent package doesn't import `validation/`. Whether the signal follows from the figures is not
+  checked by anything yet.
 - A model that can't be reached raises and nothing is recorded, as in the compare routes. A run
   that fails that way leaves no trace of its steps.
 - A company named in lower case ("nvidia") isn't found.
-- Not run against a real model. The fixtures are recorded Alpha Vantage and EDGAR payloads.
+- `load_measurements()` and `measurement_for()` read [[financial_agent/model_measurements.json]] so
+  the page can say how a model has done, or that it was never measured; nothing is guessed.
+- The unit and integration tests use scripted models and recorded Alpha Vantage and EDGAR payloads.
+  What a real model does is in the measurement, not in the tests.
 
 Related: [[financial_agent/prompts.py]], [[financial_agent/tools.py]], [[tests/test_fa_agent.py]],
 [[web/server.py]]
+
+## `financial_agent/model_measurements.json`
+
+**Role:** the compact per-model result of the last live format measurement, read by the Analysis page.
+
+Written by [[scripts/measure_analysis_format.py]] (after every run, so a partial measurement is a
+valid file): when it was measured, the prompt version and temperature, the tickers, and per model the
+runs completed, how many first replies passed the format, how many were rescued by the retry, how
+many halted, and the two rates. `load_measurements()` in [[financial_agent/agent.py]] reads it and
+treats a missing, unreadable or oddly shaped file as "not measured". The page says whether a
+measurement was made under the prompt version in use now.
+
+### Limits and open issues
+- It is a count of live runs by one model on the tickers named, not a guarantee, and it is
+  overwritten by the next measurement.
+- It is generated; editing it by hand would make the page state something nobody measured.
+
+Related: [[scripts/measure_analysis_format.py]], [[web/server.py]]

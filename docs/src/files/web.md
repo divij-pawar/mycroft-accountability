@@ -681,6 +681,7 @@ through `_read_scope`) or *none*. A request body that fails its Pydantic model r
 | `DELETE /api/runs` | required, auditor only | none | `{cleared: true}` after `clear_all()` drops and recreates every table; 403 unless the server has `ACCOUNTABILITY_ALLOW_CLEAR=1` |
 | `POST /api/analysis/stream` | required | `AnalysisRequest` `{message}` | `text/event-stream`: `run_started`, one `step` per step, then `result` with the analysis record (or `error`); 422 when no company is named, 503 when price data is unavailable |
 | `GET /api/analysis` | required | query `limit` (1 to 200, default 50) | stored analyses, newest first, as summaries without tool results or replies |
+| `GET /api/analysis/measurements` | required | none | `{model, reasoning, prompt_version, measurement}`: how the configured model did on the last format measurement, or `measurement: null` when it was never measured |
 | `GET /api/analysis/{run_id}` | required | none | one analysis record; an investor token gets the thought log and raw replies withheld; 404 |
 | `GET /api/directive` | none | none | `{version, text}` of the active directive |
 | `GET /api/self-report` | none | none | `build_self_report()` from [[web/self_report.py]] |
@@ -958,7 +959,9 @@ compares on llama3.2 with real Tavily and EDGAR. Their `started_at` spans overla
   thread like the compare streams: `_prepare_bundle` freezes the data, `fa_agent.run_analysis`
   runs the model through the retry-then-halt loop, and the bundle and record are appended
   (`insert_bundle`, `insert_analysis`). A model that can't be reached ends the stream with an
-  `error` event and stores nothing. `_serve_analysis` withholds the thought log and each attempt's
+  `error` event and stores nothing. When the agent finishes, the route runs Tier 1
+([[validation/analysis_checks.py]]) and stores the result in the record as `tier1`: the agent package
+doesn't import `validation/`, so the route is where the two meet. `_serve_analysis` withholds the thought log and each attempt's
   raw reply from an investor token; what is stored is complete. Both token scopes may ask. The
   signal is a model's reading of the data and nothing here checks it yet.
 - **The MCP guard.** `_guard_mcp`, an HTTP middleware, answers 401 to any `/mcp` request that
