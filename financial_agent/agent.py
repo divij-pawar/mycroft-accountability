@@ -34,6 +34,7 @@ import re
 import time
 import uuid
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, Callable
 
 from core.analysis import (
@@ -216,8 +217,13 @@ class Steps:
 
 
 def _tool_message(entry: dict) -> str:
-    return json.dumps({"call": entry["seq"], "tool": entry["tool"], "result": entry["result"]},
-                      separators=(",", ":"), ensure_ascii=False)
+    """
+    What the model is shown for one call: its number and tool on a first line, then the result as JSON.
+    Not a JSON object holding the result: with {"call", "tool", "result"} a small model copied that shape
+    into the arguments of its own calls (seen live, 2026-10-26).
+    """
+    body = json.dumps(entry["result"], separators=(",", ":"), ensure_ascii=False)
+    return f"call {entry['seq']} · {entry['tool']}\n{body}"
 
 
 def _answer(step: ModelStep, messages: list[dict], recorder: ToolRecorder, steps: Steps,
@@ -266,9 +272,17 @@ def make_analysis_adapter(step: ModelStep, recorder: ToolRecorder, steps: Steps,
         messages = [{"role": "system", "content": prompts.ANALYSIS_DIRECTIVE},
                     {"role": "user", "content": user}]
         started = time.monotonic()
+        calls_before = len(recorder.calls)
         try:
             raw = _answer(step, messages, recorder, steps, max_rounds)
             response, parsed = parse_analysis_response(raw)
+            if len(recorder.calls) == calls_before:
+                # Found live on the first measured run (llama3.2, 2026-10-26): a reply that passed the
+                # format with no tool call at all, its thought log narrating calls it never made and
+                # inventing their results. It is refused like any broken reply, and its raw text is kept.
+                raise StructuralParseError(
+                    "the reply was written without calling any data tool, so its figures didn't come from the data; "
+                    "start by calling describe_data", raw)
             # The loop checks an echo against the directive of that attempt, and the retry's is the
             # generic corrective text, so a reply that repeats this agent's instructions would pass
             # the second attempt unchecked. Check it against the real one here.
@@ -363,6 +377,37 @@ def run_analysis(
         "halt_reason": halt_reason,
         "status": "ok" if output else "halted",
     }
+
+
+# ── What has been measured ────────────────────────────────────────────────────
+
+MEASUREMENTS_FILE = Path(__file__).with_name("model_measurements.json")
+
+
+def load_measurements(path: Path | None = None) -> dict | None:
+    """The last format measurement (scripts/measure_analysis_format.py writes it), or None if there isn't a readable one."""
+    try:
+        data = json.loads((path or MEASUREMENTS_FILE).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    return data if isinstance(data, dict) and isinstance(data.get("models"), dict) else None
+
+
+def measurement_for(model: str, measured: dict | None) -> dict | None:
+    """
+    What was measured for `model` (a provider prefix such as "langchain:" is ignored), with whether it was
+    measured under the prompt that is in use now. None when this model was never measured: the page then
+    says "not measured" instead of implying a rate.
+    """
+    if not measured:
+        return None
+    name = (model or "").split(":", 1)[-1] if (model or "").startswith("langchain:") else (model or "")
+    stats = measured["models"].get(name)
+    if not stats:
+        return None
+    return {**stats, "model": name, "measured_at": measured.get("measured_at"),
+            "prompt_version": measured.get("prompt_version"), "tickers": measured.get("tickers"),
+            "current_prompt": measured.get("prompt_version") == prompts.ANALYSIS_PROMPT_VERSION}
 
 
 # ── The real model ─────────────────────────────────────────────────────────────

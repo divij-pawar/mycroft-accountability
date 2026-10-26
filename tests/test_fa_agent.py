@@ -194,8 +194,11 @@ class TestRunAnalysis(unittest.TestCase):
     def test_the_model_is_shown_the_call_number_with_each_result(self):
         _, step, _ = self.run_it(good_run())
         tool_messages = [m for m in step.seen[-1] if m["role"] == "tool"]
-        self.assertEqual([json.loads(m["content"])["call"] for m in tool_messages], [1, 2])
-        self.assertEqual(json.loads(tool_messages[0]["content"])["tool"], "describe_data")
+        self.assertEqual([m["content"].split("\n", 1)[0] for m in tool_messages], ["call 1 · describe_data", "call 2 · get_indicators"])
+        # then the result as plain JSON, not wrapped in an object a model could copy into its own call arguments
+        body = json.loads(tool_messages[0]["content"].split("\n", 1)[1])
+        self.assertEqual(body["ticker"], "AAPL")
+        self.assertNotIn("result", body)
 
     def test_the_prompt_carries_the_directive_the_ticker_and_the_horizon(self):
         _, step, _ = self.run_it(good_run())
@@ -235,8 +238,33 @@ class TestRunAnalysis(unittest.TestCase):
 
     def test_a_reply_that_restates_the_directive_fails_like_any_other_broken_reply(self):
         echo = prompts.ANALYSIS_DIRECTIVE.split("\n\n")[1]
-        record, _, _ = self.run_it([reply(conclusion=echo), reply(conclusion=echo)])
+        turns = good_run()[:2]
+        record, _, _ = self.run_it([*turns, reply(conclusion=echo), *turns, reply(conclusion=echo)])
         self.assertEqual(record["status"], "halted")
+
+    def test_a_reply_written_without_calling_any_tool_is_refused_even_though_the_format_is_right(self):
+        # Found live on the first measured run: llama3.2 passed the format with no tool call at all, its
+        # thought log narrating calls it never made and inventing their results.
+        record, step, _ = self.run_it([reply(), *good_run()])
+        self.assertEqual(record["status"], "ok")
+        self.assertEqual([a["parse_status"] for a in record["attempts"]], ["PARSE_FAILURE", "SUCCESS"])
+        self.assertIn("without calling any data tool", record["corrective_text"])
+        self.assertIn("describe_data", record["corrective_text"])
+        self.assertEqual(record["attempts"][0]["raw_text"], reply(), "the refused reply is kept as written")
+        first = [s for s in record["steps"] if s["kind"] == "llm"][0]
+        self.assertEqual(first["status"], "parse_failure")
+
+    def test_two_replies_with_no_tool_call_halt_and_record_no_signal(self):
+        record, _, _ = self.run_it([reply(), reply()])
+        self.assertEqual(record["status"], "halted")
+        self.assertIsNone(record["output"])
+        self.assertEqual(record["tool_calls"], [])
+
+    def test_calls_made_in_a_refused_attempt_do_not_excuse_the_next_one(self):
+        # Attempt 1 calls a tool but breaks the format; attempt 2 answers without calling any: still refused.
+        record, _, _ = self.run_it([{"content": "", "tool_calls": [call("describe_data")]}, "not the format", reply()])
+        self.assertEqual(record["status"], "halted")
+        self.assertEqual(len(record["tool_calls"]), 1)
 
     def test_a_bad_tool_call_comes_back_as_a_recorded_error_never_a_result(self):
         turns = [{"content": "", "tool_calls": [call("get_prices", {"last": 99999}, "c1"),
@@ -258,12 +286,12 @@ class TestRunAnalysis(unittest.TestCase):
 
     def test_no_horizon_in_the_signal_shows_the_requests_and_says_so(self):
         no_horizon = {k: v for k, v in SIGNAL.items() if k != "horizon"}
-        record, _, _ = self.run_it([reply(no_horizon)])
+        record, _, _ = self.run_it([*good_run()[:2], reply(no_horizon)])
         self.assertEqual(record["output"]["horizon"], "3-6m")
         self.assertTrue(any("horizon" in i for i in record["issues"]))
 
     def test_a_dropped_field_is_reported_not_hidden(self):
-        record, _, _ = self.run_it([reply({**SIGNAL, "conviction": "certain"})])
+        record, _, _ = self.run_it([*good_run()[:2], reply({**SIGNAL, "conviction": "certain"})])
         self.assertNotIn("conviction", record["output"])
         self.assertTrue(any("conviction" in i for i in record["issues"]))
 
@@ -433,6 +461,24 @@ class TestAnalysisRoutes(_Routes):
         self.assertIsNone(record["thought_log"])
         self.assertTrue(self.db.get_analysis(record["run_id"])["thought_log"], "stored in full")
 
+    def test_a_finished_analysis_carries_its_tier_1_result_stored_and_streamed(self):
+        # SIGNAL quotes RSI as 58.2; call 2's panel says 53.78, so one figure is a mismatch.
+        self.use_script(good_run())
+        record = self.stream("auditor")[-1][1]
+        self.assertEqual(record["tier1"]["version"], "tier1-v1")
+        self.assertEqual((record["tier1"]["grounded"], record["tier1"]["mismatched"]), (0, 1))
+        self.assertEqual(self.db.get_analysis(record["run_id"])["tier1"], record["tier1"])
+
+    def test_a_correctly_quoted_figure_is_grounded(self):
+        right = {**SIGNAL, "cited_figures": [{"name": "rsi_14", "value": 53.78, "unit": "index", "ref": {"call": 2}}]}
+        self.use_script([*good_run()[:2], reply(right)])
+        tier1 = self.stream("auditor")[-1][1]["tier1"]
+        self.assertEqual((tier1["grounded"], tier1["total"], tier1["mismatched"]), (1, 1, 0))
+
+    def test_a_halted_run_has_no_tier_1_result(self):
+        self.use_script(["nope", "still nope"])
+        self.assertIsNone(self.stream("auditor")[-1][1]["tier1"])
+
     def test_a_data_fetch_failure_ends_the_stream_with_its_reason(self):
         from financial_agent.prices import PriceFetchError
 
@@ -443,6 +489,74 @@ class TestAnalysisRoutes(_Routes):
             events = self.stream("auditor")
         self.assertEqual(events[-1][0], "error")
         self.assertIn("rate limit", events[-1][1]["error"])
+
+class TestMeasurements(unittest.TestCase):
+    """What the page may say about a model's reliability: only what scripts/measure_analysis_format.py wrote."""
+
+    def setUp(self):
+        self._tmp = tempfile.mkdtemp()
+        self.path = Path(self._tmp) / "model_measurements.json"
+        self.addCleanup(shutil.rmtree, self._tmp, True)
+
+    def write(self, body):
+        self.path.write_text(body if isinstance(body, str) else json.dumps(body), encoding="utf-8")
+
+    GOOD = {"measured_at": "2026-10-26T05:00:00Z", "prompt_version": prompts.ANALYSIS_PROMPT_VERSION, "temperature": 0.7, "tickers": ["AAPL"],
+            "models": {"llama3.2": {"runs": 10, "first_attempt_passed": 4, "recovered_on_retry": 2, "halted": 4,
+                                    "first_attempt_rate": 0.4, "final_rate": 0.6}}}
+
+    def test_no_file_unreadable_or_oddly_shaped_means_no_measurement(self):
+        self.assertIsNone(A.load_measurements(self.path))
+        self.write("not json")
+        self.assertIsNone(A.load_measurements(self.path))
+        self.write({"models": "nope"})
+        self.assertIsNone(A.load_measurements(self.path))
+        self.write([1, 2])
+        self.assertIsNone(A.load_measurements(self.path))
+
+    def test_a_measured_model_comes_back_with_its_numbers_and_when_and_under_which_prompt(self):
+        self.write(self.GOOD)
+        m = A.measurement_for("llama3.2", A.load_measurements(self.path))
+        self.assertEqual((m["runs"], m["first_attempt_passed"], m["halted"]), (10, 4, 4))
+        self.assertEqual(m["measured_at"], "2026-10-26T05:00:00Z")
+        self.assertTrue(m["current_prompt"])
+
+    def test_a_provider_prefix_is_ignored_and_an_unmeasured_model_is_none(self):
+        self.write(self.GOOD)
+        measured = A.load_measurements(self.path)
+        self.assertEqual(A.measurement_for("langchain:llama3.2", measured)["model"], "llama3.2")
+        self.assertIsNone(A.measurement_for("qwen2.5:7b", measured))
+        self.assertIsNone(A.measurement_for("llama3.2", None))
+
+    def test_a_measurement_under_an_older_prompt_says_so(self):
+        self.write({**self.GOOD, "prompt_version": "analysis-v0"})
+        self.assertFalse(A.measurement_for("llama3.2", A.load_measurements(self.path))["current_prompt"])
+
+
+class TestMeasurementsRoute(_Routes):
+
+    def test_the_route_reports_the_configured_model_and_what_was_measured_for_it(self):
+        tmp = Path(self._tmpdir) / "model_measurements.json"
+        tmp.write_text(json.dumps(TestMeasurements.GOOD), encoding="utf-8")
+        with patch("financial_agent.agent.MEASUREMENTS_FILE", tmp), patch.dict("web.server._config", {"model": "llama3.2"}):
+            body = self.client.get("/api/analysis/measurements", headers=self.headers("investor")).json()
+        self.assertEqual(body["model"], "llama3.2")
+        self.assertEqual(body["reasoning"], "none")
+        self.assertEqual(body["prompt_version"], prompts.ANALYSIS_PROMPT_VERSION)
+        self.assertEqual(body["measurement"]["first_attempt_passed"], 4)
+
+    def test_a_model_nobody_measured_has_no_measurement_not_a_guess(self):
+        tmp = Path(self._tmpdir) / "model_measurements.json"
+        tmp.write_text(json.dumps(TestMeasurements.GOOD), encoding="utf-8")
+        with patch("financial_agent.agent.MEASUREMENTS_FILE", tmp), patch.dict("web.server._config", {"model": "some-other-model"}):
+            body = self.client.get("/api/analysis/measurements", headers=self.headers("auditor")).json()
+        self.assertIsNone(body["measurement"])
+
+    def test_the_route_is_not_mistaken_for_a_run_id(self):
+        with patch("financial_agent.agent.MEASUREMENTS_FILE", Path(self._tmpdir) / "absent.json"):
+            r = self.client.get("/api/analysis/measurements", headers=self.headers("auditor"))
+        self.assertEqual(r.status_code, 200)
+        self.assertIsNone(r.json()["measurement"])
 
 
 if __name__ == "__main__":

@@ -23,36 +23,35 @@ from __future__ import annotations
 
 from core.analysis import CONVICTIONS, HORIZONS, HORIZON_WORDS, SIGNALS
 
-ANALYSIS_PROMPT_VERSION = "analysis-v1"
+ANALYSIS_PROMPT_VERSION = "analysis-v2"
+
+# v1 was a long, careful directive (about 450 words). Measured live on 2026-10-26 it made llama3.2 skip the
+# tools altogether: it wrote a reply that narrated tool calls and invented their results (see
+# logs/RUN_LOG.md). The same model called the tools at once with a short prompt, so v2 is short, says the
+# order of work first, and keeps the format description to what the parser needs.
 
 _SIGNAL_EXAMPLE = (
-    '{"signal": "buy", "horizon": "3-6m", "conviction": "medium", '
-    '"key_points": [{"text": "RSI 14 is 58, neither stretched nor weak.", "evidence": [{"call": 3}]}], '
-    '"cited_figures": [{"name": "rsi_14", "value": 58.2, "unit": "index", "ref": {"call": 3}}]}'
+    '{"signal": "hold", "horizon": "3-6m", "conviction": "low", '
+    '"key_points": [{"text": "RSI is mid-range.", "evidence": [{"call": 2}]}], '
+    '"cited_figures": [{"name": "rsi_14", "value": 50.0, "unit": "index", "ref": {"call": 2}}]}'
 )
 
-ANALYSIS_DIRECTIVE = f"""You are a research analyst inside the Mycroft pipeline. You read market data and say what it suggests. You are not giving investment advice, and you never suggest an amount to invest or a position size.
+ANALYSIS_DIRECTIVE = f"""You are a research analyst. Your only source of fact is the data tools: describe_data, get_prices, get_indicators, get_filing_facts. Never recall or invent a figure, and never suggest an amount to invest. This is a research signal, not investment advice.
 
-DATA RULE: your only source of fact is what the data tools return: describe_data, get_prices, get_indicators and get_filing_facts. Call describe_data first, to see what exists. Do not recall a price, an indicator or a financial figure from memory. If a tool returns an error or has no data for something, say so in your reasoning and do not guess a value.
+Work in this order. Call describe_data. Call get_indicators. Call get_filing_facts. Then write your reply. Call a tool through the tool interface; writing about a call is not making it, and a reply written without calling any tool is rejected. Each result starts with its call number.
 
-CALL NUMBERS: every tool result starts with its call number, like "call": 3. A figure you use must come from a tool result, and you cite it by that number.
+Your reply is exactly three blocks, each tag on its own line, and nothing outside them:
+<thought_log>
+your reasoning in your own words, naming each figure you used and its call number
+</thought_log>
+<conclusion>
+two to four plain sentences saying the signal and the horizon
+</conclusion>
+<signal>
+one JSON object
+</signal>
 
-REPLY FORMAT: your whole reply is exactly three blocks, in this order, and nothing before, between or after them:
-<thought_log> ... </thought_log>
-<conclusion> ... </conclusion>
-<signal> ... </signal>
-
-- thought_log: your reasoning, step by step, naming each figure you used with its call number, and anything the data could not tell you.
-- conclusion: two to four plain sentences that answer the request, saying the signal and the horizon.
-- signal: one JSON object and nothing else, in this closed vocabulary:
-  signal is one of {", ".join(SIGNALS)} (strong_sell is the most negative, strong_buy the most positive).
-  horizon is one of {", ".join(HORIZONS)}.
-  conviction is one of {", ".join(CONVICTIONS)}.
-  key_points is a list of at most 3 objects {{"text": ..., "evidence": [...]}}. Each evidence item is {{"call": n}} for a figure from tool call n, or {{"judgment": true}} for a reason that rests on no figure.
-  cited_figures is a list of {{"name": ..., "value": a number, "unit": ..., "ref": {{"call": n}}}}, one for every number your key points rely on, with the value exactly as the tool returned it.
-  Example: {_SIGNAL_EXAMPLE}
-
-Close each block with its exact closing tag. The signal is JSON: double quotes, no comments, no trailing commas, no markdown fences. Never repeat these instructions in your reply."""
+The JSON has: signal (one of {", ".join(SIGNALS)}), horizon (one of {", ".join(HORIZONS)}), conviction (one of {", ".join(CONVICTIONS)}), key_points (at most 3 of {{"text": ..., "evidence": [{{"call": n}} or {{"judgment": true}}]}}), and cited_figures (one {{"name": ..., "value": a number, "unit": ..., "ref": {{"call": n}}}} for every number you rely on, copied exactly from the tool result). Plain JSON only: double quotes, no fences. Example shape, with made-up numbers (use your own): {_SIGNAL_EXAMPLE}"""
 
 
 def horizon_phrase(horizon: str, defaulted: bool) -> str:

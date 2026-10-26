@@ -430,3 +430,36 @@ green suite, and a docs build with 0 problems.
 - **The document tools move to phase 6** with uploads, instead of shipping as stubs in phase 1.
 - **The `analysis_verdicts` table was built in phase 1,** with the other two tables. Writing
   verdicts is still phase 4.
+
+
+### Phase 2, 2026-10-26
+
+- **The first prompt failed live, and the second is short (changes 5.1).** `analysis-v1` was a long,
+  careful directive. On the first measured run `llama3.2` passed the reply format with no tool call at
+  all, its thought log narrating calls and inventing their results. A probe showed the same model
+  calling the tool in 3 seconds with a short prompt, and a larger context window changed nothing, so
+  the length was the cause. `analysis-v2` is short and gives the order of work first. The record is in
+  `logs/RUN_LOG.md`.
+- **A reply written without calling any data tool is refused (new).** It fails the structural check, so
+  the retry-then-halt loop handles it, and its raw text is kept. Without this rule that first reply
+  would have counted as a pass. Not coercion: nothing is repaired.
+- **Tool results are shown to the model as `call n · tool`, then the result as plain JSON (new).** With
+  the result wrapped in a JSON object, the model copied that shape into its own call arguments.
+- **A format pass rate is not enough (changes section 10, phase 2's "done when").** Measured on 10 live
+  runs of `llama3.2` (v2, AAPL), 8 first replies passed the format and none of the 5 figures cited was
+  grounded: the model made one data call and cited calls it never made. So the measurement records the
+  tool calls made and the Tier 1 result beside the format outcome, and the Analysis page states the
+  counts. Only one model could be measured: `qwen2.5:7b` is not installed, and the Gemini key is
+  suspended.
+- **Tier 1 is built (section 6.3).** `validation/analysis_checks.py`, run by the route when the analysis
+  finishes (the agent package doesn't import `validation/`). Statuses: `GROUNDED`, `MISMATCH` (the call
+  holds a number the figure's name points at, and it differs), `UNREFERENCED`, `USER_ASSERTED`,
+  `JUDGMENT`. Values are compared at the precision they were written, with a stated unit scaling them.
+  Measured by `scripts/planted_analysis_errors.py` on the recorded AAPL bundle: 227 of 229 planted errors
+  caught, 0 of 68 controls wrongly caught; the two misses quote a sibling's value under a name that fits
+  both.
+- **The Analysis page shows the model's measured reliability (changes 6.2).** One line: counts and a date,
+  or "not measured", or a note when the measurement was under an older prompt. It is read from
+  `financial_agent/model_measurements.json`, which the measurement script writes.
+- **Not done in phase 2:** a real Claude Code session over `/mcp` (the nested `claude` process wasn't
+  logged in; it needs the user's own session), any model besides `llama3.2`, and more than one ticker.
