@@ -384,7 +384,14 @@ a list on a chat run and `{a, b}` on a compare run, and so is `verification_rate
 
 ### Key functions
 - `token(scope)`: `POST /api/auth/token` once per scope, cached in a module-level `Map` for the
-  page's life.
+  page's life. For the auditor scope, a 403 means the server wants its admin key: the app asks
+  once through the dialog [[web/frontend/src/components/AdminKeyDialog.tsx]] (registered with
+  `setAdminKeyRequester`; `window.prompt` isn't used, because embedded browsers refuse it), sends
+  the key as `X-Admin-Key`, and keeps it in `sessionStorage` for the tab. Requests that start
+  together share one token request and one question. A declined or wrong key ends in a plain
+  message, and a wrong key is not kept.
+- `authedFetch(scope, url, init)`: fetch with the Bearer token; a 401 (the server restarted, so its
+  signing secret changed) drops the cached token and tries once more.
 - `authHeader(scope)`: the Authorization header, shared with `stream.ts`.
 - `getJson(url, scope?)`: a GET, with the token only when a scope is given; throws
   `GET {url} failed (HTTP n)` on a non-2xx.
@@ -393,7 +400,8 @@ a list on a chat run and `{a, b}` on a compare run, and so is `verification_rate
   example the 422 reasons from the decision route).
 - `download(url, scope, fallbackName)`: fetches with the token (a plain link can't carry it),
   takes the file name from `Content-Disposition`, and saves the blob through a temporary link.
-- `api`: `runs`, `run`, `sessions`, `contradictions` (all scope-aware), `flags`, `excerpt`,
+- `api`: `runs`, `run`, `sessions`, `contradictions` (all scope-aware), `analyses` and `analysis`
+  (the financial agent's records), `flags`, `excerpt`,
   `snippet`, `addFlag`, `addDecision`, `downloadReview` (`/export.md`), `downloadAudit`
   (`/audit`), `config`, `setConfig`, `directive` and `selfReport`.
 - `_resetTokens()`: clears the cache, for tests only.
@@ -404,16 +412,16 @@ a list on a chat run and `{a, b}` on a compare run, and so is `verification_rate
   server (header comment; `logs/RUN_LOG.md`, 2026-09-25, "BG + U3").
 
 ### Limits and open issues
-- `snippet(runId, url)` and `flags(runId)` never send a token. The snippet route is scope-aware
-  (it answers `withheld` to an investor while the gate is open), so without a token it answers at
-  the run's stored scope, not the viewer's. In the current UI a web-citation overlay is not
-  offered in a compare lane while the conclusions are withheld, which covers the gated case, but
-  the client itself does not carry the viewer's scope on this read.
-- `setConfig` sends no token, and `POST /api/config` doesn't require one. Settings is read-only
-  at investor scope only in the UI (`logs/RUN_LOG.md`, 2026-09-27, "B6 + U9", open issues;
-  ledger `audit-criticals`).
-- A cached token is never refreshed. Tokens expire after the TTL set in [[web/auth.py]]; after
-  that every scoped request fails until the page is reloaded.
+- `snippet(runId, url)` never sends a token. The snippet route is scope-aware (it answers
+  `withheld` to an investor while the gate is open), and with no token the server now answers at
+  the investor scope, which is the safe side; the client still doesn't carry the viewer's own scope
+  on this read.
+- `flags(runId)` and `setConfig` send an auditor token, because the routes now require one.
+- A token that expires after the TTL set in [[web/auth.py]] is replaced on the next 401, but a
+  stream (`stream.ts`) uses the cached token as is, so a run started with a stale token fails
+  with its HTTP error until the next request refreshes it.
+- The admin key sits in `sessionStorage`, readable by any script on the page. The app serves no
+  third-party script.
 - `snippet` doesn't pass the route's optional `figure` parameter; the overlay marks figures
   client-side instead (`figureSpans`).
 
@@ -931,6 +939,27 @@ that leads a compare run.
 Related: [[web/frontend/tests/checks.test.tsx]], [[web/frontend/tests/views.test.tsx]],
 [[web/frontend/tests/matrix.test.tsx]]
 
+## `web/frontend/src/views/WatchView.tsx`
+
+**Role:** watching runs the app didn't start, such as an agent session (Claude Code, Codex, Cursor)
+driving a run over MCP, or a run started in another browser.
+
+- `LiveList` (`#/live`, "Live runs" in the top bar) lists the runs in progress from
+  `GET /api/runs/live`, refreshed every 5 s, with who started each.
+- `WatchView` (`#/live/{id}`) follows one run with `useLiveRun().watch`, which reads
+  `GET /api/runs/{id}/live` through `watchRun` in [[web/frontend/src/api/stream.ts]]. It uses the
+  same `LiveRunView` lanes a run started here gets.
+- A session's lane says "Waiting for the agent session" (or "Retrying …: waiting for the agent
+  session") instead of "Thinking", because the run is waiting on a person's session, not a model
+  call ([[web/frontend/src/views/CompareView.tsx]]).
+- A watched run ends with a summary, not the payload, so the hook opens the stored record by id.
+
+### Limits and open issues
+- **One live run at a time.** The app owns one live run, so watching one replaces the view of
+  another started here; that run keeps going on the server.
+
+Related: [[web/live.py]], [[web/frontend/src/state/useLiveRun.ts]]
+
 ## `web/frontend/src/views/RunDetail.tsx`
 
 **Role:** loads a stored run and its flags at the viewer's scope and renders the whole record,
@@ -1091,3 +1120,60 @@ Chat, Settings, the active directive, and the Honest Ledger.
   checked. (judgment, not recorded)
 
 Related: [[web/self_report.py]], [[web/frontend/tests/pages.test.tsx]]
+
+## `web/frontend/src/views/AnalysisView.tsx`
+
+**Role:** the Analysis page (`#/analysis`): ask for a signal, watch the steps, read the card.
+
+- `AnalysisView` is a composer, a progress list and an "Earlier signals" list. It posts to
+  `/api/analysis/stream` through `streamAnalysis` ([[web/frontend/src/api/stream.ts]]), shows each
+  `step` event as it arrives in a polite live region, and replaces the list with the stored record
+  when `result` arrives. A refusal (422 no company, 503 no price data) is shown in the server's
+  words and the question stays typed. A lost connection says the run continues on the server.
+- `AnalysisCard` is the signal card: the headline (`B · Buy · 3–6 months (default horizon) ·
+  medium conviction`), the conclusion, up to three reasons with reference chips, the cited
+  figures, anything the check adjusted, the working notes (labelled "Thinking" only for a
+  native-reasoning model), every attempt, and a footer with the model, the data calls, a
+  **Not verified** badge and the not-investment-advice line. A halted record reads "No signal".
+- At investor scope the notes and raw replies are withheld by the server and the card says so.
+
+### Design notes
+- A reference chip says where the model says a figure came from. It is not a check, and the card
+  says so in words. Grounding is a later phase.
+- The progress list is replaced by the card when a record exists; a retry stays visible in the
+  card's attempts.
+
+### Limits and open issues
+- No model picker, evidence checks or Verify button yet (later phases of the plan).
+- The run isn't in the live registry, so another browser can't watch it.
+
+Related: [[web/frontend/src/lib/analysis.ts]], [[web/frontend/tests/analysis.test.tsx]]
+
+## `web/frontend/src/lib/analysis.ts`
+
+**Role:** how an analysis record is worded on screen.
+
+`SIGNAL_LETTERS` (A is the most positive: `strong_buy` A, `buy` B, `hold` C, `sell` D,
+`strong_sell` E; a display alias of the stored five-point signal, PLAN.md Q1), `SIGNAL_WORDS`,
+`HORIZON_WORDS`, `headline(record)`, `evidenceLabel(ref, toolCalls)` (names the tool behind a
+call number), `stepLine(step)` (a retry is worded as a retry, a refused tool call as refused) and
+`STEP_MARK`.
+
+Related: [[web/frontend/src/views/AnalysisView.tsx]]
+
+## `web/frontend/src/components/AdminKeyDialog.tsx`
+
+**Role:** the in-page question "Auditor access needs the admin key", asked when the server refuses
+an auditor token without its key.
+
+A modal `role="dialog"` form with a password field (focused on open), Continue (disabled until
+something is typed) and Cancel (also Escape). [[web/frontend/src/App.tsx]] opens it through
+`setAdminKeyRequester` in [[web/frontend/src/api/client.ts]]; every request waiting on a token
+shares the one dialog. It says where the key lives (`ACCOUNTABILITY_ADMIN_KEY`, saved in `.env` by
+`scripts/start-server.sh`) and that Investor access needs none.
+
+### Limits and open issues
+- Not a login: one shared secret, kept for the tab in `sessionStorage`.
+- No focus trap beyond autofocus and Escape.
+
+Related: [[web/frontend/tests/keydialog.test.tsx]]

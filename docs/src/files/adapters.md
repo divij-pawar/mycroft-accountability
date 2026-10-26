@@ -111,15 +111,27 @@ on_tool_event=None)` returns the adapter. Each call:
 1. Decides whether tools are active: `use_tools` and `TAVILY_API_KEY` set in the environment. The
    key is read on every call, not at construction.
 2. Builds the user prompt: `Subject: ...`, then, if the context is not blank, `Context:` followed by
-   the first `CONTEXT_CHAR_LIMIT` (6,000) characters of the context. When tools are active it
-   appends a paragraph telling the model it has a search tool, that it must search before answering
+   the first `CONTEXT_CHAR_LIMIT` (6,000) characters of the context.
+   - **No context, tools active: plan, then search** (since 2026-10-05). `_plan_searches` asks the
+     model, in a call of its own capped at 256 tokens, for a JSON list of 2 to 4 search queries
+     meant to reach different kinds of source. `_parse_search_plan` reads a JSON array, a
+     `{"queries": [...]}` object or numbered lines; an empty reply falls back to the question
+     itself. The plan is reported as a `search_plan` event (a "Search plan" step in the trace). Every
+     query runs through `_traced_tool_call`, like a tool call the agent made, and
+     `_format_search_results` turns the results into the `Context:`. Each search is represented in
+     turn, each URL appears once beside its text, and the whole stays within
+     `SEARCH_RESULTS_CHAR_LIMIT` (3,000 characters by default; at 6,000 llama3.2 looped or
+     dropped `</conclusion>` in three live runs). Closing lines say to cite each fact with its own
+     result's URL, and restate the two-block format. The answer is then one call with no tool bound. A retry reuses the plan and
+     results (a `reused` plan step) rather than searching again.
+   - **Otherwise, with tools active,** it appends a paragraph telling the model it has a search tool, that it must search before answering
    "insufficient context", that a search result counts as a source of fact and is cited like the
    context (`[SOURCE: <label>, <url>]`), that it must invoke the tool rather than write the call out
    as text, and that only its final response needs to be the two XML blocks.
 3. Sends two messages: the directive's text as the system message, and the prompt as the user
    message.
-4. Builds a chat model with `_build_chat` and either calls it once (no tools) or runs the tool
-   loop, `_invoke_with_tools`.
+4. Builds a chat model with `_build_chat` and either calls it once (no tools, or after a plan) or
+   runs the tool loop, `_invoke_with_tools`.
 5. Parses the reply with `core.parsing._parse_response`. The `allow_assessment` flag comes from
    `core.assessment.expects_assessment(directive.version)`, so the optional `<assessment>` block is
    accepted only under a directive that asks for it. With tools active, parsing goes through
@@ -135,8 +147,11 @@ the error.
 
 ### Model family inference
 
-There is no provider choice. `_build_chat(model, temperature, seed)` is the one place the family is
-decided: a model name containing "gemini" (case-insensitive) builds `ChatGoogleGenerativeAI` with
+There is no provider choice. `_build_chat(model, temperature, seed, max_tokens=None)` is the one
+place the family is decided. Every call is capped at `max_tokens` generated tokens, by default
+`MODEL_MAX_TOKENS` (2,048, from the environment): `num_predict` for Ollama, `max_output_tokens` for
+Gemini. The stall timeout can't stop a model that keeps talking; on 2026-10-06 llama3.2 generated
+10,341 tokens for one answer. The family is decided this way: a model name containing "gemini" (case-insensitive) builds `ChatGoogleGenerativeAI` with
 `GEMINI_API_KEY`; any other name builds `ChatOllama` at `OLLAMA_HOST` (default
 `http://localhost:11434`). The Gemini class has no seed parameter, so on that path the seed is not
 applied; the inline comment explains that the caller passes it anyway because the shared seed control

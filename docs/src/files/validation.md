@@ -132,25 +132,39 @@ answer's figures appear in it. Stdlib only (`urllib`), per the ADR stated in the
 
 ### How it works
 
-1. `verify_claims(claims)` pools every quantitative claim in the list, normalised with
-   `normalize_number` from [[core/numeric.py]], into one set of claim numbers.
+1. `verify_claims(claims, retrieved_urls=None)` pools every quantitative claim in the list,
+   normalised with `normalize_number` from [[core/numeric.py]], into one set of claim numbers.
 2. It keeps the citation claims whose `source_url` is set and is not `"N/A"` or empty. With none,
    it returns the claims unchanged and a rate of `0.0`.
-3. Each distinct URL is fetched once (`_fetch`: 10 second timeout, the first 300 KB of the body,
-   decoded as UTF-8 with replacement; any exception returns `None`).
-4. `_check_url` extracts the source's numbers. A URL containing `sec.gov` or `edgar` whose body
+3. **Retrieved first** (since 2026-10-05). When the caller passes `retrieved_urls` (every URL the
+   agent was given or found), a cited URL outside that set is `verified=False`,
+   `check="not_retrieved"`, and isn't fetched. Matching uses `normalize_url`, which ignores the
+   scheme, `www.`, the fragment and a trailing slash, but keeps the path and query. `None` means
+   the caller doesn't know, and every URL is fetched as before. [[web/server.py]]'s
+   `_retrieved_urls` builds the set from the run's own trace (search results), the URLs written in
+   the subject and Context, and the data sources the layer fetched. An agent session's slot passes
+   `None`, because its own web search is invisible to the server.
+4. Each other distinct URL is fetched once (`_fetch_with_status`: 10 second timeout, the first
+   300 KB of the body, decoded as UTF-8 with replacement; an HTTP error returns its status, any
+   other exception `None`). A 404 or 410 is `verified=False`, `check="page_missing"`.
+5. `_check_url` extracts the source's numbers. A URL containing `sec.gov` or `edgar` whose body
    starts with `{` is parsed as SEC companyfacts JSON and every numeric `val` in every concept and
    unit is collected (`_numbers_from_edgar`). Anything else is searched as text with
    `QUANTITATIVE_RE` (`_numbers_from_text`).
-5. The URL is `True` if any claim number is within 1% (`close_enough`'s default) of any source
-   number, `False` if the source had numbers but none matched, and `None` if there were no claim
-   numbers, the fetch failed or was empty, or the source yielded no numbers.
-6. Every citation claim for that URL gets that value in `verified` (as a new `ExtractedClaim`);
+6. The URL is `True` (`confirmed`) if any claim number is within 1% (`close_enough`'s default)
+   of any source number, `False` (`number_absent`) if the source had numbers but none matched. It
+   is `None` if the fetch failed or was empty (`unreachable`, which covers a blocked site), or if
+   there were no claim numbers or the source yielded none (`nothing_to_compare`).
+7. Every citation claim for that URL gets that value in `verified`, and the reason in `check`;
    other claims pass through unchanged.
 
 ### Key functions
 
-- `verify_claims(claims) -> (claims, verification_rate)`: the entry point above.
+- `verify_claims(claims, retrieved_urls=None) -> (claims, verification_rate)`: the entry point
+  above.
+- `normalize_url(url)` and `urls_in_text(*texts)`: the page identity used for "did the agent see
+  this?", and every http(s) URL written in some texts.
+- `CHECK_*`: the six values a checked citation's `check` can take.
 - `_normalize` and `_close_enough` are aliases for the shared implementations in
   [[core/numeric.py]]; the comment says the private names were kept so call sites read as before,
   after B1 moved the functions out of this file (RUN_LOG 2026-09-24, "B1 + U2").
@@ -166,24 +180,26 @@ answer's figures appear in it. Stdlib only (`urllib`), per the ADR stated in the
 
 ### Limits and open issues
 
-- **The rate's numerator and denominator count different things.** The docstring says
-  `verified_citations / total_citations`. The code divides the number of distinct URLs that
-  verified by the number of citation claims. Two citations with different labels and the same
-  verified URL give 0.5, not 1.0. Found by reading the code; no test covers it.
+- **Rate numerator and denominator** (resolved 2026-10-05). The rate divides the distinct URLs
+  that verified by the citation claims. These used to count different things: two labels citing
+  one verified URL gave 0.5. [[validation/claims.py]] now de-duplicates citations by URL, so there
+  is one claim per URL and the two counts agree.
 - The check is permissive by construction: numbers from the whole answer are pooled, and any
   single one within 1% of any number on the page verifies every citation to that page. It says a
   cited source backs at least one figure somewhere, not which figure. The ledger entry
   [fabrication-not-caught](ledger.html#fabrication-not-caught) states the same limit.
 - It fetches the URL the model wrote. A `True` confirms consistency with a source the model
   named, not with the input it was given (RUN_LOG 2026-09-22, "Fix: 'X% citations verified'
-  collapses 'no citations found' into 'checked, 0 verified'").
+  collapses 'no citations found' into 'checked, 0 verified'"). Since 2026-10-05 the URL must also
+  be one the agent retrieved, when that's known. It still isn't checked that the cited page is the
+  one a given figure came from.
 - The body is capped at 300 KB before JSON parsing. A companyfacts payload longer than the cap is
   truncated, fails to parse, yields no numbers and reads as `None`. How often real payloads exceed
   the cap is not recorded.
-- No test exercises the fetch-and-match path directly: a search of `tests/` for `_check_url`,
-  `_fetch` and `urlopen` finds nothing. `tests/test_numeric.py` pins that this module uses the
-  shared regex; `tests/test_compare_route.py` checks that the compare route returns a rate per
-  producer.
+- The fetch itself is never run in tests. [[tests/test_search_plan_and_citations.py]] replaces
+  `_fetch_with_status` and covers the match, the 404, the blocked site and "not retrieved".
+  `tests/test_numeric.py` pins that this module uses the shared regex; `tests/test_compare_route.py`
+  checks that the compare route returns a rate per producer.
 
 Related: [[validation/claims.py]], [[core/numeric.py]], [[web/server.py]]
 
@@ -485,6 +501,18 @@ $0.005 absolute ("EPS is reported to the cent"), percent change 0.1 points absol
 market and untagged 1% relative, years exact. Derivations use a looser 2% because agents round both
 inputs before dividing (the comment's example: ROA 18.85% against 18.96% unrounded).
 
+**Rounding** (since 2026-10-05): for dollar and per-share figures, when one agent writes a figure
+more coarsely than the other, the pair also agrees if it is within one unit of the coarser
+figure's last digit (`_agree`, using `precision_of`). So `$2.0` agrees with `$2.02`, and `$30
+billion` with `$29.8 billion`. Two figures written to the same precision get no allowance:
+`$2.02` and `$2.03` still mismatch. The source check in [[validation/constraints.py]] uses the
+same `precision_of`.
+
+**"…, respectively"** (since 2026-10-05): when a sentence says "respectively" and names exactly as
+many metrics before its first figure as it has figures, `_respectively` pairs them in order. "EPS
+for diluted and basic shares is $2.02 and $2.03, respectively" counts its two qualifiers as the two
+metrics. When the counts differ, the nearest-alias rule decides.
+
 `DERIVATIONS` recomputes net, operating and gross margin, ROA, ROE, asset turnover,
 debt-to-equity (`total_liabilities / equity`) and current ratio. The row's note shows the
 recomputed value in the form the agent used.
@@ -614,10 +642,17 @@ not `source`. Heuristic failures and every filing check are shown and never gate
 ### Limits and open issues
 
 - The checks only see figures [[validation/facts.py]] tags: an unrecognised phrasing is never
-  checked, EPS without "basic" or "diluted" is not checked against the filing (`CONCEPT_METRIC`
-  has no entry for plain `eps`), and "...$2.02 and $2.03, respectively" yields one figure. A check
-  that doesn't run isn't shown, so no failure is not evidence of a correct figure
+  checked. A check that doesn't run isn't shown, so no failure is not evidence of a correct figure
   ([checks-lexical-coverage](ledger.html#checks-lexical-coverage), open).
+- **Narrowed on 2026-10-05** (`logs/RUN_LOG.md`, "Coverage fix…"), and measured by
+  [[scripts/planted_errors.py]]:
+  - plain "EPS" is now checked against every filed EPS figure the agent was given
+    (`_plain_eps_vs_source`): it passes if it agrees with one;
+  - "…, respectively" lists are paired in order by [[validation/facts.py]];
+  - agent rules allow each figure's rounding (`_holds_within_rounding`), the same
+    one-unit-of-the-last-digit allowance the source check uses (`precision_of`).
+- **One agreeing figure still passes the source check.** An agent that cites the same figure twice
+  and gets one wrong isn't caught by it (6 of the benchmark's remaining 10 misses).
 - Source sanity may check a different period than the agents were given (MSFT on 2026-09-25:
   agents given Q3, filing checked on the fiscal year). The period is printed on every result (same
   ledger entry).

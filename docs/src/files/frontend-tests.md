@@ -85,6 +85,59 @@ failed one test in [[web/frontend/tests/live.test.tsx]] ("delivers the same even
 bytes are split"). The working tree had passed only because its copy was never re-checked-out.
 After the fix, a fresh checkout was LF and the suite passed.
 
+## `web/frontend/tests/watch.test.tsx`
+
+**Role:** watching a session-driven run.
+
+What it locks in:
+- the watch stream (`/api/runs/r1/live`) feeds the live view;
+- a session lane says "Waiting for the agent session", with the session's label;
+- a watched run that ends stored opens its record;
+- a run no longer in progress fails with a plain message;
+- the live list links each run to `#/live/{id}` and says who started it, or that nothing is
+  running.
+
+Stubs: `fetch`, with a `ReadableStream` serving server-sent events.
+
+Related: [[web/frontend/src/views/WatchView.tsx]], [[web/frontend/src/api/stream.ts]]
+
+## `web/frontend/tests/auth.test.ts`
+
+**Role:** the admin key for an auditor token, and a token the server no longer accepts.
+
+What it locks in:
+- The admin key is asked for once, only when the server refuses an auditor token without it; the
+  key is kept in `sessionStorage` and a token that merely expired is replaced without asking again.
+- Requests waiting on the key share one question.
+- An investor token never carries the key and is never asked for it.
+- A declined question and a wrong key each end in a plain message; a wrong key is not kept.
+- `window.prompt` is never called (embedded browsers refuse it).
+- A 401 on a scoped request drops the cached token and fetches one more, once.
+
+Stubs: `fetch`, the admin-key requester.
+
+Related: [[web/frontend/src/api/client.ts]]
+
+## `web/frontend/tests/analysis.test.tsx`
+
+**Role:** the Analysis page.
+
+What it locks in:
+- The wording: `B · Buy · 3–6 months (default horizon) · medium conviction`; a reference names the
+  tool behind its call number; a retry is said to be a retry and a refused tool call is refused.
+- A request streams its steps and ends in the stored record as a card that says "Not verified",
+  carries the not-advice line and says a reference has not been checked.
+- A stream that stops early shows its steps and a lost-connection notice.
+- A 422 and a 503 are shown in the server's words and keep what was typed; a stream `error` is shown.
+- Earlier signals are listed and one opens.
+- A halted record reads "No signal" with every attempt; an investor record says its notes and raw
+  replies are withheld; a native-reasoning model's notes are labelled thinking, a plain one's
+  working notes; adjusted fields are listed.
+
+Stubs: `fetch`, with server-sent events as a response body.
+
+Related: [[web/frontend/src/views/AnalysisView.tsx]], [[web/frontend/src/lib/analysis.ts]]
+
 ## `web/frontend/tests/setup.ts`
 
 **Role:** the Vitest setup file, run before every test file.
@@ -545,3 +598,18 @@ can differ by a day.
 - The fixtures freeze the payload shape at capture time. `contract.test.ts` checks a few keys
   every renderer relies on, not the full shape, so a new backend field is not caught until a
   test uses it.
+
+## `web/frontend/tests/keydialog.test.tsx`
+
+**Role:** the admin key dialog, on its own and inside the app.
+
+What it locks in:
+- The field hides what is typed, Continue needs a value, and the value is trimmed.
+- Escape and Cancel both cancel.
+- In the app at auditor scope against a server that wants its key: one dialog opens, the waiting
+  requests carry on once the key is given, and the key is kept for the tab.
+- Cancelling leaves a plain message, and Investor still works without a key.
+
+Stubs: `fetch`, with a server that checks `X-Admin-Key`.
+
+Related: [[web/frontend/src/components/AdminKeyDialog.tsx]], [[web/frontend/src/api/client.ts]]

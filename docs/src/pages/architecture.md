@@ -54,8 +54,9 @@ line of any import the rule forbids. It isn't just described in a README.
 | `core/` | nothing internal | The contracts every other layer is written against, the versioned directives, the structural parser, the record schemas, the one definition of a number, and the assessment vocabulary. | [Core](files-core.html) |
 | `adapters/` | `core` | One provider each, all satisfying the `AgentAdapter` contract; the provider registry. | [Adapters](files-adapters.html) |
 | `pipeline/` | `core` | The retry-then-halt validation loop and LangFuse tracing. | [Pipeline](files-pipeline.html) |
-| `datasources/` | `core` | The only network egress for data: EDGAR companyfacts and filing documents. | [Data sources](files-datasources.html) |
+| `datasources/` | `core` | Network egress for SEC data: EDGAR companyfacts and filing documents. | [Data sources](files-datasources.html) |
 | `producers/` | `core`, `pipeline`, `datasources` | The agents whose disagreement is measured: a concept lens over EDGAR data, run through the loop. | [Producers](files-producers.html) |
+| `financial_agent/` | `core`, `adapters`, `pipeline`, `datasources` | The user-facing financial agent, a separate component (2026-10-06, in progress): Alpha Vantage prices (its own network egress), indicators, frozen input bundles, data tools, replay. It and `validation/` never import each other; they share only `core/analysis.py`. | [Financial agent](files-financial-agent.html) |
 | `validation/` | `core`, `pipeline`, and `web` lazily | Everything that judges a run: figure comparison, accounting checks, the decision gate, synthesis, the audit record. | [Validation](files-validation.html) |
 | `web/` | everything | The FastAPI server, the SQLite store, scope tokens, the step trace, the Honest Ledger, and the built review app. | [Web server](files-web.html) |
 | `scripts/`, `tests/` | everything | Entry points and the test suite. | [Scripts](files-scripts.html), [Python tests](files-tests.html) |
@@ -87,7 +88,8 @@ A compare run touches every one of these. Only the ones marked *network* leave t
 | Filing cache | [[datasources/filings.py]], folder `web/data/filing_cache/` | Gzipped filing documents, so an excerpt lookup fetches a filing once. Gitignored. |
 | Model | [[adapters/langchain_adapter.py]] | Ollama on `OLLAMA_HOST` (local), or Gemini (*network*). Calls end after `MODEL_TIMEOUT_S` with nothing received. |
 | Search tool | [[adapters/langchain_adapter.py]] | Tavily (*network*), called by the agent mid-reasoning, at most four tool round trips per call. |
-| EDGAR | [[datasources/edgar.py]], [[datasources/filings.py]] | SEC companyfacts and filing documents (*network*). The only data egress. |
+| EDGAR | [[datasources/edgar.py]], [[datasources/filings.py]] | SEC companyfacts and filing documents (*network*). |
+| Prices | [[financial_agent/prices.py]], folder `web/data/price_cache/` | Alpha Vantage end-of-day prices (*network*) for the financial agent, cached one file per ticker per day. Gitignored. Not yet called by any route. |
 | Tracing | [[pipeline/observability.py]] | Self-hosted LangFuse (local), a no-op without credentials. |
 
 ## Concurrency

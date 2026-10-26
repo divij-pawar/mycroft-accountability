@@ -47,6 +47,8 @@ providers.
   layer and by the assessment validator.
 - [[core/assessment.py]] validates the optional structured assessment (grade, direction,
   assumptions) and runs the separate extraction call that currently produces it.
+- [[core/analysis.py]] is the financial agent's record contract: the 5-point signal vocabulary
+  and its letters, the strict signal check, and the hashing rule that bundles use.
 
 The retry-then-halt loop that ties these together (ADR-07) lives one layer out, in
 [[pipeline/middleware.py]].
@@ -60,6 +62,64 @@ The file is empty. It exists so `core` imports as a package; [[tests/test_layeri
 so callers import from the submodules directly (`from core.parsing import AgentResponse`).
 
 Related: [[pipeline/__init__.py]]
+
+## `core/analysis.py`
+
+**Role:** the analysis record, the one contract between the financial agent and the verification
+layer: the signal vocabulary, the strict signal check, the hashing rule, and the record shapes.
+
+[[financial_agent/PLAN.md]] (D1) keeps the two components apart so the agent can later move out
+of this directory. Neither imports the other ([[tests/test_layering.py]]). What they share is
+the shape of what one writes and the other reads, and that shape lives here, in `core/`, which
+both may import.
+
+### Vocabularies
+
+- `SIGNALS = ("strong_sell", "sell", "hold", "buy", "strong_buy")`, lowest first, so the index is
+  the rank. `signal_rank`, `signal_distance` (0 to 4).
+- `SIGNAL_LETTERS`: A = strong buy, B = buy, C = hold, D = sell, E = strong sell (decided
+  2026-10-06). The letter is a display alias of the stored ordinal: `signal_letter`,
+  `signal_label` (`"B · Buy"`). Agents are never asked for a letter.
+- `HORIZONS = ("1-3m", "3-6m", "6-12m", "12m+")` with `HORIZON_WORDS`, and
+  `DEFAULT_HORIZON = "3-6m"`, used when the user names none (decided 2026-10-06).
+- `CONVICTIONS`, `AGENT_KINDS` (`builtin`, `session`, `byo`), `REASONING_MODES` (`native`,
+  `none`), `RUN_STATUSES`, `EVIDENCE_TIERS` (`data`, `filing`, `document`, `judgment`;
+  `document` is user-asserted).
+- `VERDICTS`, in precedence order: `UNGROUNDED`, `INCONCLUSIVE`, `DIVERGENT`, `ADJACENT`,
+  `CONSISTENT`.
+
+The verdict, agent-kind and status lists are repeated as CHECK constraints in [[web/db.py]].
+[[tests/test_analysis_record.py]] fails if the two drift apart.
+
+### `validate_signal(obj) -> ParsedSignal`
+
+The strict check of an agent's signal object (`signal`, `horizon`, `conviction`, `key_points`,
+`cited_figures`). Same rule as [[core/assessment.py]]: a value outside the vocabulary is a
+recorded issue, never coerced. `"Buy"`, `"A"` and `"strong buy"` are not signals.
+
+- `signal` is required; without a valid one the status is `invalid` and nothing is kept.
+- An invalid `horizon` or `conviction` is dropped with an issue.
+- Key points (at most 3, each at most 400 characters) and cited figures (at most 40) are dropped
+  one by one when they fail, and the rest are kept.
+- A figure needs a name, a finite number (not a boolean), and a `ref` that is exactly one of
+  `{"call": n}` (n ≥ 1), `{"chunk": "id"}` or `{"judgment": true}`.
+- Unknown top-level keys are reported and dropped.
+
+The status is `valid` with no issues, otherwise `partial`.
+
+### Hashing
+
+`canonical_json` (sorted keys, no whitespace, `allow_nan=False`) and `content_hash`
+(`"sha256:<hex>"`). There is one rule, so the agent that builds a bundle and the layer that checks
+it compute the same hash. NaN and infinity are refused, because they have no JSON form.
+
+### Record shapes
+
+`ToolCall`, `Bundle`, `CitedFigure`, `AnalysisRecord` and `VerdictRecord` are `TypedDict`s that
+document the shapes. They aren't enforced at runtime; the store's CHECKs and `validate_signal`
+are what enforce.
+
+Related: [[financial_agent/bundle.py]], [[financial_agent/tools.py]]
 
 ## `core/assessment.py`
 
@@ -241,8 +301,8 @@ satisfies a protocol by having the right `__call__` shape, with no base class to
   reply. The live implementation is `make_langchain_model_call` in [[adapters/langchain_adapter.py]].
 - `JsonFetcher.__call__(url) -> dict`: a URL to parsed JSON. Every network read is injected as one
   of these, which is why the test suite can be network-free without patching module globals. The
-  only default implementation lives in [[datasources/edgar.py]], which is how P2 (only ingest code
-  touches the network) is kept.
+  default implementations live in [[datasources/edgar.py]] and, for prices since 2026-10-06,
+  [[financial_agent/prices.py]], which is how P2 (only ingest code touches the network) is kept.
 
 ### Design notes
 
@@ -371,7 +431,8 @@ normalisation to a float and a relative-tolerance comparison.
 `QUANTITATIVE_RE` is a case-insensitive alternation. Alternatives are tried in this order, which
 matters only when two could match the same text:
 
-1. `$`-prefixed amounts with an optional magnitude word or letter (`$383.266 billion`, `$4.2M`);
+1. `$`-prefixed amounts with an optional magnitude word or abbreviation (`$383.266 billion`, `$4.2M`,
+   `$4 bn`), which must end a word (see Design notes);
 2. percentages (`106%`, `12.5 %`);
 3. multiples (`2.3x`);
 4. basis points (`25 bps`);
@@ -395,7 +456,7 @@ claims.
   comparator in [[validation/facts.py]] normalise the same way (docstring).
 - `close_enough(a, b, tol=0.01)`: true when the difference relative to the larger magnitude is at
   most `tol`; two zeros are equal. [[core/assessment.py]] calls it with a tighter 0.005.
-- `SUFFIX_MAP`: trillion/t, billion/b, million/m to their multipliers.
+- `SUFFIX_MAP`: trillion/tn/t, billion/bn/b, million/mn/m to their multipliers.
 
 ### Design notes
 
@@ -414,6 +475,12 @@ claims.
   echoed XBRL value "13,971,000,000.0" was extracted as "000.0". Found by replaying stored runs
   (run `515f263a`, ticker V) and fixed by a dedicated alternative tried before the bare-decimal
   fallback (module docstring; ledger `regex-truncates-comma-grouped-numbers`, RESOLVED).
+- **Why the suffix must end a word.** Until 2026-10-05 the magnitude letter needed no word
+  boundary, and the pattern is case-insensitive. So the first letter of the next word was read as a
+  magnitude: "$2.03 this quarter" became $2.03 trillion, "$10 total" became $10 trillion, and
+  "$2.02 basic" became $2.02 billion. Found while writing a test for the coverage fix
+  (`logs/RUN_LOG.md`, 2026-10-05, "Coverage fix…"). `tests/test_numeric.py` `TestSuffixBoundary`
+  fails without the boundary, and "bn", "tn" and "mn" are listed so they keep working.
 
 ### Limits and open issues
 
@@ -421,8 +488,8 @@ claims.
   number, and it misses figures written in words or as bare integers.
 - `normalize_number` strips any trailing run of the characters `% x b p s`, so it does not check
   that the suffix is a real unit.
-- No test in `tests/` imports `normalize_number` or `close_enough` directly; they are exercised
-  through their callers.
+- `normalize_number` is tested directly only for suffix scaling (`TestSuffixBoundary`);
+  `close_enough` is exercised through its callers.
 
 Related: [[validation/claims.py]], [[validation/consistency.py]], [[validation/verification.py]], [[validation/facts.py]], [[core/assessment.py]]
 

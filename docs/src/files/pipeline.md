@@ -51,6 +51,11 @@ Related: [[core/__init__.py]]
 **Role:** the ADR-07 validation loop: one retry on structural failure, then halt, with every
 attempt written to the audit record.
 
+> Since 2026-10-06 each attempt's `context_window` also carries `retrieved` when the adapter says
+> it added source material to the prompt itself (`retrieved_context` on the response, or on the
+> `StructuralParseError` of a failed attempt). See [[core/parsing.py]] and
+> [[adapters/langchain_adapter.py]]'s planned searches.
+
 The module docstring states the two commitments: both attempts are always written to the record,
 and a rising parse-failure rate across runs is a signal that the directive is decaying.
 

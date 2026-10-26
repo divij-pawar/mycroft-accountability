@@ -250,3 +250,65 @@ It exits non-zero when it finds a problem. Standard library only, like the rest 
 
 Related: [[tests/test_docs_coverage.py]], `the reference site`
 
+## `scripts/refresh_tickers.py`
+
+**Role:** regenerates [[datasources/company_tickers.tsv]] from SEC's `company_tickers.json`.
+
+```bash
+python scripts/refresh_tickers.py              # fetch from SEC
+python scripts/refresh_tickers.py tickers.json # from a copy already downloaded
+```
+
+It keeps SEC's order and writes the source and date as the first line. It fetches with
+`datasources.edgar.http_get_json`, so `SEC_USER_AGENT` applies. Stdlib only.
+
+## `scripts/planted_errors.py`
+
+**Role:** the planted-error benchmark. It measures how often the verification layer catches a
+figure known to be wrong, by planting errors in answers real agents gave and rerunning the same
+deterministic checks a compare run gets.
+
+```bash
+python scripts/planted_errors.py            # writes logs/planted-errors-audit.md and .json
+python scripts/planted_errors.py --stdout   # prints the report, writes nothing
+```
+
+### How it works
+1. **The recorded runs.** `load_bases` takes the ticker compares in
+   `web/frontend/tests/fixtures/` that kept their inputs: the conclusions, each agent's context
+   and the filing facts it was given. Each run id is used once.
+2. **The alterations.** For every dollar or per-share figure an agent cited (the families a
+   filing lens gives it), `run_base` alters that one figure, one alteration at a time:
+   - errors: `plus_1pct`, `plus_10pct`, `unit_slip` (billion↔million), `digit_swap`;
+   - controls, which should not be caught: `same_value` (an extra trailing zero) and `rounded`
+     (one fewer decimal).
+
+   The figure is replaced at its exact character span, from `CanonicalFact.span`.
+3. **The replay.** `evaluate` runs [[validation/facts.py]] (the comparison against the other
+   agent), [[validation/constraints.py]] (the checks, including each figure against the filing)
+   and [[validation/gate.py]]'s `gate_items` on the altered answers.
+4. **The outcome.**
+   - **stopped:** a new gate item about the altered figure, which is either a comparison
+     `MISMATCH` or a failed check for that agent.
+   - **flagged:** the figure's row is newly flagged, but it doesn't gate.
+   - **missed:** neither.
+
+   For an error that got through, `_causes` lists facts that can be checked: a "…, respectively"
+   list, only one agent answering, no filing value checked for that metric, or another figure for
+   the metric still matching.
+
+### Design notes
+- **It measures the detector, not the agents.** It needs no model, and it is deterministic, so
+  the same inputs give the same counts. That makes it a yardstick for fixes to the comparison or
+  the checks: rerun it before and after (`logs/RUN_LOG.md`, 2026-10-05, "Planted-error benchmark
+  and the probe label").
+- **Controls are included** so that "caught" can't be bought by stopping everything.
+
+### Limits and open issues
+- Only figures the extractor already recognises can be altered, so the extractor's blind spots
+  are never tested (ledger `checks-lexical-coverage`).
+- The sample is small: five recorded runs, and the counts are trials over their figures, not
+  independent runs.
+- `causes` are facts about the trial, not a diagnosis.
+
+Related: [[tests/test_planted_errors.py]], [[logs/planted-errors-audit.md]]

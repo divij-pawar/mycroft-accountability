@@ -40,7 +40,7 @@ The number of tests is not written here. [[web/self_report.py]] counts them by d
 
 ### Known pitfall: a global guard in `tests/__init__.py`
 
-`tests/__init__.py` must stay inert. [[web/self_report.py]] runs `unittest.TestLoader().discover()` over this folder inside the running server to count tests, which imports every test module and the package itself. In the code, that happens whenever `GET /api/self-report` builds its report (`build_self_report()` calls `_discover_test_counts()`); the RUN_LOG and the `tests/support.py` docstring describe it as happening at startup. The RUN_LOG entry "2026-09-26 (continued) -- Option 1 (assessment extraction) + B5 + U8" records what happened when a suite-wide guard lived there: it made LangChain's chat builder raise, the live server inherited it, and three compares failed before any model call. The fix removed the guard, moved to per-test `no_model_extraction()`, and added `TestTestPackageIsInert` in [[tests/test_synthesis.py]]. The `no_model_extraction()` docstring in [[tests/support.py]] carries the same warning.
+`tests/__init__.py` must stay inert. [[web/self_report.py]] runs `unittest.TestLoader().discover()` over this folder inside the running server to count tests, which imports every test module and the package itself. In the code, that happens whenever `GET /api/self-report` builds its report (`build_self_report()` calls `_discover_test_counts()`); the RUN_LOG and the `tests/support.py` docstring describe it as happening at startup. The RUN_LOG entry "2026-09-26 (continued) -- Option 1 (assessment extraction) + B5 + U8" records what happened when a suite-wide guard lived there: it made LangChain's chat builder raise, the live server inherited it, and three compares failed before any model call. The fix removed the guard, moved to per-test `no_model_extraction()`, and added `TestTestPackageIsInert` in [[tests/test_synthesis.py]]. The `no_model_extraction()` docstring in [[tests/support.py]] carries the same warning. The same hazard struck again on 2026-10-26: `tests/support.py` sets an admin key when imported, and the first `GET /api/self-report` replaced the running server's own key with it. `_discover_test_counts()` now puts the environment back exactly as it was after discovery, and the test key is random per process.
 
 A corollary: module-level code in any test file also runs inside the server whenever the self-report counts tests. Keep test modules free of import-time side effects.
 
@@ -87,6 +87,31 @@ What it locks in:
 Stubs: throwaway `ProviderSpec`s built on `make_scripted_adapter`, removed in `finally` / `tearDown` so they don't leak into other tests.
 
 Related: [[adapters/langchain_adapter.py]], [[tests/support.py]]
+
+## `tests/test_analysis_record.py`
+
+**Role:** the analysis record ([[core/analysis.py]]) and its store ([[web/db.py]]'s three
+analysis tables).
+
+What it locks in:
+- **The vocabulary.** Five signal levels in rank order, letters A–E with A the strongest buy,
+  distance as a subtraction of ranks, and the 3–6 month default horizon. The verdict, agent-kind
+  and status lists match the store's CHECK constraints.
+- **`validate_signal` never coerces.** `"Buy"`, `"A"`, `"strong buy"`, `"STRONG_BUY"`, empty,
+  `None` and a number are all invalid. Bad horizons, convictions and unknown fields are dropped
+  with reasons. Figures that are text, NaN, booleans, unreferenced, doubly referenced or `call 0`
+  are dropped one by one, and key points are capped at three.
+- **Hashing.** Key order doesn't change a hash; NaN and infinity are refused.
+- **The store:**
+  - a bundle is stored once per hash, and a run can't reference one that isn't stored;
+  - SQLite itself refuses an unknown status, agent kind or verdict, a hash without the
+    `sha256:` prefix, and any update or delete on all three tables;
+  - verdicts come back in insertion order;
+  - the TTL purge removes runs, their verdicts and orphaned bundles, and puts the guards back;
+  - `clear_all` drops the new tables too;
+  - stored JSON round-trips to the same hash.
+
+Stubs: none beyond a temporary database.
 
 ## `tests/test_assessment.py`
 
@@ -315,6 +340,68 @@ Stubs: none; pure functions over `tests/fixtures/edgar_aapl_companyfacts_sample.
 
 Related: [[producers/financial.py]], [[producers/earnings.py]], [[tests/test_producer_lens.py]]
 
+## `tests/test_fa_bundle.py`
+
+**Role:** the frozen-input chain of [[financial_agent/bundle.py]], [[financial_agent/tools.py]]
+and [[financial_agent/replay.py]].
+
+What it locks in:
+- **A bundle's hash covers its data only.** It is the same whatever the creation time or the key
+  order.
+- **Damage is detected and refused.** A changed price is caught both by the bundle hash and by
+  its rows' own hash. Mismatched tickers and NaN are refused.
+- **The filing snapshot** keeps period metadata (diluted EPS is the quarter, not the year to
+  date), lists missing concepts, and marks a fact older than the newest period as stale. The
+  stale case is a synthetic payload with the shape seen live on 2026-10-06.
+- **Tools answer only from the bundle.** Seven kinds of bad request come back as error results,
+  not exceptions. A bundle without filing data says so.
+- **The recorder** numbers calls 1, 2, 3 ... across slots, records errors too, and never shares
+  or skips a number when two threads call at once (80 calls).
+- **Replay** reproduces recorded calls from a stored bundle. It finds an edited result even when
+  the edit came with a matching hash, finds a result that doesn't match its hash and a gap in the
+  numbering, and refuses a damaged bundle. Agent B can ask its own questions of the same data.
+
+Stubs: none; the recorded Alpha Vantage and EDGAR fixtures.
+
+## `tests/test_fa_indicators.py`
+
+**Role:** every indicator in [[financial_agent/indicators.py]] checked against hand-worked values.
+
+Each indicator is pinned on a five-bar series small enough to work through by hand (SMA, EMA,
+Wilder RSI and ATR, MACD, return, drawdown, range, last close). The expected values are written as
+the fractions the working gives (`223 / 18`, `10 / 27`), not as numbers copied from the code.
+Volatility is checked against `statistics.stdev`.
+
+It also locks in the refusals:
+- too little history is a status, not a shorter window;
+- a window across a possible split refuses, and two bars after it don't count as crossing it;
+- the EMA family counts a split anywhere in its series;
+- seven kinds of malformed request raise.
+
+On the real 2026-10-05 AAPL snapshot, every standard indicator has a value, a 200-day average is
+refused on 100 bars, and simple values match the raw reply.
+
+Stubs: none.
+
+## `tests/test_fa_prices.py`
+
+**Role:** [[financial_agent/prices.py]] against Alpha Vantage's recorded replies, without the
+network.
+
+What it locks in:
+- **The snapshot's shape:** 100 daily bars oldest first, weekly trimmed to `WEEKLY_KEEP`, the
+  as-of date, the exact last bar, and both requests with a pause between them.
+- **Impossible bars are refused.**
+- **Each refusal has its kind.** The three refusal texts were observed live on 2026-10-06:
+  premium, rate-limited and bad symbol. A refused daily request stops before the weekly one, and
+  a refused weekly request is an error too. A missing key is `no_key`.
+- **A malformed ticker never reaches a URL.**
+- **The key appears nowhere:** not in the snapshot, not in an error, not in the cache file.
+- **The day cache:** the same UTC day makes no request, the next day refetches, and a failed
+  fetch caches nothing.
+
+Stubs: a fixture fetcher, a no-op sleep and a fixed clock.
+
 ## `tests/test_facts.py`
 
 **Role:** canonical, period-aware figure comparison in [[validation/facts.py]] (B1).
@@ -386,10 +473,10 @@ Related: [[validation/gate.py]], [[web/db.py]], [[web/server.py]], [[tests/test_
 **Role:** enforces the package layering by reading imports from the source, so the structure has to be broken deliberately, by editing the table.
 
 What it locks in:
-- **Allowed layers.** Each package may import only from its allowed set: `core/` from nothing internal; `adapters/`, `pipeline/` and `datasources/` from `core/` only; `producers/` from `core`, `pipeline` and `datasources`; `validation/` from `core`, `pipeline` and `web`; `web/` from everything but `scripts` and `tests`; `scripts/` and `tests/` from everything. Intra-package imports are always allowed.
+- **Allowed layers.** Each package may import only from its allowed set: `core/` from nothing internal; `adapters/`, `pipeline/` and `datasources/` from `core/` only; `producers/` from `core`, `pipeline` and `datasources`; `validation/` from `core`, `pipeline` and `web`; `financial_agent/` from `core`, `adapters`, `pipeline` and `datasources` (never `validation` or `web`, and `validation/` may not import it: the two components share only [[core/analysis.py]]); `web/` from everything but `scripts` and `tests`; `scripts/` and `tests/` from everything. Intra-package imports are always allowed.
 - **`core/` stands alone**, asserted separately because every other layer relies on it.
 - **The one upward exception.** `validation/` may import `web` (to persist through `web.db`) only inside a function body. At module level it would make the comparator unimportable without the database layer and create a cycle with [[web/server.py]]. The test also fails if no such lazy import exists, so a move is noticed rather than silently passing.
-- **Network egress.** Outside `datasources/` and `adapters/`, only [[validation/verification.py]] may contain `urllib.request` or `import requests`; a new egress point has to be named in the test (P2).
+- **Network egress.** Outside `datasources/` and `adapters/`, only [[validation/verification.py]] and [[financial_agent/prices.py]] (added 2026-10-06) may contain `urllib.request` or `import requests`; a new egress point has to be named in the test (P2).
 - **No loose root modules.** The subsystem root holds no `.py` file except `__init__.py`, and every package has an `__init__.py`. The class docstring says a loose root module once shadowed a stdlib name.
 
 Stubs: none. It parses files with `ast`; it imports none of them.
@@ -399,6 +486,34 @@ Stubs: none. It parses files with `ast`; it imports none of them.
 - The root check looks only at `*.py` directly in the root.
 
 Related: [[README.md]], [[core/contracts.py]]
+
+## `tests/test_mcp_sessions.py`
+
+**Role:** an agent session as the agent, over MCP, and watching any run live.
+
+What it locks in:
+- **Start:** `start_compare` hands the session the directive and its lens's filing context. The
+  run is listed in progress, and the agent is recorded as `session: <label>`.
+- **The server checks the format:**
+  - a reply without the two blocks comes back as attempt 2, with the reason;
+  - a second bad reply halts that side;
+  - a good reply is accepted, then the session is asked for the assessment JSON;
+  - the run is compared, stored and gated as usual, and the stored attempts read
+    `PARSE_FAILURE`, `SUCCESS`.
+- **Two sessions** (`partner="session"`): agent B joins once, and agents answering 1998 against 1996
+  give a `release_year` `MISMATCH` and `AWAITING_DECISION`.
+- **A silent session** halts the run with "Agent session timed out", and is released.
+- **Search:** without a key the tool says to use your own search; with one, the query is recorded
+  as a tool step. The layer's search is replaced in the test, so no request leaves the machine.
+- **Watching:** the live stream replays `run_started` through `result`, shows who started the run,
+  and keeps an investor watcher from seeing conclusions; an unknown run is 404.
+- **Over the real protocol:** the official MCP client over Streamable HTTP, against the app served
+  by uvicorn on 127.0.0.1, lists the five tools and completes a run.
+
+Stubs: EDGAR (`lookup_cik`, `fetch_company_facts`), agent B as a scripted adapter,
+`no_model_extraction` for B's grade call, and a temporary database. The session is the test itself.
+
+Related: [[web/mcp_server.py]], [[web/agent_sessions.py]], [[web/live.py]]
 
 ## `tests/test_model_timeout.py`
 
@@ -435,6 +550,30 @@ Stubs: none.
 - `test_suffix_map_covers_every_magnitude_the_pattern_matches` checks a hand-written word list against `SUFFIX_MAP`, not the words the pattern can actually match. A magnitude word added to the pattern but not to the list would pass.
 
 Related: [[tests/test_claims.py]], [[validation/cross_validation.py]]
+
+## `tests/test_planted_errors.py`
+
+**Role:** the planted-error benchmark ([[scripts/planted_errors.py]]) plants what it says and
+counts what it sees.
+
+What it locks in:
+- **The alterations:** each changes the figure the way its name says (a 1% change too small to
+  show gains a digit), the controls keep or only round the value, and a phrase with no number is
+  never altered.
+- **On the real AAPL run `20c538e4`:**
+  - a 10% error planted in agent A's revenue, a figure the filing gave it, stops the run by the
+    source check;
+  - the same value rewritten does not stop it;
+  - an error planted in a "…, respectively" list is caught: the figure is tagged by position
+    (operating income), not as the net income named nearest to it. It was missed before the
+    2026-10-05 coverage fix.
+- **Determinism:** two runs give identical outcomes. The summary adds up, and each recorded run
+  is used once.
+
+Stubs: none. It replays the deterministic comparison, checks and gate over the fixtures in
+`web/frontend/tests/fixtures/`, with no model and no network.
+
+Related: [[scripts/planted_errors.py]], [[validation/facts.py]], [[validation/constraints.py]]
 
 ## `tests/test_phase1_schemas.py`
 
@@ -509,6 +648,33 @@ Stubs: `make_fixture_adapter` replays each stored conclusion verbatim; contexts 
 
 Related: [[validation/cross_validation.py]], [[adapters/fixture_adapter.py]], [[tests/test_facts.py]]
 
+## `tests/test_search_plan_and_citations.py`
+
+**Role:** plan-then-search, citations checked against what the agent retrieved, and a chat run's
+confidence lowered by what the checks found. The fixtures are run 03bd3ca5, the first chat run,
+which cited a URL none of its search results had.
+
+What it locks in:
+- **Retrieved first:** a cited URL the agent never retrieved is `not_retrieved` and isn't fetched.
+  A retrieved URL is fetched, and matching ignores scheme, `www.` and a trailing slash.
+- **The fetch result is kept apart:** a 404 is `page_missing` (not verified); a blocked site or a
+  timeout is still "couldn't check".
+- **Confidence:** run 03bd3ca5's shape (an invented source, nothing confirmed, a probe with
+  different figures) takes the chat route from 0.75 to 0.1, `HIGH_UNCERTAINTY_SPECULATIVE`. Each
+  reason is listed, the stored run has the lowered score, and the attempt keeps the 0.75 it was
+  given. A clean run, a failed probe and `N/A` citations lose nothing.
+- **The plan:** a JSON array, a `{"queries": [...]}` object or numbered lines are read,
+  de-duplicated and capped at four.
+- **The searches:** every planned search runs, is traced with its own `seq`, and reaches the
+  agent's Context with each URL beside its text. Each search is represented in turn, each URL
+  once, within the size limit.
+- **Edge cases:** an empty plan searches the question itself, recorded as `fallback`. With a
+  Context, nothing is planned.
+- **The plan as a step:** it appears in the trace as its own step, `Search plan: N searches`.
+- **What the agent was sent** (fix 4, 2026-10-06): the planned results are recorded in each
+  attempt's `context_window` as `retrieved`, on success and on a failed attempt. An adapter that
+  adds nothing records nothing extra.
+
 ## `tests/test_synthesis.py`
 
 **Role:** the assessment extraction call (B4 option 1, `extract_assessment` in [[core/assessment.py]]) and B5: divergence classification in [[validation/divergence.py]], counted evidence, grade candidates, consensus and the set-the-grade gate item. It also holds the inertness check for the test package.
@@ -529,6 +695,20 @@ Stubs: `reply(obj)` builds a model call that returns fixed JSON; local scripted 
 
 Related: [[validation/gate.py]], [[pipeline/middleware.py]], [[web/db.py]], [[tests/test_assessment.py]]
 
+## `tests/test_tickers.py`
+
+**Role:** filing a chat run under the company its question names ([[datasources/tickers.py]]).
+
+What it locks in:
+- **Questions that name a company:** run 03bd3ca5's question is `AAPL`. Possessives, multi-word
+  names, "Ford" for FORD MOTOR CO, "American Airlines" over "American", and `$TSLA` / `NVDA`
+  written as tickers are all found.
+- **Questions that name none:** a film, a country, "EPS", and a lowercase "target" are `None`.
+- **Through `/api/chat`:** the payload, the session and the stored row agree (`AAPL`, found by
+  `GET /api/runs?ticker=AAPL`), and a question about no company is `CHAT`.
+- `web/db.py` prefers a payload's own ticker over its subject.
+- The snapshot's first line names its source.
+
 ## `tests/test_trace_withholding.py`
 
 **Role:** the gate must withhold disputed figures from investors everywhere they appear, including inside the run trace's search results.
@@ -545,6 +725,85 @@ Stubs: temporary database; the real gated run (live 2026-09-25, per the class do
 
 Related: [[validation/gate.py]], [[web/server.py]], [[web/step_trace.py]], [[tests/test_gate.py]]
 
+## `tests/test_auth_matrix.py`
+
+**Role:** who may call what, the token rules, and what a read carries.
+
+What it locks in:
+- **Issuing a token.** An investor token is open. An auditor token needs the admin key; a wrong
+  or empty key, and a server with no key configured, are 403 (the last says how to set one).
+  `ACCOUNTABILITY_INSECURE_DEV=1` restores the old open behaviour.
+- **The secret.** A token signed with the old public secret is rejected; a configured secret
+  signs and verifies; without one the process secret is random and stable. Expired, malformed
+  and unknown-scope tokens are 401, 401 and 403.
+- **The matrix.** Every route on the app, with the status an unauthenticated caller, an investor
+  token and an auditor token each get. The test walks `app.routes`, so a route added without a
+  row, or a row for a route that is gone, fails the suite. `/mcp` needs the admin key as a Bearer.
+- **`DELETE /api/runs`** is 403 without `ACCOUNTABILITY_ALLOW_CLEAR=1`, and the run survives.
+- **What a read carries.** The real gated run (`ec1a3b44`, stored at auditor scope) read with no
+  token or an investor token holds neither disputed value nor any internal-tier key on every read
+  route, the export and the snippet; the auditor still gets everything.
+- **The routes the ledger listed as untested**: plain `/api/chat` (and that an investor response
+  carries no thought log, raw output or directive text anywhere, the nested session included),
+  `/api/config`, directive, self-report, contradictions, drift, replay.
+
+- **The server's key survives test counting.** `web/self_report.py` counts the suite by importing
+  the test modules, and `tests/support.py` sets an admin key as it is imported. A fresh process
+  checks that counting the tests leaves the server's own key as it was, and that the test key is
+  random and not a string in the repo. Found 2026-10-26 by running the server: the running
+  server's key had been replaced by a string that sat in the repository.
+
+Checked against the fixes: with the read-scope default and the flags guard reverted, ten of these
+fail, and with the environment restore removed the new test fails.
+
+Stubs: a temporary database; the scripted adapter from [[tests/support.py]] for chat.
+
+Related: [[web/auth.py]], [[web/server.py]]
+
+## `tests/test_adapter_tool_limits.py`
+
+**Role:** two behaviours the README's resilience table had marked "in the code, not covered by a
+test".
+
+What it locks in:
+- **The tool-loop cap.** A fake model that asks for another search every turn is cut off after
+  exactly `_MAX_TOOL_ITERATIONS` (4) turns; each call is traced as started then finished with
+  numbers 1 to 4; each result is handed back to the model; the last reply is returned, not
+  raised. A model that answers after one search stops after two turns.
+- **No search key.** With `TAVILY_API_KEY` unset the call runs with no tool bound and no search
+  plan, and the server warns when the input holds a URL; with a key set it doesn't.
+
+Stubs: a fake chat model and a fake `TavilySearch`. This pins control flow; it says nothing about a
+real model.
+
+Related: [[adapters/langchain_adapter.py]], [[web/server.py]]
+
+## `tests/test_fa_agent.py`
+
+**Role:** the built-in financial agent and its routes, driven by scripted model turns.
+
+What it locks in:
+- **The request.** Ticker and horizon from free text; the default horizon is labelled as one; a
+  named horizon overrides it; no company, empty and overlong messages are refused with what to
+  change.
+- **The reply.** Each way of breaking the three-block format names its rule; a fenced or
+  malformed signal fails; a signal outside the vocabulary is never coerced; a partly valid signal
+  keeps what is valid and lists what was dropped.
+- **A run.** A good run gives an `ok` record with numbered, hash-checked tool calls that replay
+  from the bundle; a broken first reply recovers and keeps both attempts; two broken replies halt
+  with every attempt and no signal; a bad tool call is a recorded error; a model that never stops
+  asking for data is cut off and goes through retry and halt; a reply that repeats the directive
+  fails; an unreachable model raises and records nothing.
+- **The routes.** The stream sends steps then the stored record; a halted run is stored too;
+  422 before streaming for no company; 503 for missing price data; a data failure ends the stream
+  with its reason; the routes need a token; an investor read withholds the thought log and raw
+  replies while the stored record is complete.
+
+Stubs: a scripted model, the recorded AAPL price and EDGAR fixtures, a temporary database. Not a
+claim about any real model.
+
+Related: [[financial_agent/agent.py]], [[financial_agent/prompts.py]], [[web/server.py]]
+
 ## `tests/fixtures/*`
 
 **Role:** real data captured from SEC EDGAR and from the subsystem's own run store, trimmed and kept byte-exact, so tests can check behaviour against what production actually saw.
@@ -554,8 +813,10 @@ Related: [[validation/gate.py]], [[web/server.py]], [[web/step_trace.py]], [[tes
 | File | Origin and provenance | Captured | Used by |
 |---|---|---|---|
 | `tests/fixtures/aapl_10q_2026q3_trimmed.htm` | Apple Inc. Form 10-Q, accession 0000320193-26-000020, primary document `aapl-20260627.htm`, from SEC EDGAR. Its header comment says every `xbrli:context` from `ix:header`, the condensed consolidated statement of operations table and the balance sheet table are kept verbatim, with everything else removed. Added in RUN_LOG "2026-09-25 (continued) -- BP + U4". | Fetched 2026-09-25 (header comment) | [[tests/test_filings.py]] |
+| `tests/fixtures/av_aapl_daily_compact_2026-10-05.json` | Alpha Vantage `TIME_SERIES_DAILY` (outputsize compact) reply for AAPL, as received: 100 daily bars, 2026-05-13 to 2026-10-05, with its `Meta Data`. No key in it. Added in RUN_LOG "2026-10-06 (continued) -- Financial agent phase 1". | Fetched 2026-10-06 | [[tests/test_fa_prices.py]], [[tests/test_fa_indicators.py]], [[tests/test_fa_bundle.py]] |
+| `tests/fixtures/av_aapl_weekly_2026-10-05_trimmed.json` | Alpha Vantage `TIME_SERIES_WEEKLY` reply for AAPL, trimmed to its latest 160 weekly bars (2023-09-22 to 2026-10-05; the reply had 1,405), values unmodified. No key in it. Same RUN_LOG entry. | Fetched 2026-10-06 | [[tests/test_fa_prices.py]], [[tests/test_fa_indicators.py]], [[tests/test_fa_bundle.py]] |
 | `tests/fixtures/cross_agent_real_runs_corpus.json` | Every real (non-mock) cross-agent comparison run in `web/data/accountability.db` as of extraction, with stored fields, a replay snapshot (`replay_today`) and an AI-assigned label per run. `_meta` records the purpose, source database (gitignored), extractor ("NOT reviewed by a human yet"), the labelling caveat, the replay method and the headline finding. Added in RUN_LOG "2026-09-07 -- Real-run regression corpus + structural diagnosis". Later edits, all recorded: run `515f263a`'s `replay_today` corrected after the comma-grouping regex fix, stored fields untouched (RUN_LOG "2026-09-11 (continued)"); every entry tagged `lens_version: "v1"` with a `_meta.lens_version_note` (RUN_LOG "2026-09-25 (continued) -- B2 + B3", which says the file was re-saved with only those keys added and whitespace may differ). | Extracted 2026-09-07 (`_meta.extracted_on`) | [[tests/test_real_run_corpus.py]], [[tests/test_concept_linkage.py]], [[tests/test_facts.py]] |
-| `tests/fixtures/edgar_aapl_companyfacts_sample.json` | SEC EDGAR companyfacts payload for AAPL (`https://data.sec.gov/api/xbrl/companyfacts/CIK0000320193.json`). Its `_fixture_note` says it keeps the us-gaap concepts the producer lenses read, every entry field, and entries ending on or after 2025-01-01, except `Revenues`, kept whole because AAPL stopped using that tag after FY2018; values unmodified. Added in RUN_LOG "2026-09-24 (continued) -- B0". | Fetched 2026-09-24 (`_fixture_note`) | [[tests/test_edgar_facts.py]], [[tests/test_constraints.py]], [[tests/test_assessment.py]], [[tests/test_synthesis.py]] |
+| `tests/fixtures/edgar_aapl_companyfacts_sample.json` | SEC EDGAR companyfacts payload for AAPL (`https://data.sec.gov/api/xbrl/companyfacts/CIK0000320193.json`). Its `_fixture_note` says it keeps the us-gaap concepts the producer lenses read, every entry field, and entries ending on or after 2025-01-01, except `Revenues`, kept whole because AAPL stopped using that tag after FY2018; values unmodified. Added in RUN_LOG "2026-09-24 (continued) -- B0". | Fetched 2026-09-24 (`_fixture_note`) | [[tests/test_edgar_facts.py]], [[tests/test_constraints.py]], [[tests/test_assessment.py]], [[tests/test_synthesis.py]], [[tests/test_fa_bundle.py]] |
 
 ### Limits and open issues
 - The corpus's labels are judgments, not ground truth, and no human review of them is recorded.

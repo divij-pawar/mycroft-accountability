@@ -77,19 +77,23 @@ The token names a tier, not a person. `sub` is the same for every token, so no r
 two callers apart. That is why the decision gate records a typed name instead of an identity
 ([gate-identity-self-declared](ledger.html#gate-identity-self-declared)).
 
-The signing secret is read from the `ACCOUNTABILITY_SECRET` environment variable on every call.
-When it is unset the module falls back to a constant, `_DEV_SECRET`, whose text says it is for
-development only. The module docstring gives the reason: an obvious placeholder can't be mistaken
-for a production secret. The consequence is that on a server started without the variable,
-anyone who has read this file can sign a valid token without calling the server at all.
+The signing secret is `ACCOUNTABILITY_SECRET` when it is set. When it is unset the module makes
+a random one per process (`secrets.token_urlsafe(32)`), so no token can be forged from the source
+code; the consequence is that tokens stop working when the server restarts, and the review app
+fetches a new one (see [[web/frontend/src/api/client.ts]]). `_DEV_SECRET`, the old public
+fallback, is used only when `ACCOUNTABILITY_INSECURE_DEV=1`, which also reopens everything below
+for a throwaway local session. Until 2026-10-26 the public constant was the fallback, so anyone
+who had read this file could sign a valid token without calling the server.
 
 ### Who can get a token
 
-`POST /api/auth/token` in [[web/server.py]] calls `issue_token` for whatever scope the body names,
-with no credential of any kind. Both the route and `issue_token` carry a `TODO (SEC-02 production
-hardening)` saying the caller's identity must be checked before an auditor token is issued. The
-module docstring explains why it is open: the Phase 1 prototype lets the test UI get its own token
-without a separate identity system.
+`POST /api/auth/token` in [[web/server.py]] calls `authorize_issue(scope, key)` first, then
+`issue_token`. An investor token is open to anyone: it is the most restricted scope. An auditor
+token needs the admin key, `ACCOUNTABILITY_ADMIN_KEY`, in an `X-Admin-Key` header, compared with
+`hmac.compare_digest`. With no admin key configured the answer is 403 saying how to set one,
+never an open door; a wrong or empty key is 403. `scripts/start-server.sh` generates a key into
+`.env` the first time it runs and prints only where it saved it. The admin key is a shared
+secret, not an identity: whoever holds it is "the auditor", and `sub` is still the same constant.
 
 ### Key functions
 
@@ -101,39 +105,51 @@ without a separate identity system.
   - Bad signature or malformed token: 401, "Invalid token: " followed by the PyJWT error text.
   - Valid token whose `scope` claim is neither `auditor` nor `investor`: 403.
   - Otherwise it returns the scope string.
+- `require_auditor(scope)`: `require_scope` plus a 403 for an investor token. It guards the routes
+  that change settings, spend a model call or drop data.
 - `optional_scope(credentials)`: the dependency for read routes. No header yields `None`; a header
-  that is sent goes through `require_scope`, so a bad token is still refused. Its docstring gives
-  the reason: the read routes never required a token, because the classic UI read runs without
-  one. The caller decides what `None` means. [[web/server.py]] serves the run at the scope it was
-  stored under (see `_read_scope` there).
+  that is sent goes through `require_scope`, so a bad token is still refused. The caller decides
+  what `None` means. [[web/server.py]] serves a token-less read at the investor scope (see
+  `_read_scope` there); it used to serve the scope the run was stored under.
+- `authorize_issue(scope, provided_key)`, `check_admin_key(provided)` and `admin_key()`: the rules
+  above. `check_admin_key` also guards `/mcp` (a Bearer token carrying the admin key).
 
 ### What is and isn't authenticated
 
-Six routes use `require_scope`: `/api/chat`, `/api/chat/stream`, `/api/compare`,
-`/api/compare/stream`, `POST /api/runs/{run_id}/decisions` and `POST /api/runs/{run_id}/flags`.
-The last two also refuse an investor token with 403.
+[[tests/test_auth_matrix.py]] walks every route on the app and states, for each, what an
+unauthenticated caller, an investor token and an auditor token get; a route added without a row
+fails the suite. In short (the route-by-route table is in the [[web/server.py]] entry):
 
-The read routes that serve run content use `optional_scope`. Every other route takes no token at
-all, including `POST /api/config`, `POST /api/runs/{run_id}/replay` (which makes a model call) and
-`DELETE /api/runs` (which drops every table). The full list, route by route, is in the
-[[web/server.py]] entry.
+- **Any token** (`require_scope`): `/api/chat`, `/api/chat/stream`, `/api/compare`,
+  `/api/compare/stream`, `/api/analysis/stream`, `GET /api/analysis` and `GET /api/analysis/{id}`.
+- **Auditor only** (`require_auditor`, or a 403 in the route): `POST .../decisions`,
+  `POST` and `GET .../flags`, `POST .../replay`, `POST /api/config`, `DELETE /api/runs`. The last
+  also needs `ACCOUNTABILITY_ALLOW_CLEAR=1` on the server.
+- **Optional** (`optional_scope`, investor when absent): the run, session, audit, export,
+  decision and snippet reads.
+- **The admin key as a Bearer token:** `/mcp`, through a middleware in [[web/server.py]].
+- **Public on purpose:** `GET /api/config`, `/api/directive`, `/api/self-report`,
+  `/api/runs/live`, `/api/runs/drift`, `/api/facts/excerpt`, `/`.
 
 ### Limits and open issues
 
 - [audit-criticals](ledger.html#audit-criticals) (critical, open): the four CRITICAL findings from
-  the original audit, two of which are this file's concern: anyone can mint an auditor token, and
-  most routes are unauthenticated. The ledger's wording ("14 of 16 routes unauthenticated") is
-  quoted from the audit of commit `fe45eb4`. The server has more routes today, so that ratio
-  describes the audited commit, not the current file.
+  the original audit. Three are addressed in code as of 2026-10-26 (auditor tokens need the admin
+  key, the write and spend routes need a token, `DELETE /api/runs` is off by default). Built and
+  tested, not yet observed on a restarted server. The fourth stays open: a run is stored at full
+  detail and redacted when read, so anything that reads the database bypasses it.
+- The admin key is one shared secret held in `.env` and, in the review app, in the tab's
+  `sessionStorage` after it is typed once. There are no per-person credentials.
 - [gate-identity-self-declared](ledger.html#gate-identity-self-declared) (medium, open): a token
   carries a scope, not a person.
-- There is no revocation. A token is valid until its `exp`, or until `ACCOUNTABILITY_SECRET`
-  changes, which invalidates every token already issued.
+- There is no revocation. A token is valid until its `exp`, or until the signing secret changes
+  (a configured `ACCOUNTABILITY_SECRET` changed, or, with none configured, the server restarted),
+  which invalidates every token already issued.
 - A 401 for a bad token includes the library's error text in `detail`. That is harmless for a
   localhost prototype. Whether it is acceptable for a deployed service hasn't been considered
   (judgment, not recorded).
 
-Related: [[web/server.py]], [[validation/gate.py]]
+Related: [[web/server.py]], [[validation/gate.py]], [[tests/test_auth_matrix.py]]
 
 ## `web/db.py`
 
@@ -162,7 +178,7 @@ copied out into columns so they can be indexed.
 | Column | Type | Filled from |
 |---|---|---|
 | `run_id` | TEXT, primary key | `payload["run_id"]` |
-| `ticker` | TEXT NOT NULL | `_extract_ticker(payload["subject"])`: the first word, letters and digits only, upper-cased, at most 10 characters, else `"CHAT"` |
+| `ticker` | TEXT NOT NULL | `_payload_ticker(payload)`: the payload's own `ticker` if it has one (compare and, since 2026-10-06, chat runs), else the company `datasources.tickers.ticker_for` finds in the subject, else `"CHAT"` |
 | `scope` | TEXT NOT NULL | `payload["scope"]`, default `"auditor"` |
 | `status` | TEXT NOT NULL | `"HALTED"` if `payload["halted"]`, else `"COMPLETE"` |
 | `initiated_at` | TEXT NOT NULL | `payload["session"]["initiated_at"]` |
@@ -175,9 +191,12 @@ There are indexes on `ticker`, `initiated_at` and `created_at`. The triggers `ru
 `runs_no_delete` abort any `UPDATE` or `DELETE`, so the database engine refuses to change history,
 whatever the application code does.
 
-The `ticker` column is only a ticker for ticker-mode compare runs. For a chat run or a generic
-compare run it is the first word of the message or subject: a question beginning "What year..."
-is stored under `WHAT`. `GET /api/runs?ticker=` and `/api/runs/drift` filter on this column.
+For a ticker-mode compare run, the `ticker` column is the ticker asked for. For a chat run or a
+generic compare run it is the company the question names, found by [[datasources/tickers.py]]
+("What was Apples revenue last quarter?" is `AAPL`), or `CHAT` if it names none. Until
+2026-10-06 it was the first word of the message or subject, so a question beginning "What
+year..." was stored under `WHAT`. Rows stored before then keep that value; history isn't
+rewritten. `GET /api/runs?ticker=` and `/api/runs/drift` filter on this column.
 
 `initiated_at` is NOT NULL and comes only from the nested session. That is why the chat route
 always builds a session, even when the model call fails before producing one. See the 2026-09-22
@@ -258,6 +277,37 @@ replays decisions in.
 - `migrate_from_json(runs, sessions)`: one-time import of the pre-SQLite JSON store. It skips runs
   and sessions already present, and returns how many runs it inserted.
 
+### The financial agent's tables (2026-10-06)
+
+Three append-only tables for [[financial_agent/PLAN.md]], each with no-update and no-delete
+triggers:
+
+- **`analysis_bundles`**, keyed by `bundle_hash` (CHECK: starts with `sha256:`), with `ticker`,
+  `as_of` and the bundle JSON.
+- **`analysis_runs`**, keyed by `run_id`, with `parent_run_id`, `ticker`, `bundle_hash`
+  (foreign key), `agent_kind` and `status`. Both are CHECKed against [[core/analysis.py]]'s
+  vocabularies.
+- **`analysis_verdicts`**, with `run_id` (foreign key) and `verdict` (CHECKed against the five
+  verdicts).
+
+The functions:
+
+- `insert_bundle(bundle)` returns `False` when the hash is already stored. It uses
+  `ON CONFLICT(bundle_hash) DO NOTHING`, not `INSERT OR IGNORE`, because `OR IGNORE` also skips
+  CHECK violations: a malformed hash went in silently until the test caught it.
+- `get_bundle`, `insert_analysis(record)`, `get_analysis`, and
+  `list_analyses(limit=50, ticker=None)`, newest first, as summaries without tool results.
+- `insert_verdict(verdict)` fills in the id and time. `get_verdicts(run_id)` returns them oldest
+  first, so the last one is current.
+- `purge_old_analyses(retention_days=RETENTION_DAYS)` applies the same 90-day TTL. It removes
+  expired runs with their verdicts, then bundles no remaining run references, and puts every
+  no-delete trigger back in a `finally`. [[web/server.py]] calls it at startup, after
+  `purge_old_runs`.
+
+`clear_all` drops these three tables too. The rows hold JSON exactly as given: whether a bundle
+is intact is checked by whoever reads it ([[financial_agent/replay.py]]), not trusted because it
+came from this store. [[tests/test_analysis_record.py]] covers all of it.
+
 ### The retention purge
 
 `purge_old_runs(retention_days=RETENTION_DAYS)`, where `RETENTION_DAYS = 90`, deletes runs whose
@@ -309,7 +359,7 @@ migrated without losing a row) and `tests/test_synthesis.py`
   the same. The code calls it only from the server's startup handler; no insert helper calls it.
 - **Code and docstring disagree on the ticker column.** The module docstring calls `ticker` "a
   generated column (extracted at insert time)". It is an ordinary column filled by Python
-  (`_extract_ticker`), not a SQLite generated column.
+  (`_payload_ticker`), not a SQLite generated column.
 - **The purge's comments overstate how local the bypass is.** Its docstring says it uses "a
   separate connection with the trigger temporarily disabled", and a comment says "for this
   connection only". The code drops the triggers from the database schema, so for the length of the
@@ -325,6 +375,108 @@ migrated without losing a row) and `tests/test_synthesis.py`
   read ([session-scope-leak](ledger.html#session-scope-leak), open).
 
 Related: [[web/server.py]], [[validation/gate.py]], [[validation/cross_validation.py]]
+
+## `web/agent_sessions.py`
+
+**Role:** an agent session (Claude Code, Codex, Cursor or any MCP client) standing in for a
+model, so the whole pipeline runs unchanged when the agent is someone else's session.
+
+- **`SessionAgent`** satisfies the same contracts a model does ([[core/contracts.py]]):
+  - `adapter(subject, context, directive)` is one attempt of the slot's answer. It queues the
+    prompt for the session, waits for the session's `submit`, and parses the text with
+    [[core/parsing.py]]. A reply that breaks the output contract raises `StructuralParseError`,
+    so the retry is the validation loop's own second call, with the reason attached to the next
+    prompt (`previous_attempt_failed`).
+  - `model_call(system, user)` is the assessment extraction, asked of the same session.
+  - `finish(halted)` and `run_over(error)` release a waiting session when its side or the whole
+    run ends.
+- **The server parses, not the agent.** What the session submits is checked by the same
+  parser as a model's reply.
+- **Time limit:** `SESSION_TIMEOUT_S` (`AGENT_SESSION_TIMEOUT_S`, default 900 s). This is far longer
+  than `MODEL_TIMEOUT_S`, because a person may be reading along. A silent session raises
+  `SessionTimeout`, and the run is halted with "Agent session timed out".
+- **Searches:** `record_search` runs a search on the session's behalf and records it in the trace,
+  in the event shape the LangChain adapter's tool loop uses. The server observes it; it isn't the
+  agent's self-report.
+- **`start(run_id, agents, partner, work)`** runs the compare on a background thread and releases
+  every session when it ends, even on an exception.
+
+### Limits and open issues
+- **The session's label is self-reported** (the MCP client's name, or `agent_label`); it is
+  recorded, never verified ([session-identity-self-reported](ledger.html#session-identity-self-reported)).
+- **The agent's own web searches aren't observed.** Only searches through the layer's `search`
+  tool are recorded; sources found otherwise are known only through the citations, which are
+  still fetched and checked.
+- **Tested with this test suite standing in for the session**
+  ([[tests/test_mcp_sessions.py]]). Not yet run with a real Claude Code, Codex or Cursor session.
+
+Related: [[web/mcp_server.py]], [[web/server.py]], [[pipeline/middleware.py]]
+
+## `web/live.py`
+
+**Role:** the registry of runs in progress, so the review app can watch a run it didn't start.
+
+- Every compare run registers while it runs (`register`), and every event the run produces is
+  kept in order: `run_started`, the steps, `agent_finished`, then `result`.
+- `wait_from(index, timeout)` returns the events from `index` on, waiting if there are none yet.
+  [[web/server.py]]'s `GET /api/runs/{id}/live` uses it to replay a run and then follow it.
+- `in_progress()` lists runs still running (`GET /api/runs/live`).
+- A finished run stays for `FINISHED_TTL_S` (15 minutes) so a late watcher still sees the whole
+  trace; after that, the stored record is the place to read it.
+- It is thread-safe: runs execute on worker threads, and watchers read from the event loop.
+
+### Limits and open issues
+- **It lives in memory.** A server restart forgets runs in progress, but the stored records stay.
+- **Full events are kept.** Investor filtering happens when they are served (no search text, no
+  conclusions), the same rule as `/api/compare/stream`.
+
+Related: [[web/server.py]], [[web/frontend/src/views/WatchView.tsx]]
+
+## `web/mcp_server.py`
+
+**Role:** the verification layer as an MCP server, mounted inside the web server at `/mcp`
+(Streamable HTTP), so an agent you run yourself is the agent the layer checks, records and gates.
+
+```bash
+claude mcp add --transport http mycroft http://localhost:8000/mcp
+```
+
+| Tool | What it does |
+|---|---|
+| `start_compare(ticker \| subject, context, pairing, partner, agent_label)` | creates a run with this session as agent A; returns the directive, the subject and the lens's context. `partner` is `ollama` (the server runs agent B) or `session` (a second session joins) |
+| `join_compare(run_id, agent_label)` | joins as agent B, once |
+| `submit(run_id, slot, text)` | hands in a reply; returns `your_turn` (a retry, with the reason), `assessment_requested`, `accepted` or `halted`, and once the run is done its outcome |
+| `search(run_id, slot, query)` | the layer's Tavily search, recorded in the trace; without `TAVILY_API_KEY` it says to use the agent's own search |
+| `get_run(run_id)` | the run in progress (who is still working), or the outcome: figure rows, failed checks, gate status |
+
+- **The server's instructions** (`INSTRUCTIONS`, shown to the agent by the client) explain the
+  workflow. They tell the agent to cite every source as `[SOURCE: label, url]` and not to
+  fabricate figures.
+- **Every reply carries a `watch` link** (`MYCROFT_APP_URL` + `/app/#/live/{id}`).
+- **No circular imports:** [[web/server.py]] passes in its compare runner and readers, so this
+  module doesn't import it.
+
+### Design notes
+- **Why MCP.** The human has no API key, so the model runs in their own session. Keeping the
+  layer on the other side of a tool interface means the layer never calls the model and never
+  holds the user's credentials (`logs/RUN_LOG.md`, 2026-10-05, "An agent session as the agent,
+  over MCP").
+- **Why the official SDK.** The human chose it over a hand-written endpoint (same entry). It is
+  a deliberate dependency exception (`requirements.txt`), optional at runtime.
+
+### Limits and open issues
+- **The endpoint is unauthenticated,** like the rest of the server
+  ([audit-criticals](ledger.html#audit-criticals)), so keep it on localhost.
+- **A session's identity is self-reported**
+  ([session-identity-self-reported](ledger.html#session-identity-self-reported)).
+- **Agent B's label** for `partner="session"` is fixed as "second session" when the run starts,
+  because the trace labels are set before B joins.
+- **Waits:**
+  - `submit` waits up to 110 s for the next step;
+  - `start_compare` and `join_compare` wait up to 120 s for the first prompt;
+  - a longer wait returns `waiting`, and the agent calls `get_run` or `submit` again.
+
+Related: [[web/agent_sessions.py]], [[web/live.py]], [[tests/test_mcp_sessions.py]]
 
 ## `web/self_report.py`
 
@@ -377,7 +529,7 @@ A `UNVERIFIED` item is not given an optimistic default. The docstring says so ex
 
 ### How the test count is found
 
-`_discover_test_counts()` runs `unittest.TestLoader().discover()` over `tests/`, with the
+`_discover_test_counts()` (which also restores `os.environ` to what it was before discovery, since importing the test modules runs module-level setup such as the admin key in `tests/support.py`) runs `unittest.TestLoader().discover()` over `tests/`, with the
 subsystem folder as the top level. That imports the test modules but runs none of them. It walks
 the suite and counts test cases per module, by the last part of each test class's module name. It
 returns `modules` (name and count, sorted), `total`, `load_errors` and `error`. If discovery
@@ -481,13 +633,12 @@ apply at once to every later run from every caller.
 ### Scope on reads: `_read_scope` and `_serve_runs`
 
 The read routes take `optional_scope` from [[web/auth.py]]. They serve a stored run at
-`_read_scope(token_scope, run)`: the token's scope if a token was sent, else the scope the run was
-stored under, else `"auditor"`. The code comment gives the reason: reads never required a token
-(the legacy UI sent none), and this kept it working. The same comment states the consequence:
-anyone without a token can read, at auditor scope, any run an auditor created. It is recorded in
-the RUN_LOG instead of being changed silently; see the 2026-09-25 entry "BG + U3: the human
-decision gate, backend and inline UI", open issue "The withholding is only as strong as read
-auth", which calls requiring a token "a human call" because it would break the legacy UI.
+`_read_scope(token_scope, run)`: the token's scope if a token was sent, else `"investor"`. Until
+2026-10-26 a read with no token was served at the scope the run was stored under, so anyone
+without a token could read, at auditor scope, any run an auditor created (the 2026-09-25 entry
+"BG + U3: the human decision gate, backend and inline UI" recorded that as open). The review app
+sends a token on every read that has a scope, so it is unaffected; a bare `curl` now gets the
+investor view.
 
 `_serve_runs(runs, token_scope)` fetches decisions in one query (`get_decisions_for`) for the runs
 that carry a `gate_policy`, and passes each run through `redact_for_scope(run, read_scope,
@@ -504,10 +655,10 @@ through `_read_scope`) or *none*. A request body that fails its Pydantic model r
 
 | Method and path | Token | Request | Response and errors |
 |---|---|---|---|
-| `POST /api/auth/token` | none | `TokenRequest` `{scope: "auditor"\|"investor"}` | `{access_token, token_type: "bearer", scope}`. Any caller, any scope. |
+| `POST /api/auth/token` | none, but an auditor token needs `X-Admin-Key` | `TokenRequest` `{scope: "auditor"\|"investor"}` | `{access_token, token_type: "bearer", scope}`; 403 for an auditor token without a valid key, or when the server has no key configured. |
 | `GET /` | none | none | 307 redirect to `/app/` if `web/frontend/dist/` exists, else a 503 HTML page saying how to build the UI. Both send `Cache-Control: no-store`. |
 | `GET /api/config` | none | none | the `_config` dict |
-| `POST /api/config` | none | `ConfigUpdate` | the updated `_config`; 400 on an unknown `agent_id` |
+| `POST /api/config` | required, auditor only | `ConfigUpdate` | the updated `_config`; 400 on an unknown `agent_id`; 401, 403 |
 | `POST /api/chat` | required | `ChatRequest` `{message, context=""}` | the chat payload (below); 401 or 403 from auth |
 | `POST /api/chat/stream` | required | `ChatRequest` | `text/event-stream` of the same run |
 | `POST /api/compare` | required | `CompareRequest` | the compare payload (below) |
@@ -522,12 +673,15 @@ through `_read_scope`) or *none*. A request body that fails its Pydantic model r
 | `GET /api/runs/{run_id}/export.md` | optional | none | the audit record as Markdown, sent as a download; same errors |
 | `GET /api/runs/{run_id}/decisions` | optional | none | the run's `gate` block after redaction; 404 |
 | `POST /api/runs/{run_id}/decisions` | required, auditor only | `DecisionRequest` | the gate state after the decision is appended; 403 for investor; 404; 422 with the refusal reason |
-| `POST /api/runs/{run_id}/replay` | none | none | a determinism check (below); 404; 400; 500 "Replay failed" |
+| `POST /api/runs/{run_id}/replay` | required, auditor only | none | a determinism check (below); 404; 400; 500 "Replay failed" |
 | `POST /api/runs/{run_id}/flags` | required, auditor only | `FlagRequest` `{flag_type, reviewer_note?}` | the stored flag; 403 for investor; 404 |
-| `GET /api/runs/{run_id}/flags` | none | none | the run's flags, newest first; 404 |
+| `GET /api/runs/{run_id}/flags` | required, auditor only | none | the run's flags, newest first; 404; 401, 403 |
 | `GET /api/sessions` | optional | none | the 50 newest sessions, each through `_serve_session` |
 | `GET /api/sessions/{session_id}` | optional | none | one session through `_serve_session`; 404 "Session not found" |
-| `DELETE /api/runs` | none | none | `{cleared: true}` after `clear_all()` drops and recreates every table |
+| `DELETE /api/runs` | required, auditor only | none | `{cleared: true}` after `clear_all()` drops and recreates every table; 403 unless the server has `ACCOUNTABILITY_ALLOW_CLEAR=1` |
+| `POST /api/analysis/stream` | required | `AnalysisRequest` `{message}` | `text/event-stream`: `run_started`, one `step` per step, then `result` with the analysis record (or `error`); 422 when no company is named, 503 when price data is unavailable |
+| `GET /api/analysis` | required | query `limit` (1 to 200, default 50) | stored analyses, newest first, as summaries without tool results or replies |
+| `GET /api/analysis/{run_id}` | required | none | one analysis record; an investor token gets the thought log and raw replies withheld; 404 |
 | `GET /api/directive` | none | none | `{version, text}` of the active directive |
 | `GET /api/self-report` | none | none | `build_self_report()` from [[web/self_report.py]] |
 
@@ -569,12 +723,24 @@ runs through the full accountability loop:
    auditor. Then the ADR-06 checks:
    - claims are extracted from the thought log and conclusion and checked against their cited
      sources ([[validation/claims.py]], [[validation/verification.py]]), filling `claims` and
-     `verification_rate`;
+     `verification_rate`. Since 2026-10-05, `_retrieved_urls` gives the verifier every URL the
+     agent could have read: its search results from this run's trace, URLs written in the subject
+     and Context, and fetched data sources. A citation to anything else is `not_retrieved`;
    - the consistency probe ([[validation/consistency.py]]) asks the same question again and
      scores the agreement into `consistency`. It runs when `_config["consistency_probe"]` is true
      *or* the model name doesn't contain "gemini", so it is on by default for every Ollama-family
      model. The code comment gives the reason: the Ollama determinism claim is documented as
      unreliable ([ollama-determinism](ledger.html#ollama-determinism)).
+   - **Confidence after the checks** (since 2026-10-05). `_check_penalties` lowers the run's
+     score, never below 0.05:
+     - by 0.3 for a cited source the agent never retrieved, or a page that doesn't exist;
+     - by 0.15 when citations were checked and none confirmed a figure;
+     - by 0.2 when the probe's figures diverge, or 0.1 when its agreement is only LOW.
+
+     A failed probe counts for nothing. The amounts are a judgement, stated as such in the code:
+     two serious findings take 0.75 below 0.4. The payload, the session and the stored row carry
+     the lowered score. `confidence_before_checks` and `confidence_adjustments` (each `{reason,
+     penalty}`) record how it got there. The reasoning objects keep the score they were given.
 7. **On failure.**
    - `HaltError` (two parse failures) gives a `HALTED` session with the failed attempts' reasoning
      objects, and the error text.
@@ -593,7 +759,8 @@ The chat payload has these keys: `run_id`, `subject` (the canonical message), `s
 `conclusion`, `thought_log`, `confidence_score`, `confidence_degraded`,
 `confidence_classification`, `high_uncertainty`, `data_sources`, `reasoning_objects`, `session`,
 `error`, `config_snapshot` (a copy of `_config`), `steps`, `tool_capability_warning`, `claims`,
-`consistency` and `verification_rate`. The context isn't stored as a field of its own.
+`consistency` and `verification_rate`, plus `confidence_before_checks` and
+`confidence_adjustments` on a completed run. The context isn't stored as a field of its own.
 
 `tool_capability_warning` is set only when search can't run (no `TAVILY_API_KEY`, so the
 provider's `supports_tools()` is false) *and* the message or context contains a URL. The docstring
@@ -775,15 +942,27 @@ compares on llama3.2 with real Tavily and EDGAR. Their `started_at` spans overla
   separately". It returns `original_conclusion`, `replay_conclusion`, `match` (byte-identical),
   `diff_chars` and `original_config`. A halt returns `replay_halted: true` with the error; any
   other exception returns 500. Nothing is stored.
-- **Reviewer flags** (UN-05). `POST` is auditor-only and never changes the run itself. `GET` takes
-  no token and returns every flag and note.
+- **Reviewer flags** (UN-05). `POST` is auditor-only and never changes the run itself. `GET` is
+  auditor-only too, since a flag carries the reviewer's free-text note.
 - **Sessions.** `_serve_session` looks up the session's run and works out the read scope. Auditor
   reads get the session unchanged. Investor reads get it through `redact_for_scope`. The code
   comment gives the reason: a session nests the run's reasoning objects, conclusions included.
 - **`DELETE /api/runs`** drops and recreates every table, including the append-only decisions and
   flags. The React app deliberately has no button for it, because it contradicts the
-  repository's never-delete rule. The route itself is unchanged
+  repository's never-delete rule. Since 2026-10-26 it needs an auditor token and
+  `ACCOUNTABILITY_ALLOW_CLEAR=1` on the server, and answers 403 otherwise
   ([clear-all-runs-not-in-ui](ledger.html#clear-all-runs-not-in-ui), by design).
+- **The analysis routes** (financial agent, 2026-10-26). `POST /api/analysis/stream` plans the
+  request first (`fa_agent.plan_request`: 422 with what to change when no company is named,
+  503 when `unavailable_reason` says price data can't be fetched), then streams a run in a worker
+  thread like the compare streams: `_prepare_bundle` freezes the data, `fa_agent.run_analysis`
+  runs the model through the retry-then-halt loop, and the bundle and record are appended
+  (`insert_bundle`, `insert_analysis`). A model that can't be reached ends the stream with an
+  `error` event and stores nothing. `_serve_analysis` withholds the thought log and each attempt's
+  raw reply from an investor token; what is stored is complete. Both token scopes may ask. The
+  signal is a model's reading of the data and nothing here checks it yet.
+- **The MCP guard.** `_guard_mcp`, an HTTP middleware, answers 401 to any `/mcp` request that
+  doesn't carry the admin key as a Bearer token, unless `ACCOUNTABILITY_INSECURE_DEV=1`.
 - **`GET /api/self-report`** is unauthenticated on purpose. Its docstring says it is the
   subsystem's own honest ledger, shown prominently rather than buried.
 
@@ -822,10 +1001,11 @@ from the running app). No live model is called in any of them.
 - `tests/test_synthesis.py` covers the grade decision route.
 - `tests/test_cutover.py` covers `/`.
 
-The ledger's [no-route-tests](ledger.html#no-route-tests) entry lists the routes still without a
-test: the plain `/api/chat`, `/api/config`, `DELETE /api/runs`, replay, contradictions,
-`/api/self-report` and `/api/directive`. The drift and flag routes don't appear in any test's
-requests either.
+- `tests/test_auth_matrix.py` covers who may call every route, the token rules, the secret,
+  `DELETE /api/runs`, what a token-less read carries, and the routes the ledger had listed as
+  untested (`/api/chat`, `/api/config`, replay, contradictions, drift, `/api/self-report`,
+  `/api/directive`). It walks `app.routes`, so a route without a row fails.
+- `tests/test_fa_agent.py` covers the analysis routes.
 
 ### Limits and open issues
 
@@ -835,15 +1015,12 @@ requests either.
   chat run `3f1b0f89`, whose reasoning objects hold a single successful attempt. The trace and the
   record disagree (P6). Not fixed.
 - [session-scope-leak](ledger.html#session-scope-leak) (high, open). Storage holds the full nested
-  session. Reads with an investor token strip it; reads with no token are served at the stored
-  scope. From reading the code, not tested: the live `/api/compare` response to an investor whose
-  run is *not* awaiting a decision carries `stored["session"]` without `redact_for_scope`, so the
-  nested reasoning objects there are the full auditor view. The 2026-08-28 smoke test recorded
-  exactly that, and the BG fix covered the read routes only.
-- [audit-criticals](ledger.html#audit-criticals) (critical, open). Unauthenticated routes include
-  `POST /api/config`, which changes the model and settings for every later run, and `DELETE
-  /api/runs`, which drops the append-only tables. `POST .../replay` needs no token either, and
-  makes a model call.
+  session, and reads redact it. The live responses of `/api/chat` and `/api/compare` to an
+  investor went out with the nested session at full detail unless the run was awaiting a
+  decision; found and fixed 2026-10-26 (both now go through `redact_for_scope`), with a test per
+  route. Still open because storage is unchanged.
+- [audit-criticals](ledger.html#audit-criticals) (critical, open). Addressed in code on
+  2026-10-26 (see [[web/auth.py]]); storage-time redaction remains.
 - `/api/chat/stream` and the chat payload's `steps` aren't filtered by scope. A step's `error` for
   a parse failure can quote model output; [[validation/gate.py]] removes that text from compare
   traces for investors ("parse-failure messages can quote model output", 2026-09-26 correction
