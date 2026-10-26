@@ -5486,3 +5486,113 @@ date, recipe, inputs, commands, outputs, result, open issues.
   - the dialog has no focus trap beyond autofocus and Escape;
   - nothing is committed;
   - the earlier Week 1 entry's "Result" should be read together with this one.
+
+## 2026-10-26 (continued) -- A narrated explainer script for Week 1
+
+- **Recipe:** none. Requested: a 6-8 minute vox-style narrated explainer script about Week 1, with
+  visuals written beside the narration, as part of another workflow.
+- **Inputs:** the two 2026-10-26 entries in this log, `october plan.md`, the Week 1 article. The
+  `divij/video-script-writing-guide.md` named in `CLAUDE.md` is not in this clone, so the structure
+  was taken from the guide's description there.
+- **Commands:** none beyond reading files.
+- **Outputs:** `youtube/week1-vox-explainer-script.md` (gitignored): about 1,100 words of narration
+  across a cold open, seven chapters, a close and an end card, a fact-check table, a "deliberately
+  refuses to say" list and a capture checklist.
+- **Result:** script written. Not recorded, timed aloud or reviewed by the human; the 7:00-7:45
+  length is an estimate at 150 words a minute.
+- **Open issues:** the script quotes 705 tests (the count when the server was first run) and the
+  final 707; the guide and the proposal/SDD documents `CLAUDE.md` says to check claims against were
+  not available, so the claims were checked against this log only.
+
+## 2026-10-26 (continued) -- A narrated explainer script for Week 2
+
+- **Recipe:** none. Requested: a vox-style narrated explainer script for Week 2, as part of another workflow.
+- **Inputs:** the uncommitted Week 2 work (`validation/analysis_checks.py`, `scripts/measure_analysis_format.py`,
+  `scripts/planted_analysis_errors.py`, the agent, prompt, server and frontend diffs), the generated
+  `logs/analysis-format-measurements.*` and `logs/planted-analysis-errors-audit.md`, and `october plan.md`.
+  This log has no entry for the Week 2 work itself.
+- **Commands:** reading files; one `python3 -m unittest discover` with the system interpreter, which
+  errored 37 times for missing dependencies and was not used for any claim.
+- **Outputs:** `youtube/week2-vox-explainer-script.md` (gitignored), with a fact-check table, a "refuses to
+  say" list and a capture checklist.
+- **Result:** script written; no test counts quoted. Not timed aloud or reviewed by the human.
+- **Open issues:** the Week 2 work is uncommitted and has no log entry; the prompt v1-to-v2 finding is known only
+  from a code comment; the chips and badge were not seen in a browser by this session.
+
+## 2026-10-26 (continued) -- Week 2 of the October plan: Tier 1 grounding, and the first live measurement of the financial agent
+
+- **Recipe:** none. Requested: "start with week 2's work" (`october plan.md`, gitignored): the feature
+  "is this signal grounded?", the live format measurement, the planted-error benchmark for analyses, a
+  real Claude Code session over MCP, Gemini and bull/bear.
+- **Inputs:** the Week 1 commits; local `llama3.2` (3.2B) through Ollama, the only local model installed
+  (`qwen2.5:7b` is not), on an 8 GB machine; the recorded AAPL fixtures for tests; for the live runs, AAPL
+  prices from the day's cache and live SEC EDGAR facts (as of 2026-10-23); the Gemini key in `.env`.
+- **Commands:** `python scripts/measure_analysis_format.py`, `python scripts/planted_analysis_errors.py`,
+  `python scripts/planted_errors.py`, a determinism script, a bull/bear script through the real
+  `/api/compare` route on a throwaway database, short Ollama probes, one Gemini call, the unittest suite,
+  `npm run verify`, `python scripts/build_docs.py`.
+- **Outputs:**
+  - **Tier 1 (built, tested).** `validation/analysis_checks.py`: each figure a signal cites is checked
+    against the tool result it cites, at the precision it was written, with a stated unit scaling it.
+    Statuses `GROUNDED`, `MISMATCH`, `UNREFERENCED`, `USER_ASSERTED`, `JUDGMENT`. Run by the route when an
+    analysis finishes and stored in the record as `tier1`. The Analysis card shows `grounded n/m`, a mark
+    and reason per figure, and flags a reference to a call that doesn't exist. 30 unit tests, with unit
+    scaling ignored 3 fail and with the tolerance loosened 8 fail.
+  - **Planted errors for analyses (measured, deterministic).** Starting from correct figures taken from the
+    real tools over the recorded bundle (34 figures, all passed as written): 227 of 229 planted errors
+    caught, 0 of 68 controls wrongly caught. The 2 misses are `neighbour_value` on MACD (the signal line's
+    value quoted for the MACD line, whose name `macd_12_26_9_macd` fits both). The compare benchmark is
+    unchanged: 50 of 60 stopped, 0 of 34 controls. This measures the detector on known truth, not how often
+    a real agent errs.
+  - **The live measurement, first prompt (`analysis-v1`).** The first run passed the reply format with no
+    tool call: `tool_calls: 0`, a thought log that narrated calls and invented their results (30 bars, a
+    2022 split, a close of 145.31), none of it in the data. I had counted a format pass as a pass and this
+    was one. A reply written without calling any data tool is now refused (retry-then-halt, raw text kept).
+    The next v1 run halted after 420 s with no tool call in either attempt.
+  - **Why, and the second prompt (`analysis-v2`).** Short probes (bounded Ollama calls): with a short
+    prompt the model called `describe_data` in 3 to 12 s; with the long directive it narrated instead, in
+    95 to 148 s, and a larger context window (8192) changed nothing. v2 is short and gives the order of
+    work first. Tool results are now shown as `call n · tool` plus plain JSON, because the model had
+    copied the old `{"call", "tool", "result"}` shape into its own call arguments.
+  - **The live measurement, v2.** 10 runs, AAPL (data as of 2026-10-23), temperature 0.7, five phrasings,
+    seeds 1000 to 1009. **8 first replies passed the format, 2 halted, 0 were rescued by the retry.**
+    Median 61 s a run. **Median data calls: 1** (`describe_data`; the indicators and filing were never
+    asked for). 4 runs cited figures, 5 figures in all: **0 grounded, 5 unreferenced**, each pointing at a
+    call the model never made (for example RSI 70.0 from a "call 2" that did not exist). The 4 failed
+    attempts: no `<signal>` block, invalid JSON, none of the three blocks, no data call. (Three earlier v2
+    trial runs on the same setting, kept out of these counts, looked the same: 2 passed, 1 halted.) So the
+    80% says little; Tier 1's 0 of 5 is the finding. Ledger: `small-model-invents-tool-use` (new).
+  - **Retry and halt on a real model, for analyses:** the retry rescued 0 of the 2 first-reply failures
+    in the v2 measurement; one v1 run halted. The 4 failed attempts above are the observed failures.
+  - **Determinism:** `llama3.2`, seed 42, temperature 0, 80 tokens, two prompts, 6 identical calls each:
+    1 distinct answer of 6 both times. The ledger's finding was for `qwen2.5:7b`, which isn't installed, so
+    it could be neither reproduced nor retired; UPDATE added, entry stays open.
+  - **Gemini:** one call (`gemini-2.5-flash`, a one-word prompt) returned 403 "Consumer 'api_key:...' has
+    been suspended". The key is suspended by Google. UPDATE added to `gemini-key-unconfirmed`.
+  - **Bull/bear (real `/api/compare`, `llama3.2`, real EDGAR, web search off):** AAPL and MSFT with both
+    agents at once: no answer from either (850 s and 672 s), the 120 s stall timeout abandoned the first
+    call (`ollama-hangs-under-compare` reproduced on this machine). AAPL with the agents one after the other
+    and a 400 s stall limit: 1100 s; bull passed the format first time, bear failed twice and halted
+    (`AGENT_B_HALTED`). With the earlier four attempts: bull 1 of 3, bear 2 of 3. UPDATE added to
+    `bull-bear-unmeasured`; still too few to say anything about the briefs.
+  - **The Analysis page** gained the model line (counts and a date, "not measured", or an older-prompt
+    note) from `GET /api/analysis/measurements`. Viewed in the browser with the scripted server: a
+    misquoted RSI shows `grounded 1/3` in red with a mark, the call and the reason per figure.
+  - **Final counts:** 767 backend tests, 0 failures; 163 frontend tests; docs build with 0 problems.
+- **Result:** the Tier 1 feature is built, tested and was seen in the browser with scripted data. The live
+  measurement is real but narrow: **one model, one ticker, one prompt version, 10 runs.** What it observed:
+  `llama3.2` follows the reply format most of the time and does not use the data tools, and Tier 1 catches
+  the figures it invents. **Not done:** item 12, a real Claude Code session over `/mcp`: the nested `claude`
+  process I started reported "Not logged in" (it doesn't inherit this app's login), spent nothing, and I did
+  not try to log it in; the user needs to run it from their own session. Not measured: any second model, any
+  other ticker, the compare tools with a real session.
+- **Open issues:**
+  - a LangFuse export error printed a malformed line of `.env` into this session's output, and that line
+    contains the Alpha Vantage key (`LANGFUSE_HOST=localhost:3000` with `ALPHAVANTAGE_API_KEY=...` run on to
+    it, no newline between them). The key was not written to any repo file or this log. It should be
+    rotated, and the line fixed; the error text is why later runs filtered LangFuse export lines out;
+  - nothing from Week 2 is committed;
+  - the measurement is for one model: whether any local model that fits in 8 GB uses the tools is unknown;
+  - `financial_agent/model_measurements.json` and the two measurement logs are overwritten by the next
+    measurement; this entry is where this one survives;
+  - Tier 1 matches names by words: it misses a sibling's value under a name that fits both.
