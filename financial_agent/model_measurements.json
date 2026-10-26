@@ -1,0 +1,18 @@
+{
+ "measured_at": "2026-10-26T05:40:01Z",
+ "prompt_version": "analysis-v2",
+ "temperature": 0.7,
+ "tickers": [
+  "AAPL"
+ ],
+ "models": {
+  "llama3.2": {
+   "runs": 10,
+   "first_attempt_passed": 8,
+   "recovered_on_retry": 0,
+   "halted": 2,
+   "first_attempt_rate": 0.8,
+   "final_rate": 0.8
+  }
+ }
+}
