@@ -67,6 +67,17 @@ export interface ChatRequestBody {
   context?: string;
 }
 
+export interface AnalysisRequestBody {
+  message: string;
+}
+
+/** A signal for the ticker in the message: step events, then `result` with the record. */
+export function streamAnalysis(
+  scope: Scope, body: AnalysisRequestBody, onEvent: (e: StreamEvent) => void, signal?: AbortSignal,
+): Promise<"done" | "lost"> {
+  return streamRun("/api/analysis/stream", scope, body, onEvent, signal);
+}
+
 export function streamCompare(
   scope: Scope, body: CompareRequestBody, onEvent: (e: StreamEvent) => void, signal?: AbortSignal,
 ): Promise<"done" | "lost"> {
@@ -75,9 +86,9 @@ export function streamCompare(
 
 /** Any of the stream routes: /api/compare/stream or /api/chat/stream (same event protocol). */
 export async function streamRun(
-  path: "/api/compare/stream" | "/api/chat/stream",
+  path: "/api/compare/stream" | "/api/chat/stream" | "/api/analysis/stream",
   scope: Scope,
-  body: CompareRequestBody | ChatRequestBody,
+  body: CompareRequestBody | ChatRequestBody | AnalysisRequestBody,
   onEvent: (e: StreamEvent) => void,
   signal?: AbortSignal,
 ): Promise<"done" | "lost"> {
@@ -89,15 +100,41 @@ export async function streamRun(
   });
   if (!res.ok || !res.body) {
     let detail = "";
-    try { detail = JSON.stringify(((await res.json()) as { detail?: unknown }).detail ?? ""); } catch { /* no body */ }
+    try {
+      const d = ((await res.json()) as { detail?: unknown }).detail ?? "";
+      detail = typeof d === "string" ? d : JSON.stringify(d);   // the server explains a refusal in words
+    } catch { /* no body */ }
     throw new Error(`The run wasn't started (HTTP ${res.status})${detail ? `: ${detail}` : ""}`);
   }
+  return readEvents(res.body, onEvent);
+}
+
+/**
+ * Follow a run someone else started (GET /api/runs/{id}/live): every event so far, then new
+ * ones. This is how a run driven by an agent session over MCP is watched; the events are the
+ * same as a started stream's, so the live view reads them unchanged.
+ */
+export async function watchRun(
+  runId: string, scope: Scope, onEvent: (e: StreamEvent) => void, signal?: AbortSignal,
+): Promise<"done" | "lost"> {
+  const res = await fetch(`/api/runs/${encodeURIComponent(runId)}/live`, {
+    headers: { ...(await authHeader(scope)) }, signal,
+  });
+  if (!res.ok || !res.body) {
+    throw new Error(res.status === 404
+      ? "That run isn't in progress any more. Open it from History."
+      : `This run can't be watched (HTTP ${res.status}).`);
+  }
+  return readEvents(res.body, onEvent);
+}
+
+async function readEvents(body: ReadableStream<Uint8Array>, onEvent: (e: StreamEvent) => void): Promise<"done" | "lost"> {
   let finalSeen = false;
   const parser = createSSEParser((e) => {
     if (e.event === "result" || e.event === "error") finalSeen = true;
     onEvent(e);
   });
-  const reader = res.body.getReader();
+  const reader = body.getReader();
   const decoder = new TextDecoder();
   try {
     for (;;) {

@@ -205,6 +205,24 @@ button { font: inherit; cursor: pointer; }
 .verdict-line { margin: 4px 0; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .verdict-note { margin: 0 0 8px; }
 .subhead { font-size: 13px; font-weight: 700; margin: 14px 0 6px; }
+.analysis-layout { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 16px; align-items: start; }
+@media (max-width: 800px) { .analysis-layout { grid-template-columns: minmax(0, 1fr); } }
+.analysis-layout section > * + * { margin-top: 12px; }
+.step-list { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 4px; }
+.step-list li[data-status="parse_failure"], .step-list li[data-status="warn"] { color: var(--badge-warning-fg); }
+.step-list li[data-status="error"], .step-list li[data-status="halt"] { color: var(--badge-danger-fg); }
+.signal-headline { margin: 4px 0 8px; font-size: 20px; }
+.signal-card[data-status="halted"] .signal-headline { color: var(--badge-danger-fg); }
+.small-head { font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); margin: 12px 0 4px; }
+.reasons { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
+.evidence { display: inline-flex; gap: 4px; flex-wrap: wrap; margin-left: 6px; }
+.evidence-chip { font-size: 11px; border: 1px solid var(--border-dark); border-radius: 20px; padding: 0 7px; color: var(--text-muted); white-space: nowrap; }
+.notes { white-space: pre-wrap; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px; font-size: 12px; }
+.signal-foot { display: flex; gap: 8px 12px; flex-wrap: wrap; align-items: center; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border); }
+.history-list { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 4px; }
+.history-list .btn-ghost { width: 100%; text-align: left; }
+.scrim-modal { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.45); display: grid; place-items: center; z-index: 50; padding: 16px; }
+.key-dialog { width: min(420px, 100%); display: grid; gap: 10px; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .matrix-section, .matrix-wrap { min-width: 0; }
 .matrix-filters { padding: 0 0 8px; }

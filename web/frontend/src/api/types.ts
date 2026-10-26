@@ -18,7 +18,9 @@ export interface Step {
   status: string; // ok | error | parse_failure
   error: string | null;
   duration_ms: number | null;
-  kind?: "fetch" | "llm" | "tool" | "compare" | "extract"; // extract: B4 option 1's grade-reading call
+  kind?: "fetch" | "llm" | "tool" | "compare" | "extract" | "probe" | "plan"; // extract: B4 option 1's grade-reading call; probe: the chat route's consistency probe (asks again; not a retry); plan: the searches chosen before searching
+  queries?: string[];    // kind "plan"
+  plan_source?: "model" | "fallback";
   attempt?: number;
   model?: string;
   tool?: string;
@@ -37,6 +39,8 @@ export interface Step {
 export interface ContextWindow {
   subject: string;
   context: string;
+  /** Search results the adapter added to the prompt itself (planned searches); absent before 2026-10-06. */
+  retrieved?: string;
 }
 
 // SEC-01: at investor scope thought_log / raw_output / directive_text / context_window
@@ -68,6 +72,14 @@ export interface Claim {
   verified: boolean | null;
   source_label?: string;
   source_url?: string;
+  /** Why `verified` is what it is (validation/verification.py); absent before 2026-10-05. */
+  check?: "confirmed" | "number_absent" | "page_missing" | "not_retrieved" | "unreachable" | "nothing_to_compare";
+}
+
+/** One thing the run's checks found that lowered a chat run's confidence. */
+export interface ConfidenceAdjustment {
+  reason: string;
+  penalty: number;
 }
 
 export interface DataSource {
@@ -219,6 +231,16 @@ export interface Producer {
   overridden: boolean;
   lens_version?: string; // B2: "v2" shares NetIncomeLoss + EarningsPerShareDiluted
   lens?: string;         // B4: financial | earnings | bull | bear
+  session?: boolean;     // the agent is an MCP session (Claude Code, Codex, Cursor...), not a model the server calls
+}
+
+/** A run in progress, from GET /api/runs/live. */
+export interface LiveRunSummary {
+  run_id: string;
+  started_by: string;
+  mode?: "ticker" | "subject" | null;
+  ticker?: string | null;
+  subject?: string | null;
 }
 
 /** A stored run as returned by /api/runs and /api/runs/{id}: chat or compare. */
@@ -239,6 +261,8 @@ export interface Run {
   confidence_score?: number;
   confidence_classification?: string;
   high_uncertainty?: boolean;
+  confidence_before_checks?: number;              // absent before 2026-10-05
+  confidence_adjustments?: ConfidenceAdjustment[];
   data_sources?: DataSource[];
   claims?: Claim[] | { a: Claim[]; b: Claim[] };
   verification_rate?: number | null | { a: number | null; b: number | null };
@@ -379,3 +403,63 @@ export interface Flag {
 }
 
 export const isCompareRun = (run: Run): boolean => "cross_agent_comparison" in run;
+
+// The financial agent's analysis record (core/analysis.py AnalysisRecord, financial_agent/agent.py).
+export type EvidenceRef = { call: number } | { chunk: string } | { judgment: true };
+
+export interface AnalysisKeyPoint { text: string; evidence: EvidenceRef[] }
+export interface AnalysisFigure { name: string; value: number; unit?: string; ref: EvidenceRef }
+
+export interface AnalysisOutput {
+  signal: "strong_sell" | "sell" | "hold" | "buy" | "strong_buy";
+  horizon: "1-3m" | "3-6m" | "6-12m" | "12m+";
+  conviction?: "low" | "medium" | "high";
+  key_points: AnalysisKeyPoint[];
+  cited_figures: AnalysisFigure[];
+}
+
+export interface AnalysisStep {
+  seq: number;
+  kind: "data" | "tool" | "llm" | "result";
+  label: string;
+  status: "ok" | "error" | "warn" | "parse_failure" | "halt";
+  detail: string | null;
+  duration_ms: number | null;
+  attempt?: number;
+  call?: number;
+}
+
+export interface AnalysisAttempt {
+  attempt: number;
+  parse_status: string;
+  raw_text: string | null;
+  directive_version: string;
+  withheld?: boolean;
+}
+
+export interface AnalysisRecord {
+  schema: string;
+  run_id: string;
+  parent_run_id: string | null;
+  created_at: string;
+  request: { message: string; ticker: string; horizon: AnalysisOutput["horizon"]; horizon_defaulted: boolean };
+  agent: { kind: string; model: string; reasoning: "native" | "none"; prompt_version: string;
+           temperature: number; seed: number | null; label: string | null };
+  bundle_hash: string;
+  data_as_of: string;
+  inputs_captured: boolean;
+  tool_calls: { seq: number; slot: string; tool: string; args: unknown; result: unknown; result_sha256: string }[];
+  steps: AnalysisStep[];
+  attempts: AnalysisAttempt[];
+  corrective_text: string | null;
+  output: AnalysisOutput | null;
+  conclusion: string | null;
+  thought_log: string | null;
+  issues: string[];
+  halt_reason: string | null;
+  status: "ok" | "halted" | "abstained";
+  withheld?: string[];
+}
+
+export type AnalysisSummary = Pick<AnalysisRecord,
+  "run_id" | "parent_run_id" | "created_at" | "request" | "agent" | "bundle_hash" | "inputs_captured" | "status" | "output">;
