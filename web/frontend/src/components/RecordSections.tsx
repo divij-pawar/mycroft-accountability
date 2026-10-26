@@ -14,6 +14,8 @@ import { GradesPanel } from "./Grades";
 // ── Is this claim's source actually confirmed? ─────────────────────────────────
 
 function citationState(c: Claim): StatusState {
+  if (c.check === "not_retrieved") return "not_retrieved";
+  if (c.check === "page_missing") return "page_missing";
   if (c.verified === true) return "verified";
   if (c.verified === false) return "not_found";
   return "unchecked";
@@ -46,6 +48,7 @@ export function VerificationBanner({ claims }: { claims: Claim[] | undefined }) 
               <span className="muted">no URL given</span>
             )}
             {c.verified === null && <Info term="verified_null" />}
+            {c.check === "not_retrieved" && <Info term="not_retrieved" />}
           </li>
         ))}
       </ul>
@@ -142,8 +145,14 @@ export function ContextWindow({ objects }: { objects: ReasoningObject[] }) {
           </div>
           <div className="prompt-block">
             <div className="prompt-label"><RolePill role="user" /> User prompt</div>
-            <pre className="prompt-text">{`Subject: ${o.context_window?.subject ?? ""}\n\nContext:\n${o.context_window?.context || "(none provided)"}`}</pre>
+            <pre className="prompt-text">{`Subject: ${o.context_window?.subject ?? ""}\n\nContext:\n${o.context_window?.context || (o.context_window?.retrieved ? "(none provided; the search results below were added)" : "(none provided)")}`}</pre>
           </div>
+          {o.context_window?.retrieved && (
+            <div className="prompt-block">
+              <div className="prompt-label"><RolePill role="verifier" /> Search results the layer added to the prompt (planned searches)</div>
+              <pre className="prompt-text">{o.context_window.retrieved}</pre>
+            </div>
+          )}
         </div>
       ))}
     </Section>

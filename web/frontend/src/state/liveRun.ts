@@ -113,6 +113,7 @@ export type LaneLine =
   | { kind: "thinking"; since: string; attempt: number }
   | { kind: "searching"; query: string | null; since: string | undefined }
   | { kind: "extracting"; since: string | undefined }
+  | { kind: "probing"; since: string | undefined }
   | { kind: "between"; label: string }
   | { kind: "finished"; halted: boolean };
 
@@ -136,6 +137,9 @@ export function phaseLine(s: LiveState, phase: string): LaneLine {
   // B4 option 1: the second call that reads the finished answer for a grade.
   const extracting = steps.find((st) => st.kind === "extract" && st.duration_ms === null);
   if (extracting) return { kind: "extracting", since: extracting.started_at };
+  // The chat route's consistency probe: the same question asked again, not a retry.
+  const probing = steps.find((st) => st.kind === "probe" && st.duration_ms === null);
+  if (probing) return { kind: "probing", since: probing.started_at };
   const llm = steps.filter((st) => st.kind === "llm");
   const open = [...llm].reverse().find((st) => st.duration_ms === null);
   if (open) return { kind: "thinking", since: open.started_at ?? "", attempt: open.attempt ?? 1 };

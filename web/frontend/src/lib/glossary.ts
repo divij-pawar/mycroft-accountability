@@ -38,6 +38,12 @@ export const GLOSSARY = {
     definition:
       "At least one agent never produced a conclusion, so nothing was compared. Recorded differently from \"compared and found nothing\".",
   },
+  not_retrieved: {
+    plain: "Agent never saw this source",
+    technical: "check = not_retrieved",
+    definition:
+      "The cited URL isn't one of the pages the agent's searches returned or that it was given, so it can't have read it there. The site may be real; this page, cited for this fact, was made up.",
+  },
   verified_null: {
     plain: "Couldn't check",
     technical: "verified = null",

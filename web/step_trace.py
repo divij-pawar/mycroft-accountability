@@ -195,9 +195,16 @@ def wrap_adapter(
     adapter: Callable,
     *,
     model_label: str,
+    kind: str = "llm",
+    label: str = "LLM attempt",
 ) -> Callable:
     """
     Wrap a producer's adapter so every LLM attempt becomes its own timed step.
+
+    `kind` and `label` name what the calls are. The chat route's consistency probe
+    asks the same question again; it gets its own wrapper (kind "probe", label
+    "Consistency probe, attempt") so its call is never counted or shown as a retry
+    of the agent's answer (ledger consistency-probe-shown-as-retry).
 
     This is the only way to see per-attempt behaviour without touching
     pipeline/middleware.py: run_validation_loop calls the adapter once per attempt, and
@@ -217,9 +224,9 @@ def wrap_adapter(
         n = attempt["n"]
         with trace.record(
             phase,
-            f"LLM attempt {n}",
+            f"{label} {n}",
             detail=f"model={model_label} · directive={getattr(directive, 'version', '?')}",
-            extra={"kind": "llm", "attempt": n, "model": model_label},
+            extra={"kind": kind, "attempt": n, "model": model_label},
         ) as step:
             try:
                 response = adapter(subject, context, directive)

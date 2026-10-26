@@ -160,7 +160,12 @@ function Lane({ state, slot, now }: { state: LiveState; slot: Slot; now: number 
       </header>
       <p className="lane-status" data-kind={line.kind}>
         {line.kind === "waiting" && <span className="muted">Waiting to start</span>}
-        {line.kind === "thinking" && (
+        {line.kind === "thinking" && p?.session && (
+          <><span className="spinner" aria-hidden="true" /> {line.attempt > 1
+            ? `Retrying (attempt ${line.attempt}): waiting for the agent session`
+            : "Waiting for the agent session"}… {seconds(line.since, now)}s</>
+        )}
+        {line.kind === "thinking" && !p?.session && (
           <><span className="spinner" aria-hidden="true" /> {line.attempt > 1 ? `Retrying (attempt ${line.attempt})` : "Thinking"}… {seconds(line.since, now)}s</>
         )}
         {line.kind === "searching" && (

@@ -3,7 +3,7 @@ import { act, fireEvent, render, renderHook, screen, waitFor, within } from "@te
 import RAW from "./fixtures/stream_compare_aapl_2026-09-24.txt?raw";
 import { createSSEParser, type StreamEvent } from "../src/api/stream";
 import { _resetTokens } from "../src/api/client";
-import { initialLive, laneLine, laneSources, liveReducer, ranSequentially, type LiveState } from "../src/state/liveRun";
+import { initialLive, laneLine, laneSources, liveReducer, phaseLine, ranSequentially, type LiveState } from "../src/state/liveRun";
 import { useLiveRun } from "../src/state/useLiveRun";
 import { CompareForm, LiveRunView } from "../src/views/CompareView";
 import { App } from "../src/App";
@@ -42,6 +42,34 @@ describe("SSE parser", () => {
     p.push(": keep-alive\r\n\r\nevent: note\r\ndata: line one\r\ndata: line two\r\n\r\nevent: result\ndata: {\"x\"");
     p.end();
     expect(got).toEqual([{ event: "note", data: "line one\nline two" }]);
+  });
+});
+
+describe("chat lane: the consistency probe is not a retry", () => {
+  // The server traces the probe as kind "probe" (ledger consistency-probe-shown-as-retry).
+  const step = (seq: number, kind: string, label: string, attempt: number, done: boolean) => ({
+    event: done ? "step_finished" : "step_started",
+    data: { seq, phase: "chat", label, kind, attempt, started_at: "2026-10-05T00:00:00.000Z", duration_ms: done ? 900 : null, status: "ok" },
+  });
+  const chat = (events: StreamEvent[]): LiveState =>
+    liveReducer(liveReducer(initialLive, { type: "start", title: "q" }), { type: "events", events });
+
+  it("reads an open probe step as probing, never as attempt 2", () => {
+    const s = chat([
+      { event: "run_started", data: { run_id: "c1", mode: "chat", subject: "q" } },
+      step(1, "llm", "LLM attempt 1", 1, false), step(1, "llm", "LLM attempt 1", 1, true),
+      step(2, "probe", "Consistency probe, attempt 1", 1, false),
+    ] as StreamEvent[]);
+    expect(phaseLine(s, "chat")).toMatchObject({ kind: "probing" });
+  });
+
+  it("still reads a real second attempt as a retry", () => {
+    const s = chat([
+      { event: "run_started", data: { run_id: "c1", mode: "chat", subject: "q" } },
+      step(1, "llm", "LLM attempt 1", 1, false), step(1, "llm", "LLM attempt 1", 1, true),
+      step(2, "llm", "LLM attempt 2", 2, false),
+    ] as StreamEvent[]);
+    expect(phaseLine(s, "chat")).toMatchObject({ kind: "thinking", attempt: 2 });
   });
 });
 

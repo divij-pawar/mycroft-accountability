@@ -37,3 +37,11 @@ langchain-tavily>=0.1.0
 # v3+ only — top-level `observe`/`get_client` API (v2's `langfuse.decorators`
 # is a different API). Degrades to a no-op when credentials are unset.
 langfuse>=3.0.0
+
+# ── An agent session as the agent, over MCP (web/mcp_server.py) ───────────────
+# Deliberate exception to stdlib-only: the official MCP Python SDK, so Claude Code,
+# Codex, Cursor or any MCP client can be the agent the layer checks. Optional at
+# runtime: without it the server runs as before and /mcp isn't mounted.
+# Capped below 2: mcp 2.x renamed FastMCP (mcp.server.fastmcp) to MCPServer and changed
+# other APIs; web/mcp_server.py is written against 1.x.
+mcp>=1.8,<2

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useReducer, useRef } from "react";
 import { api } from "../api/client";
-import { streamRun, type ChatRequestBody, type CompareRequestBody, type StreamEvent } from "../api/stream";
+import { streamRun, watchRun, type ChatRequestBody, type CompareRequestBody, type StreamEvent } from "../api/stream";
 import type { Run, Scope } from "../api/types";
 import { initialLive, liveReducer, type LiveState } from "./liveRun";
 
@@ -28,6 +28,8 @@ export interface LiveRunControls {
   start: (scope: Scope, body: CompareRequestBody, title: string) => void;
   /** A chat run (U9): one agent, the same stream protocol. */
   startChat: (scope: Scope, body: ChatRequestBody) => void;
+  /** Follow a run started elsewhere, e.g. by an agent session over MCP. */
+  watch: (scope: Scope, runId: string) => void;
   reset: () => void;
   running: boolean;
 }
@@ -62,6 +64,13 @@ export function useLiveRun(onStored?: (run: Run) => void, pollMs = POLL_MS): Liv
     run("/api/compare/stream", scope, body, title), [run]);
   const startChat = useCallback((scope: Scope, body: ChatRequestBody) =>
     run("/api/chat/stream", scope, body, body.message), [run]);
+  const watch = useCallback((scope: Scope, runId: string) => {
+    scopeRef.current = scope;
+    dispatch({ type: "start", title: `Run ${runId.slice(0, 8)}` });
+    watchRun(runId, scope, enqueue)
+      .then((outcome) => { if (outcome === "lost") frame(() => dispatch({ type: "lost" })); })
+      .catch((err: Error) => dispatch({ type: "failed", error: err.message }));
+  }, [enqueue]);
 
   // A lost connection doesn't stop the run on the server; when it lands in the
   // store, show it. Polls the one run id the stream announced — nothing else.
@@ -77,10 +86,16 @@ export function useLiveRun(onStored?: (run: Run) => void, pollMs = POLL_MS): Liv
   // A finished run that was persisted (it has a session) is shown from the store,
   // so what the reviewer sees is the record, redacted for their scope, with its gate.
   useEffect(() => {
-    if (state.status === "done" && state.result?.session) onStored?.(state.result);
+    if (state.status !== "done" || !state.result) return;
+    if (state.result.session) { onStored?.(state.result); return; }
+    // A watched run ends with a summary, not the payload: open the stored record by id.
+    const summary = state.result as unknown as { run_id?: string; stored?: boolean };
+    if (summary.stored && summary.run_id) {
+      api.run(summary.run_id, scopeRef.current).then((r) => onStored?.(r)).catch(() => { /* shown as done */ });
+    }
   }, [state.status, state.result, onStored]);
 
   const reset = useCallback(() => dispatch({ type: "reset" }), []);
   const running = state.status === "starting" || state.status === "running";
-  return { state, start, startChat, reset, running };
+  return { state, start, startChat, watch, reset, running };
 }

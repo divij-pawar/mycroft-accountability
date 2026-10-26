@@ -11,7 +11,7 @@ import type { Fact } from "../api/types";
 export type StatusState =
   | "match" | "mismatch" | "different_periods" | "one_sided" | "unchecked"
   | "uncorroborated" | "unverifiable_period" | "derived_ok" | "derived_wrong"
-  | "verified" | "not_found" | "ok" | "success" | "error" | "parse_failure"
+  | "verified" | "not_found" | "page_missing" | "not_retrieved" | "ok" | "success" | "error" | "parse_failure"
   | "halted" | "retried" | "running" | "awaiting_decision" | "decided" | "withheld" | "cited_by_one"
   | "check_pass" | "check_fail" | "check_warn" | "check_skipped" | "source_match" | "source_mismatch";
 
@@ -27,6 +27,8 @@ const STATUS: Record<StatusState, { label: string; glyph: string; cls: string }>
   unchecked:         { label: "Couldn't check",        glyph: "—", cls: "badge-neutral" },
   verified:          { label: "Matches source",        glyph: "✓", cls: "badge-success" },
   not_found:         { label: "Not found in source",   glyph: "✗", cls: "badge-danger" },
+  page_missing:      { label: "Page doesn't exist",    glyph: "✗", cls: "badge-danger" },
+  not_retrieved:     { label: "Agent never saw this source", glyph: "✗", cls: "badge-danger" },
   ok:                { label: "OK",                    glyph: "✓", cls: "badge-success" },
   success:           { label: "Passed format check",   glyph: "✓", cls: "badge-success" },
   error:             { label: "Error",                 glyph: "✗", cls: "badge-danger" },

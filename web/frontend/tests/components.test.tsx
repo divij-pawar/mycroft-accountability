@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { Info, Markdown, RolePill, StatusBadge } from "../src/components/primitives";
 import { TraceLog, hostOf, stepLine } from "../src/components/TraceLog";
-import { VerificationBanner } from "../src/components/RecordSections";
-import type { Claim, Step } from "../src/api/types";
+import { ContextWindow, VerificationBanner } from "../src/components/RecordSections";
+import type { Claim, ReasoningObject, Step } from "../src/api/types";
 import chatRun from "./fixtures/run_chat_auditor.json";
 
 describe("status vocabulary", () => {
@@ -51,6 +51,16 @@ describe("VerificationBanner", () => {
     expect(screen.getByText("Couldn't check")).toBeInTheDocument();
     expect(screen.getByText("Not found in source")).toBeInTheDocument();
     expect(screen.getByText("Matches source")).toBeInTheDocument();
+  });
+  it("names a source the agent never saw, and a page that doesn't exist (run 03bd3ca5)", () => {
+    const claims: Claim[] = [
+      { claim_type: "citation", text: "a", context: "", verified: false, check: "not_retrieved", source_label: "A", source_url: "https://a.example" },
+      { claim_type: "citation", text: "b", context: "", verified: false, check: "page_missing", source_label: "B", source_url: "https://b.example" },
+    ];
+    render(<VerificationBanner claims={claims} />);
+    expect(screen.getByText("Agent never saw this source")).toBeInTheDocument();
+    expect(screen.getByText("Page doesn't exist")).toBeInTheDocument();
+    expect(screen.queryByText("Not found in source")).not.toBeInTheDocument();
   });
 });
 
@@ -104,5 +114,27 @@ describe("TraceLog", () => {
 
   it("never throws on a malformed URL", () => {
     expect(hostOf("::::")).toBe("::::");
+  });
+});
+
+describe("ContextWindow", () => {
+  const attempt = (window: Record<string, string>) => ({
+    reasoning_id: "r1", agent_id: "external", attempt_number: 1, directive_version: "v1.5.2",
+    directive_text: "directive", context_window: window,
+  }) as unknown as ReasoningObject;
+
+  it("shows the search results added to the prompt, not just an empty Context (fix 4)", () => {
+    render(<ContextWindow objects={[attempt({ subject: "Q?", context: "", retrieved: "- Page\n  URL: https://a.example/1" })]} />);
+    fireEvent.click(screen.getByText(/What the agent was sent/));
+    expect(screen.getByText(/the search results below were added/)).toBeInTheDocument();
+    expect(screen.getByText(/Search results the layer added/)).toBeInTheDocument();
+    expect(screen.getByText(/https:\/\/a\.example\/1/)).toBeInTheDocument();
+  });
+
+  it("says none provided when nothing was given or added", () => {
+    render(<ContextWindow objects={[attempt({ subject: "Q?", context: "" })]} />);
+    fireEvent.click(screen.getByText(/What the agent was sent/));
+    expect(screen.getByText(/\(none provided\)/)).toBeInTheDocument();
+    expect(screen.queryByText(/Search results the layer added/)).not.toBeInTheDocument();
   });
 });
