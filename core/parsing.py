@@ -34,9 +34,11 @@ class StructuralParseError(Exception):
     Carries the raw response so the middleware can log it as PARSE_FAILURE.
     """
 
-    def __init__(self, message: str, raw_response: str) -> None:
+    def __init__(self, message: str, raw_response: str, retrieved_context: str | None = None) -> None:
         super().__init__(message)
         self.raw_response = raw_response
+        # What an adapter added to the prompt itself (see AgentResponse.retrieved_context).
+        self.retrieved_context = retrieved_context
 
 
 @dataclass(frozen=True)
@@ -53,6 +55,11 @@ class AgentResponse:
     # text None + closed False when it looked and found no block.
     assessment_text: str | None = None
     assessment_closed: bool | None = None
+    # Source material the adapter found and put in the prompt itself, beyond the Context it
+    # was handed: langchain_adapter.py's planned search results (2026-10-06). The validation
+    # loop records it in the attempt's context_window as "retrieved", so the record of what
+    # the agent was sent isn't an empty Context when the agent answered from five pages.
+    retrieved_context: str | None = None
 
 
 def _parse_response(raw: str, *, allow_assessment: bool = False) -> AgentResponse:

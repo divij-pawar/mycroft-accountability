@@ -137,6 +137,11 @@ class ModelTimeoutTest(unittest.TestCase):
         chat = la._build_chat("llama3.2", 0.0, 42)
         self.assertEqual(chat.client_kwargs, {"timeout": 42})
 
+    def test_output_is_capped(self):
+        # A timeout can't stop a model that keeps talking (10,341 tokens, 2026-10-06).
+        self.assertEqual(la._build_chat("llama3.2", 0.0, 42).num_predict, la.MODEL_MAX_TOKENS)
+        self.assertEqual(la._build_chat("llama3.2", 0.0, 42, max_tokens=256).num_predict, 256)
+
 
 if __name__ == "__main__":
     unittest.main()

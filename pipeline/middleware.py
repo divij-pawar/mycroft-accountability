@@ -161,6 +161,11 @@ def run_validation_loop(
     # without the reader having to cross-reference this call.
     context_window = {"subject": ticker, "context": context}
 
+    def window(outcome) -> dict[str, str]:
+        """This attempt's context_window: plus what the adapter retrieved, when it says."""
+        retrieved = getattr(outcome, "retrieved_context", None)
+        return {**context_window, "retrieved": retrieved} if retrieved else context_window
+
     objects: list[ReasoningObject] = []
 
     # ── Attempt 1 ──────────────────────────────────────────────────────────
@@ -179,7 +184,7 @@ def run_validation_loop(
                 parse_status=ParseStatus.PARSE_FAILURE,
                 confidence_score=confidence_score,
                 directive=directive,
-                context_window=context_window,
+                context_window=window(exc),
                 raw_text=exc.raw_response,
                 data_sources=data_sources,
             )
@@ -198,7 +203,7 @@ def run_validation_loop(
                     parse_status=ParseStatus.HALT,
                     confidence_score=confidence_score,
                     directive=_CORRECTIVE_DIRECTIVE,
-                    context_window=context_window,
+                    context_window=window(exc2),
                     raw_text=exc2.raw_response,
                     data_sources=data_sources,
                 )
@@ -217,7 +222,7 @@ def run_validation_loop(
                 parse_status=ParseStatus.SUCCESS,
                 confidence_score=confidence_score,
                 directive=_CORRECTIVE_DIRECTIVE,
-                context_window=context_window,
+                context_window=window(response),
                 thought_log=response.thought_log,
                 conclusion=response.conclusion,
                 raw_text=response.raw_text,
@@ -237,7 +242,7 @@ def run_validation_loop(
             parse_status=ParseStatus.SUCCESS,
             confidence_score=confidence_score,
             directive=directive,
-            context_window=context_window,
+            context_window=window(response),
             thought_log=response.thought_log,
             conclusion=response.conclusion,
             raw_text=response.raw_text,

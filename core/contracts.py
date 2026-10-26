@@ -67,8 +67,9 @@ class JsonFetcher(Protocol):
     Every network read in this subsystem is injected as one of these, which is
     why the automated suite can be network-free without patching module globals:
     a test passes its own fixture fetcher instead. P2 (only ingest code touches
-    the network) is enforced by the fact that the only default implementation
-    lives in `datasources.edgar`.
+    the network) is enforced by the fact that the default implementations live
+    in `datasources.edgar` and, for prices, `financial_agent.prices`
+    (tests/test_layering.py names both).
     """
 
     def __call__(self, url: str) -> dict: ...
