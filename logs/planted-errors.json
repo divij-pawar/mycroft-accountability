@@ -1,0 +1,1635 @@
+{
+ "summary": {
+  "by_alteration": {
+   "plus_1pct": {
+    "planted": 17,
+    "stopped": 14,
+    "flagged": 0,
+    "missed": 3,
+    "comparison": 4,
+    "source check": 14,
+    "accounting check": 0
+   },
+   "plus_10pct": {
+    "planted": 17,
+    "stopped": 14,
+    "flagged": 0,
+    "missed": 3,
+    "comparison": 4,
+    "source check": 14,
+    "accounting check": 1
+   },
+   "digit_swap": {
+    "planted": 17,
+    "stopped": 14,
+    "flagged": 0,
+    "missed": 3,
+    "comparison": 4,
+    "source check": 14,
+    "accounting check": 1
+   },
+   "same_value": {
+    "planted": 17,
+    "stopped": 0,
+    "flagged": 0,
+    "missed": 17,
+    "comparison": 0,
+    "source check": 0,
+    "accounting check": 0
+   },
+   "rounded": {
+    "planted": 17,
+    "stopped": 0,
+    "flagged": 0,
+    "missed": 17,
+    "comparison": 0,
+    "source check": 0,
+    "accounting check": 0
+   },
+   "unit_slip": {
+    "planted": 9,
+    "stopped": 8,
+    "flagged": 0,
+    "missed": 1,
+    "comparison": 4,
+    "source check": 8,
+    "accounting check": 0
+   }
+  },
+  "errors": {
+   "planted": 60,
+   "stopped": 50,
+   "flagged": 0,
+   "missed": 10
+  },
+  "controls": {
+   "planted": 34,
+   "stopped": 0,
+   "flagged": 0
+  }
+ },
+ "trials": [
+  {
+   "run_id": "beb02048-9373-40a2-ae0c-333592d05fde",
+   "slot": "b",
+   "metric": "eps_diluted",
+   "family": "per_share",
+   "alteration": "plus_1pct",
+   "is_error": true,
+   "original": "$4.27",
+   "altered": "$4.31",
+   "outcome": "stopped",
+   "by": [
+    "source check"
+   ],
+   "causes": [],
+   "sentence": "The earnings per share diluted for Microsoft (MSFT) in Q3 FY2026 is $4.27 USD/shares, according to the Context and the search tool results."
+  },
+  {
+   "run_id": "beb02048-9373-40a2-ae0c-333592d05fde",
+   "slot": "b",
+   "metric": "eps_diluted",
+   "family": "per_share",
+   "alteration": "plus_10pct",
+   "is_error": true,
+   "original": "$4.27",
+   "altered": "$4.70",
+   "outcome": "stopped",
+   "by": [
+    "source check"
+   ],
+   "causes": [],
+   "sentence": "The earnings per share diluted for Microsoft (MSFT) in Q3 FY2026 is $4.27 USD/shares, according to the Context and the search tool results."
+  },
+  {
+   "run_id": "beb02048-9373-40a2-ae0c-333592d05fde",
+   "slot": "b",
+   "metric": "eps_diluted",
+   "family": "per_share",
+   "alteration": "digit_swap",
+   "is_error": true,
+   "original": "$4.27",
+   "altered": "$4.72",
+   "outcome": "stopped",
+   "by": [
+    "source check"
+   ],
+   "causes": [],
+   "sentence": "The earnings per share diluted for Microsoft (MSFT) in Q3 FY2026 is $4.27 USD/shares, according to the Context and the search tool results."
+  },
+  {
+   "run_id": "beb02048-9373-40a2-ae0c-333592d05fde",
+   "slot": "b",
+   "metric": "eps_diluted",
+   "family": "per_share",
+   "alteration": "same_value",
+   "is_error": false,
+   "original": "$4.27",
+   "altered": "$4.270",
+   "outcome": "missed",
+   "by": [],
+   "causes": [
+    "another figure for the same metric still matched the filing (one agreeing figure passes)"
+   ],
+   "sentence": "The earnings per share diluted for Microsoft (MSFT) in Q3 FY2026 is $4.27 USD/shares, according to the Context and the search tool results."
+  },
+  {
+   "run_id": "beb02048-9373-40a2-ae0c-333592d05fde",
+   "slot": "b",
+   "metric": "eps_diluted",
+   "family": "per_share",
+   "alteration": "rounded",
+   "is_error": false,
+   "original": "$4.27",
+   "altered": "$4.3",
+   "outcome": "missed",
+   "by": [],
+   "causes": [
+    "another figure for the same metric still matched the filing (one agreeing figure passes)"
+   ],
+   "sentence": "The earnings per share diluted for Microsoft (MSFT) in Q3 FY2026 is $4.27 USD/shares, according to the Context and the search tool results."
+  },
+  {
+   "run_id": "beb02048-9373-40a2-ae0c-333592d05fde",
+   "slot": "b",
+   "metric": "eps",
+   "family": "per_share",
+   "alteration": "plus_1pct",
+   "is_error": true,
+   "original": "$4.27",
+   "altered": "$4.31",
+   "outcome": "stopped",
+   "by": [
+    "source check"
+   ],
+   "causes": [],
+   "sentence": "This is consistent with the report from CNBC, which states that Microsoft delivered a record quarter with EPS of $4.27 (up 21% YoY)."
+  },
+  {
+   "run_id": "beb02048-9373-40a2-ae0c-333592d05fde",
+   "slot": "b",
+   "metric": "eps",
+   "family": "per_share",
+   "alteration": "plus_10pct",
+   "is_error": true,
+   "original": "$4.27",
+   "altered": "$4.70",
+   "outcome": "stopped",
+   "by": [
+    "source check"
+   ],
+   "causes": [],
+   "sentence": "This is consistent with the report from CNBC, which states that Microsoft delivered a record quarter with EPS of $4.27 (up 21% YoY)."
+  },
+  {
+   "run_id": "beb02048-9373-40a2-ae0c-333592d05fde",
+   "slot": "b",
+   "metric": "eps",
+   "family": "per_share",
+   "alteration": "digit_swap",
+   "is_error": true,
+   "original": "$4.27",
+   "altered": "$4.72",
+   "outcome": "stopped",
+   "by": [
+    "source check"
+   ],
+   "causes": [],
+   "sentence": "This is consistent with the report from CNBC, which states that Microsoft delivered a record quarter with EPS of $4.27 (up 21% YoY)."
+  },
+  {
+   "run_id": "beb02048-9373-40a2-ae0c-333592d05fde",
+   "slot": "b",
+   "metric": "eps",
+   "family": "per_share",
+   "alteration": "same_value",
+   "is_error": false,
+   "original": "$4.27",
+   "altered": "$4.270",
+   "outcome": "missed",
+   "by": [],
+   "causes": [
+    "another figure for the same metric still matched the filing (one agreeing figure passes)"
+   ],
+   "sentence": "This is consistent with the report from CNBC, which states that Microsoft delivered a record quarter with EPS of $4.27 (up 21% YoY)."
+  },
+  {
+   "run_id": "beb02048-9373-40a2-ae0c-333592d05fde",
+   "slot": "b",
+   "metric": "eps",
+   "family": "per_share",
+   "alteration": "rounded",
+   "is_error": false,
+   "original": "$4.27",
+   "altered": "$4.3",
+   "outcome": "missed",
+   "by": [],
+   "causes": [
+    "another figure for the same metric still matched the filing (one agreeing figure passes)"
+   ],
+   "sentence": "This is consistent with the report from CNBC, which states that Microsoft delivered a record quarter with EPS of $4.27 (up 21% YoY)."
+  },
+  {
+   "run_id": "20c538e4-ea77-4765-91a1-aad8c488d4b0",
+   "slot": "a",
+   "metric": "revenue",
+   "family": "currency",
+   "alteration": "plus_1pct",
+   "is_error": true,
+   "original": "$109.4 billion",
+   "altered": "$110.5 billion",
+   "outcome": "stopped",
+   "by": [
+    "source check"
+   ],
+   "causes": [],
+   "sentence": "Apple's revenue for fiscal 2026 third quarter was $109.4 billion, up 16% year-over-year, and a June quarter record."
+  },
+  {
+   "run_id": "20c538e4-ea77-4765-91a1-aad8c488d4b0",
+   "slot": "a",
+   "metric": "revenue",
+   "family": "currency",
+   "alteration": "plus_10pct",
+   "is_error": true,
+   "original": "$109.4 billion",
+   "altered": "$120.3 billion",
+   "outcome": "stopped",
+   "by": [
+    "source check"
+   ],
+   "causes": [],
+   "sentence": "Apple's revenue for fiscal 2026 third quarter was $109.4 billion, up 16% year-over-year, and a June quarter record."
+  },
+  {
+   "run_id": "20c538e4-ea77-4765-91a1-aad8c488d4b0",
+   "slot": "a",
+   "metric": "revenue",
+   "family": "currency",
+   "alteration": "unit_slip",
+   "is_error": true,
+   "original": "$109.4 billion",
+   "altered": "$109.4 million",
+   "outcome": "stopped",
+   "by": [
+    "source check"
+   ],
+   "causes": [],
+   "sentence": "Apple's revenue for fiscal 2026 third quarter was $109.4 billion, up 16% year-over-year, and a June quarter record."
+  },
+  {
+   "run_id": "20c538e4-ea77-4765-91a1-aad8c488d4b0",
+   "slot": "a",
+   "metric": "revenue",
+   "family": "currency",
+   "alteration": "digit_swap",
+   "is_error": true,
+   "original": "$109.4 billion",
+   "altered": "$190.4 billion",
+   "outcome": "stopped",
+   "by": [
+    "source check"
+   ],
+   "causes": [],
+   "sentence": "Apple's revenue for fiscal 2026 third quarter was $109.4 billion, up 16% year-over-year, and a June quarter record."
+  },
+  {
+   "run_id": "20c538e4-ea77-4765-91a1-aad8c488d4b0",
+   "slot": "a",
+   "metric": "revenue",
+   "family": "currency",
+   "alteration": "same_value",
+   "is_error": false,
+   "original": "$109.4 billion",
+   "altered": "$109.40 billion",
+   "outcome": "missed",
+   "by": [],
+   "causes": [
+    "another figure for the same metric still matched the filing (one agreeing figure passes)"
+   ],
+   "sentence": "Apple's revenue for fiscal 2026 third quarter was $109.4 billion, up 16% year-over-year, and a June quarter record."
+  },
+  {
+   "run_id": "20c538e4-ea77-4765-91a1-aad8c488d4b0",
+   "slot": "a",
+   "metric": "revenue",
+   "family": "currency",
+   "alteration": "rounded",
+   "is_error": false,
+   "original": "$109.4 billion",
+   "altered": "$109 billion",
+   "outcome": "missed",
+   "by": [],
+   "causes": [
+    "another figure for the same metric still matched the filing (one agreeing figure passes)"
+   ],
+   "sentence": "Apple's revenue for fiscal 2026 third quarter was $109.4 billion, up 16% year-over-year, and a June quarter record."
+  },
+  {
+   "run_id": "20c538e4-ea77-4765-91a1-aad8c488d4b0",
+   "slot": "a",
+   "metric": "net_income",
+   "family": "currency",
+   "alteration": "plus_1pct",
+   "is_error": true,
+   "original": "$29.79 billion",
+   "altered": "$30.09 billion",
+   "outcome": "stopped",
+   "by": [
+    "comparison",
+    "source check"
+   ],
+   "causes": [],
+   "sentence": "The company's net income was $29.79 billion, or $2.02 per share, with 11 cents per share attributed to tariff rebates."
+  },
+  {
+   "run_id": "20c538e4-ea77-4765-91a1-aad8c488d4b0",
+   "slot": "a",
+   "metric": "net_income",
+   "family": "currency",
+   "alteration": "plus_10pct",
+   "is_error": true,
+   "original": "$29.79 billion",
+   "altered": "$32.77 billion",
+   "outcome": "stopped",
+   "by": [
+    "comparison",
+    "source check"
+   ],
+   "causes": [],
+   "sentence": "The company's net income was $29.79 billion, or $2.02 per share, with 11 cents per share attributed to tariff rebates."
+  },
+  {
+   "run_id": "20c538e4-ea77-4765-91a1-aad8c488d4b0",
+   "slot": "a",
+   "metric": "net_income",
+   "family": "currency",
+   "alteration": "unit_slip",
+   "is_error": true,
+   "original": "$29.79 billion",
+   "altered": "$29.79 million",
+   "outcome": "stopped",
+   "by": [
+    "comparison",
+    "source check"
+   ],
+   "causes": [],
+   "sentence": "The company's net income was $29.79 billion, or $2.02 per share, with 11 cents per share attributed to tariff rebates."
+  },
+  {
+   "run_id": "20c538e4-ea77-4765-91a1-aad8c488d4b0",
+   "slot": "a",
+   "metric": "net_income",
+   "family": "currency",
+   "alteration": "digit_swap",
+   "is_error": true,
+   "original": "$29.79 billion",
+   "altered": "$92.79 billion",
+   "outcome": "stopped",
+   "by": [
+    "comparison",
+    "source check"
+   ],
+   "causes": [],
+   "sentence": "The company's net income was $29.79 billion, or $2.02 per share, with 11 cents per share attributed to tariff rebates."
+  },
+  {
+   "run_id": "20c538e4-ea77-4765-91a1-aad8c488d4b0",
+   "slot": "a",
+   "metric": "net_income",
+   "family": "currency",
+   "alteration": "same_value",
+   "is_error": false,
+   "original": "$29.79 billion",
+   "altered": "$29.790 billion",
+   "outcome": "missed",
+   "by": [],
+   "causes": [
+    "another figure for the same metric still matched the other agent",
+    "another figure for the same metric still matched the filing (one agreeing figure passes)"
+   ],
+   "sentence": "The company's net income was $29.79 billion, or $2.02 per share, with 11 cents per share attributed to tariff rebates."
+  },
+  {
+   "run_id": "20c538e4-ea77-4765-91a1-aad8c488d4b0",
+   "slot": "a",
+   "metric": "net_income",
+   "family": "currency",
+   "alteration": "rounded",
+   "is_error": false,
+   "original": "$29.79 billion",
+   "altered": "$29.8 billion",
+   "outcome": "missed",
+   "by": [],
+   "causes": [
+    "another figure for the same metric still matched the other agent",
+    "another figure for the same metric still matched the filing (one agreeing figure passes)"
+   ],
+   "sentence": "The company's net income was $29.79 billion, or $2.02 per share, with 11 cents per share attributed to tariff rebates."
+  },
+  {
+   "run_id": "20c538e4-ea77-4765-91a1-aad8c488d4b0",
+   "slot": "a",
+   "metric": "eps",
+   "family": "per_share",
+   "alteration": "plus_1pct",
+   "is_error": true,
+   "original": "$2.02",
+   "altered": "$2.04",
+   "outcome": "stopped",
+   "by": [
+    "source check"
+   ],
+   "causes": [],
+   "sentence": "The company's net income was $29.79 billion, or $2.02 per share, with 11 cents per share attributed to tariff rebates."
+  },
+  {
+   "run_id": "20c538e4-ea77-4765-91a1-aad8c488d4b0",
+   "slot": "a",
+   "metric": "eps",
+   "family": "per_share",
+   "alteration": "plus_10pct",
+   "is_error": true,
+   "original": "$2.02",
+   "altered": "$2.22",
+   "outcome": "stopped",
+   "by": [
+    "source check"
+   ],
+   "causes": [],
+   "sentence": "The company's net income was $29.79 billion, or $2.02 per share, with 11 cents per share attributed to tariff rebates."
+  },
+  {
+   "run_id": "20c538e4-ea77-4765-91a1-aad8c488d4b0",
+   "slot": "a",
+   "metric": "eps",
+   "family": "per_share",
+   "alteration": "digit_swap",
+   "is_error": true,
+   "original": "$2.02",
+   "altered": "$2.20",
+   "outcome": "stopped",
+   "by": [
+    "source check"
+   ],
+   "causes": [],
+   "sentence": "The company's net income was $29.79 billion, or $2.02 per share, with 11 cents per share attributed to tariff rebates."
+  },
+  {
+   "run_id": "20c538e4-ea77-4765-91a1-aad8c488d4b0",
+   "slot": "a",
+   "metric": "eps",
+   "family": "per_share",
+   "alteration": "same_value",
+   "is_error": false,
+   "original": "$2.02",
+   "altered": "$2.020",
+   "outcome": "missed",
+   "by": [],
+   "causes": [
+    "another figure for the same metric still matched the filing (one agreeing figure passes)"
+   ],
+   "sentence": "The company's net income was $29.79 billion, or $2.02 per share, with 11 cents per share attributed to tariff rebates."
+  },
+  {
+   "run_id": "20c538e4-ea77-4765-91a1-aad8c488d4b0",
+   "slot": "a",
+   "metric": "eps",
+   "family": "per_share",
+   "alteration": "rounded",
+   "is_error": false,
+   "original": "$2.02",
+   "altered": "$2.0",
+   "outcome": "missed",
+   "by": [],
+   "causes": [
+    "another figure for the same metric still matched the filing (one agreeing figure passes)"
+   ],
+   "sentence": "The company's net income was $29.79 billion, or $2.02 per share, with 11 cents per share attributed to tariff rebates."
+  },
+  {
+   "run_id": "20c538e4-ea77-4765-91a1-aad8c488d4b0",
+   "slot": "b",
+   "metric": "eps_diluted",
+   "family": "per_share",
+   "alteration": "plus_1pct",
+   "is_error": true,
+   "original": "$2.02",
+   "altered": "$2.04",
+   "outcome": "stopped",
+   "by": [
+    "source check"
+   ],
+   "causes": [],
+   "sentence": "The EPS for both diluted and basic shares is $2.02 and $2.03, respectively."
+  },
+  {
+   "run_id": "20c538e4-ea77-4765-91a1-aad8c488d4b0",
+   "slot": "b",
+   "metric": "eps_diluted",
+   "family": "per_share",
+   "alteration": "plus_10pct",
+   "is_error": true,
+   "original": "$2.02",
+   "altered": "$2.22",
+   "outcome": "stopped",
+   "by": [
+    "accounting check",
+    "source check"
+   ],
+   "causes": [],
+   "sentence": "The EPS for both diluted and basic shares is $2.02 and $2.03, respectively."
+  },
+  {
+   "run_id": "20c538e4-ea77-4765-91a1-aad8c488d4b0",
+   "slot": "b",
+   "metric": "eps_diluted",
+   "family": "per_share",
+   "alteration": "digit_swap",
+   "is_error": true,
+   "original": "$2.02",
+   "altered": "$2.20",
+   "outcome": "stopped",
+   "by": [
+    "accounting check",
+    "source check"
+   ],
+   "causes": [],
+   "sentence": "The EPS for both diluted and basic shares is $2.02 and $2.03, respectively."
+  },
+  {
+   "run_id": "20c538e4-ea77-4765-91a1-aad8c488d4b0",
+   "slot": "b",
+   "metric": "eps_diluted",
+   "family": "per_share",
+   "alteration": "same_value",
+   "is_error": false,
+   "original": "$2.02",
+   "altered": "$2.020",
+   "outcome": "missed",
+   "by": [],
+   "causes": [
+    "in a '\u2026, respectively' list, where figures can be tagged to the wrong metric",
+    "another figure for the same metric still matched the other agent",
+    "another figure for the same metric still matched the filing (one agreeing figure passes)"
+   ],
+   "sentence": "The EPS for both diluted and basic shares is $2.02 and $2.03, respectively."
+  },
+  {
+   "run_id": "20c538e4-ea77-4765-91a1-aad8c488d4b0",
+   "slot": "b",
+   "metric": "eps_diluted",
+   "family": "per_share",
+   "alteration": "rounded",
+   "is_error": false,
+   "original": "$2.02",
+   "altered": "$2.0",
+   "outcome": "missed",
+   "by": [],
+   "causes": [
+    "in a '\u2026, respectively' list, where figures can be tagged to the wrong metric",
+    "another figure for the same metric still matched the filing (one agreeing figure passes)"
+   ],
+   "sentence": "The EPS for both diluted and basic shares is $2.02 and $2.03, respectively."
+  },
+  {
+   "run_id": "20c538e4-ea77-4765-91a1-aad8c488d4b0",
+   "slot": "b",
+   "metric": "eps_basic",
+   "family": "per_share",
+   "alteration": "plus_1pct",
+   "is_error": true,
+   "original": "$2.03",
+   "altered": "$2.05",
+   "outcome": "stopped",
+   "by": [
+    "source check"
+   ],
+   "causes": [],
+   "sentence": "The EPS for both diluted and basic shares is $2.02 and $2.03, respectively."
+  },
+  {
+   "run_id": "20c538e4-ea77-4765-91a1-aad8c488d4b0",
+   "slot": "b",
+   "metric": "eps_basic",
+   "family": "per_share",
+   "alteration": "plus_10pct",
+   "is_error": true,
+   "original": "$2.03",
+   "altered": "$2.23",
+   "outcome": "stopped",
+   "by": [
+    "source check"
+   ],
+   "causes": [],
+   "sentence": "The EPS for both diluted and basic shares is $2.02 and $2.03, respectively."
+  },
+  {
+   "run_id": "20c538e4-ea77-4765-91a1-aad8c488d4b0",
+   "slot": "b",
+   "metric": "eps_basic",
+   "family": "per_share",
+   "alteration": "digit_swap",
+   "is_error": true,
+   "original": "$2.03",
+   "altered": "$2.30",
+   "outcome": "stopped",
+   "by": [
+    "source check"
+   ],
+   "causes": [],
+   "sentence": "The EPS for both diluted and basic shares is $2.02 and $2.03, respectively."
+  },
+  {
+   "run_id": "20c538e4-ea77-4765-91a1-aad8c488d4b0",
+   "slot": "b",
+   "metric": "eps_basic",
+   "family": "per_share",
+   "alteration": "same_value",
+   "is_error": false,
+   "original": "$2.03",
+   "altered": "$2.030",
+   "outcome": "missed",
+   "by": [],
+   "causes": [
+    "in a '\u2026, respectively' list, where figures can be tagged to the wrong metric",
+    "another figure for the same metric still matched the filing (one agreeing figure passes)"
+   ],
+   "sentence": "The EPS for both diluted and basic shares is $2.02 and $2.03, respectively."
+  },
+  {
+   "run_id": "20c538e4-ea77-4765-91a1-aad8c488d4b0",
+   "slot": "b",
+   "metric": "eps_basic",
+   "family": "per_share",
+   "alteration": "rounded",
+   "is_error": false,
+   "original": "$2.03",
+   "altered": "$2.0",
+   "outcome": "missed",
+   "by": [],
+   "causes": [
+    "in a '\u2026, respectively' list, where figures can be tagged to the wrong metric",
+    "another figure for the same metric still matched the filing (one agreeing figure passes)"
+   ],
+   "sentence": "The EPS for both diluted and basic shares is $2.02 and $2.03, respectively."
+  },
+  {
+   "run_id": "20c538e4-ea77-4765-91a1-aad8c488d4b0",
+   "slot": "b",
+   "metric": "operating_income",
+   "family": "currency",
+   "alteration": "plus_1pct",
+   "is_error": true,
+   "original": "$35.695 billion",
+   "altered": "$36.052 billion",
+   "outcome": "stopped",
+   "by": [
+    "source check"
+   ],
+   "causes": [],
+   "sentence": "The operating income loss and net income loss are $35.695 billion and $29.788 billion, respectively."
+  },
+  {
+   "run_id": "20c538e4-ea77-4765-91a1-aad8c488d4b0",
+   "slot": "b",
+   "metric": "operating_income",
+   "family": "currency",
+   "alteration": "plus_10pct",
+   "is_error": true,
+   "original": "$35.695 billion",
+   "altered": "$39.265 billion",
+   "outcome": "stopped",
+   "by": [
+    "source check"
+   ],
+   "causes": [],
+   "sentence": "The operating income loss and net income loss are $35.695 billion and $29.788 billion, respectively."
+  },
+  {
+   "run_id": "20c538e4-ea77-4765-91a1-aad8c488d4b0",
+   "slot": "b",
+   "metric": "operating_income",
+   "family": "currency",
+   "alteration": "unit_slip",
+   "is_error": true,
+   "original": "$35.695 billion",
+   "altered": "$35.695 million",
+   "outcome": "stopped",
+   "by": [
+    "source check"
+   ],
+   "causes": [],
+   "sentence": "The operating income loss and net income loss are $35.695 billion and $29.788 billion, respectively."
+  },
+  {
+   "run_id": "20c538e4-ea77-4765-91a1-aad8c488d4b0",
+   "slot": "b",
+   "metric": "operating_income",
+   "family": "currency",
+   "alteration": "digit_swap",
+   "is_error": true,
+   "original": "$35.695 billion",
+   "altered": "$53.695 billion",
+   "outcome": "stopped",
+   "by": [
+    "source check"
+   ],
+   "causes": [],
+   "sentence": "The operating income loss and net income loss are $35.695 billion and $29.788 billion, respectively."
+  },
+  {
+   "run_id": "20c538e4-ea77-4765-91a1-aad8c488d4b0",
+   "slot": "b",
+   "metric": "operating_income",
+   "family": "currency",
+   "alteration": "same_value",
+   "is_error": false,
+   "original": "$35.695 billion",
+   "altered": "$35.6950 billion",
+   "outcome": "missed",
+   "by": [],
+   "causes": [
+    "in a '\u2026, respectively' list, where figures can be tagged to the wrong metric",
+    "another figure for the same metric still matched the filing (one agreeing figure passes)"
+   ],
+   "sentence": "The operating income loss and net income loss are $35.695 billion and $29.788 billion, respectively."
+  },
+  {
+   "run_id": "20c538e4-ea77-4765-91a1-aad8c488d4b0",
+   "slot": "b",
+   "metric": "operating_income",
+   "family": "currency",
+   "alteration": "rounded",
+   "is_error": false,
+   "original": "$35.695 billion",
+   "altered": "$35.70 billion",
+   "outcome": "missed",
+   "by": [],
+   "causes": [
+    "in a '\u2026, respectively' list, where figures can be tagged to the wrong metric",
+    "another figure for the same metric still matched the filing (one agreeing figure passes)"
+   ],
+   "sentence": "The operating income loss and net income loss are $35.695 billion and $29.788 billion, respectively."
+  },
+  {
+   "run_id": "20c538e4-ea77-4765-91a1-aad8c488d4b0",
+   "slot": "b",
+   "metric": "net_income",
+   "family": "currency",
+   "alteration": "plus_1pct",
+   "is_error": true,
+   "original": "$29.788 billion",
+   "altered": "$30.086 billion",
+   "outcome": "stopped",
+   "by": [
+    "comparison",
+    "source check"
+   ],
+   "causes": [],
+   "sentence": "The operating income loss and net income loss are $35.695 billion and $29.788 billion, respectively."
+  },
+  {
+   "run_id": "20c538e4-ea77-4765-91a1-aad8c488d4b0",
+   "slot": "b",
+   "metric": "net_income",
+   "family": "currency",
+   "alteration": "plus_10pct",
+   "is_error": true,
+   "original": "$29.788 billion",
+   "altered": "$32.767 billion",
+   "outcome": "stopped",
+   "by": [
+    "comparison",
+    "source check"
+   ],
+   "causes": [],
+   "sentence": "The operating income loss and net income loss are $35.695 billion and $29.788 billion, respectively."
+  },
+  {
+   "run_id": "20c538e4-ea77-4765-91a1-aad8c488d4b0",
+   "slot": "b",
+   "metric": "net_income",
+   "family": "currency",
+   "alteration": "unit_slip",
+   "is_error": true,
+   "original": "$29.788 billion",
+   "altered": "$29.788 million",
+   "outcome": "stopped",
+   "by": [
+    "comparison",
+    "source check"
+   ],
+   "causes": [],
+   "sentence": "The operating income loss and net income loss are $35.695 billion and $29.788 billion, respectively."
+  },
+  {
+   "run_id": "20c538e4-ea77-4765-91a1-aad8c488d4b0",
+   "slot": "b",
+   "metric": "net_income",
+   "family": "currency",
+   "alteration": "digit_swap",
+   "is_error": true,
+   "original": "$29.788 billion",
+   "altered": "$92.788 billion",
+   "outcome": "stopped",
+   "by": [
+    "comparison",
+    "source check"
+   ],
+   "causes": [],
+   "sentence": "The operating income loss and net income loss are $35.695 billion and $29.788 billion, respectively."
+  },
+  {
+   "run_id": "20c538e4-ea77-4765-91a1-aad8c488d4b0",
+   "slot": "b",
+   "metric": "net_income",
+   "family": "currency",
+   "alteration": "same_value",
+   "is_error": false,
+   "original": "$29.788 billion",
+   "altered": "$29.7880 billion",
+   "outcome": "missed",
+   "by": [],
+   "causes": [
+    "in a '\u2026, respectively' list, where figures can be tagged to the wrong metric",
+    "another figure for the same metric still matched the other agent",
+    "another figure for the same metric still matched the filing (one agreeing figure passes)"
+   ],
+   "sentence": "The operating income loss and net income loss are $35.695 billion and $29.788 billion, respectively."
+  },
+  {
+   "run_id": "20c538e4-ea77-4765-91a1-aad8c488d4b0",
+   "slot": "b",
+   "metric": "net_income",
+   "family": "currency",
+   "alteration": "rounded",
+   "is_error": false,
+   "original": "$29.788 billion",
+   "altered": "$29.79 billion",
+   "outcome": "missed",
+   "by": [],
+   "causes": [
+    "in a '\u2026, respectively' list, where figures can be tagged to the wrong metric",
+    "another figure for the same metric still matched the other agent",
+    "another figure for the same metric still matched the filing (one agreeing figure passes)"
+   ],
+   "sentence": "The operating income loss and net income loss are $35.695 billion and $29.788 billion, respectively."
+  },
+  {
+   "run_id": "8ecb0922-da49-4e81-ad9d-c71dbb8bfac1",
+   "slot": "a",
+   "metric": "revenue",
+   "family": "currency",
+   "alteration": "plus_1pct",
+   "is_error": true,
+   "original": "$109.4 billion",
+   "altered": "$110.5 billion",
+   "outcome": "stopped",
+   "by": [
+    "source check"
+   ],
+   "causes": [],
+   "sentence": "Apple's revenue for Q3 FY2026 was $109.4 billion, up 16% from the previous year."
+  },
+  {
+   "run_id": "8ecb0922-da49-4e81-ad9d-c71dbb8bfac1",
+   "slot": "a",
+   "metric": "revenue",
+   "family": "currency",
+   "alteration": "plus_10pct",
+   "is_error": true,
+   "original": "$109.4 billion",
+   "altered": "$120.3 billion",
+   "outcome": "stopped",
+   "by": [
+    "source check"
+   ],
+   "causes": [],
+   "sentence": "Apple's revenue for Q3 FY2026 was $109.4 billion, up 16% from the previous year."
+  },
+  {
+   "run_id": "8ecb0922-da49-4e81-ad9d-c71dbb8bfac1",
+   "slot": "a",
+   "metric": "revenue",
+   "family": "currency",
+   "alteration": "unit_slip",
+   "is_error": true,
+   "original": "$109.4 billion",
+   "altered": "$109.4 million",
+   "outcome": "stopped",
+   "by": [
+    "source check"
+   ],
+   "causes": [],
+   "sentence": "Apple's revenue for Q3 FY2026 was $109.4 billion, up 16% from the previous year."
+  },
+  {
+   "run_id": "8ecb0922-da49-4e81-ad9d-c71dbb8bfac1",
+   "slot": "a",
+   "metric": "revenue",
+   "family": "currency",
+   "alteration": "digit_swap",
+   "is_error": true,
+   "original": "$109.4 billion",
+   "altered": "$190.4 billion",
+   "outcome": "stopped",
+   "by": [
+    "source check"
+   ],
+   "causes": [],
+   "sentence": "Apple's revenue for Q3 FY2026 was $109.4 billion, up 16% from the previous year."
+  },
+  {
+   "run_id": "8ecb0922-da49-4e81-ad9d-c71dbb8bfac1",
+   "slot": "a",
+   "metric": "revenue",
+   "family": "currency",
+   "alteration": "same_value",
+   "is_error": false,
+   "original": "$109.4 billion",
+   "altered": "$109.40 billion",
+   "outcome": "missed",
+   "by": [],
+   "causes": [
+    "another figure for the same metric still matched the filing (one agreeing figure passes)"
+   ],
+   "sentence": "Apple's revenue for Q3 FY2026 was $109.4 billion, up 16% from the previous year."
+  },
+  {
+   "run_id": "8ecb0922-da49-4e81-ad9d-c71dbb8bfac1",
+   "slot": "a",
+   "metric": "revenue",
+   "family": "currency",
+   "alteration": "rounded",
+   "is_error": false,
+   "original": "$109.4 billion",
+   "altered": "$109 billion",
+   "outcome": "missed",
+   "by": [],
+   "causes": [
+    "another figure for the same metric still matched the filing (one agreeing figure passes)"
+   ],
+   "sentence": "Apple's revenue for Q3 FY2026 was $109.4 billion, up 16% from the previous year."
+  },
+  {
+   "run_id": "8ecb0922-da49-4e81-ad9d-c71dbb8bfac1",
+   "slot": "a",
+   "metric": "net_income",
+   "family": "currency",
+   "alteration": "plus_1pct",
+   "is_error": true,
+   "original": "$29.79 billion",
+   "altered": "$30.09 billion",
+   "outcome": "stopped",
+   "by": [
+    "comparison",
+    "source check"
+   ],
+   "causes": [],
+   "sentence": "The company's net income was $29.79 billion, or $2.02 per share, beating analyst estimates."
+  },
+  {
+   "run_id": "8ecb0922-da49-4e81-ad9d-c71dbb8bfac1",
+   "slot": "a",
+   "metric": "net_income",
+   "family": "currency",
+   "alteration": "plus_10pct",
+   "is_error": true,
+   "original": "$29.79 billion",
+   "altered": "$32.77 billion",
+   "outcome": "stopped",
+   "by": [
+    "comparison",
+    "source check"
+   ],
+   "causes": [],
+   "sentence": "The company's net income was $29.79 billion, or $2.02 per share, beating analyst estimates."
+  },
+  {
+   "run_id": "8ecb0922-da49-4e81-ad9d-c71dbb8bfac1",
+   "slot": "a",
+   "metric": "net_income",
+   "family": "currency",
+   "alteration": "unit_slip",
+   "is_error": true,
+   "original": "$29.79 billion",
+   "altered": "$29.79 million",
+   "outcome": "stopped",
+   "by": [
+    "comparison",
+    "source check"
+   ],
+   "causes": [],
+   "sentence": "The company's net income was $29.79 billion, or $2.02 per share, beating analyst estimates."
+  },
+  {
+   "run_id": "8ecb0922-da49-4e81-ad9d-c71dbb8bfac1",
+   "slot": "a",
+   "metric": "net_income",
+   "family": "currency",
+   "alteration": "digit_swap",
+   "is_error": true,
+   "original": "$29.79 billion",
+   "altered": "$92.79 billion",
+   "outcome": "stopped",
+   "by": [
+    "comparison",
+    "source check"
+   ],
+   "causes": [],
+   "sentence": "The company's net income was $29.79 billion, or $2.02 per share, beating analyst estimates."
+  },
+  {
+   "run_id": "8ecb0922-da49-4e81-ad9d-c71dbb8bfac1",
+   "slot": "a",
+   "metric": "net_income",
+   "family": "currency",
+   "alteration": "same_value",
+   "is_error": false,
+   "original": "$29.79 billion",
+   "altered": "$29.790 billion",
+   "outcome": "missed",
+   "by": [],
+   "causes": [
+    "another figure for the same metric still matched the other agent",
+    "another figure for the same metric still matched the filing (one agreeing figure passes)"
+   ],
+   "sentence": "The company's net income was $29.79 billion, or $2.02 per share, beating analyst estimates."
+  },
+  {
+   "run_id": "8ecb0922-da49-4e81-ad9d-c71dbb8bfac1",
+   "slot": "a",
+   "metric": "net_income",
+   "family": "currency",
+   "alteration": "rounded",
+   "is_error": false,
+   "original": "$29.79 billion",
+   "altered": "$29.8 billion",
+   "outcome": "missed",
+   "by": [],
+   "causes": [
+    "another figure for the same metric still matched the other agent",
+    "another figure for the same metric still matched the filing (one agreeing figure passes)"
+   ],
+   "sentence": "The company's net income was $29.79 billion, or $2.02 per share, beating analyst estimates."
+  },
+  {
+   "run_id": "8ecb0922-da49-4e81-ad9d-c71dbb8bfac1",
+   "slot": "a",
+   "metric": "eps",
+   "family": "per_share",
+   "alteration": "plus_1pct",
+   "is_error": true,
+   "original": "$2.02",
+   "altered": "$2.04",
+   "outcome": "stopped",
+   "by": [
+    "source check"
+   ],
+   "causes": [],
+   "sentence": "The company's net income was $29.79 billion, or $2.02 per share, beating analyst estimates."
+  },
+  {
+   "run_id": "8ecb0922-da49-4e81-ad9d-c71dbb8bfac1",
+   "slot": "a",
+   "metric": "eps",
+   "family": "per_share",
+   "alteration": "plus_10pct",
+   "is_error": true,
+   "original": "$2.02",
+   "altered": "$2.22",
+   "outcome": "stopped",
+   "by": [
+    "source check"
+   ],
+   "causes": [],
+   "sentence": "The company's net income was $29.79 billion, or $2.02 per share, beating analyst estimates."
+  },
+  {
+   "run_id": "8ecb0922-da49-4e81-ad9d-c71dbb8bfac1",
+   "slot": "a",
+   "metric": "eps",
+   "family": "per_share",
+   "alteration": "digit_swap",
+   "is_error": true,
+   "original": "$2.02",
+   "altered": "$2.20",
+   "outcome": "stopped",
+   "by": [
+    "source check"
+   ],
+   "causes": [],
+   "sentence": "The company's net income was $29.79 billion, or $2.02 per share, beating analyst estimates."
+  },
+  {
+   "run_id": "8ecb0922-da49-4e81-ad9d-c71dbb8bfac1",
+   "slot": "a",
+   "metric": "eps",
+   "family": "per_share",
+   "alteration": "same_value",
+   "is_error": false,
+   "original": "$2.02",
+   "altered": "$2.020",
+   "outcome": "missed",
+   "by": [],
+   "causes": [
+    "another figure for the same metric still matched the filing (one agreeing figure passes)"
+   ],
+   "sentence": "The company's net income was $29.79 billion, or $2.02 per share, beating analyst estimates."
+  },
+  {
+   "run_id": "8ecb0922-da49-4e81-ad9d-c71dbb8bfac1",
+   "slot": "a",
+   "metric": "eps",
+   "family": "per_share",
+   "alteration": "rounded",
+   "is_error": false,
+   "original": "$2.02",
+   "altered": "$2.0",
+   "outcome": "missed",
+   "by": [],
+   "causes": [
+    "another figure for the same metric still matched the filing (one agreeing figure passes)"
+   ],
+   "sentence": "The company's net income was $29.79 billion, or $2.02 per share, beating analyst estimates."
+  },
+  {
+   "run_id": "8ecb0922-da49-4e81-ad9d-c71dbb8bfac1",
+   "slot": "b",
+   "metric": "operating_income",
+   "family": "currency",
+   "alteration": "plus_1pct",
+   "is_error": true,
+   "original": "$35.6 billion",
+   "altered": "$36.0 billion",
+   "outcome": "stopped",
+   "by": [
+    "source check"
+   ],
+   "causes": [],
+   "sentence": "The operating income loss for Q3 FY2026 was $35.6 billion [SOURCE: Visible Alpha, https://www.visiblealpha.com/earnings/aapl-q3-2026-earnings]."
+  },
+  {
+   "run_id": "8ecb0922-da49-4e81-ad9d-c71dbb8bfac1",
+   "slot": "b",
+   "metric": "operating_income",
+   "family": "currency",
+   "alteration": "plus_10pct",
+   "is_error": true,
+   "original": "$35.6 billion",
+   "altered": "$39.2 billion",
+   "outcome": "stopped",
+   "by": [
+    "source check"
+   ],
+   "causes": [],
+   "sentence": "The operating income loss for Q3 FY2026 was $35.6 billion [SOURCE: Visible Alpha, https://www.visiblealpha.com/earnings/aapl-q3-2026-earnings]."
+  },
+  {
+   "run_id": "8ecb0922-da49-4e81-ad9d-c71dbb8bfac1",
+   "slot": "b",
+   "metric": "operating_income",
+   "family": "currency",
+   "alteration": "unit_slip",
+   "is_error": true,
+   "original": "$35.6 billion",
+   "altered": "$35.6 million",
+   "outcome": "stopped",
+   "by": [
+    "source check"
+   ],
+   "causes": [],
+   "sentence": "The operating income loss for Q3 FY2026 was $35.6 billion [SOURCE: Visible Alpha, https://www.visiblealpha.com/earnings/aapl-q3-2026-earnings]."
+  },
+  {
+   "run_id": "8ecb0922-da49-4e81-ad9d-c71dbb8bfac1",
+   "slot": "b",
+   "metric": "operating_income",
+   "family": "currency",
+   "alteration": "digit_swap",
+   "is_error": true,
+   "original": "$35.6 billion",
+   "altered": "$53.6 billion",
+   "outcome": "stopped",
+   "by": [
+    "source check"
+   ],
+   "causes": [],
+   "sentence": "The operating income loss for Q3 FY2026 was $35.6 billion [SOURCE: Visible Alpha, https://www.visiblealpha.com/earnings/aapl-q3-2026-earnings]."
+  },
+  {
+   "run_id": "8ecb0922-da49-4e81-ad9d-c71dbb8bfac1",
+   "slot": "b",
+   "metric": "operating_income",
+   "family": "currency",
+   "alteration": "same_value",
+   "is_error": false,
+   "original": "$35.6 billion",
+   "altered": "$35.60 billion",
+   "outcome": "missed",
+   "by": [],
+   "causes": [
+    "another figure for the same metric still matched the filing (one agreeing figure passes)"
+   ],
+   "sentence": "The operating income loss for Q3 FY2026 was $35.6 billion [SOURCE: Visible Alpha, https://www.visiblealpha.com/earnings/aapl-q3-2026-earnings]."
+  },
+  {
+   "run_id": "8ecb0922-da49-4e81-ad9d-c71dbb8bfac1",
+   "slot": "b",
+   "metric": "operating_income",
+   "family": "currency",
+   "alteration": "rounded",
+   "is_error": false,
+   "original": "$35.6 billion",
+   "altered": "$36 billion",
+   "outcome": "missed",
+   "by": [],
+   "causes": [
+    "another figure for the same metric still matched the filing (one agreeing figure passes)"
+   ],
+   "sentence": "The operating income loss for Q3 FY2026 was $35.6 billion [SOURCE: Visible Alpha, https://www.visiblealpha.com/earnings/aapl-q3-2026-earnings]."
+  },
+  {
+   "run_id": "8ecb0922-da49-4e81-ad9d-c71dbb8bfac1",
+   "slot": "b",
+   "metric": "net_income",
+   "family": "currency",
+   "alteration": "plus_1pct",
+   "is_error": true,
+   "original": "$29.8 billion",
+   "altered": "$30.1 billion",
+   "outcome": "stopped",
+   "by": [
+    "comparison",
+    "source check"
+   ],
+   "causes": [],
+   "sentence": "The net income loss for the quarter was $29.8 billion [SOURCE: CNBC, https://www.cnbc.com/2026/07/30/apple-earnings-live-updates.html]."
+  },
+  {
+   "run_id": "8ecb0922-da49-4e81-ad9d-c71dbb8bfac1",
+   "slot": "b",
+   "metric": "net_income",
+   "family": "currency",
+   "alteration": "plus_10pct",
+   "is_error": true,
+   "original": "$29.8 billion",
+   "altered": "$32.8 billion",
+   "outcome": "stopped",
+   "by": [
+    "comparison",
+    "source check"
+   ],
+   "causes": [],
+   "sentence": "The net income loss for the quarter was $29.8 billion [SOURCE: CNBC, https://www.cnbc.com/2026/07/30/apple-earnings-live-updates.html]."
+  },
+  {
+   "run_id": "8ecb0922-da49-4e81-ad9d-c71dbb8bfac1",
+   "slot": "b",
+   "metric": "net_income",
+   "family": "currency",
+   "alteration": "unit_slip",
+   "is_error": true,
+   "original": "$29.8 billion",
+   "altered": "$29.8 million",
+   "outcome": "stopped",
+   "by": [
+    "comparison",
+    "source check"
+   ],
+   "causes": [],
+   "sentence": "The net income loss for the quarter was $29.8 billion [SOURCE: CNBC, https://www.cnbc.com/2026/07/30/apple-earnings-live-updates.html]."
+  },
+  {
+   "run_id": "8ecb0922-da49-4e81-ad9d-c71dbb8bfac1",
+   "slot": "b",
+   "metric": "net_income",
+   "family": "currency",
+   "alteration": "digit_swap",
+   "is_error": true,
+   "original": "$29.8 billion",
+   "altered": "$92.8 billion",
+   "outcome": "stopped",
+   "by": [
+    "comparison",
+    "source check"
+   ],
+   "causes": [],
+   "sentence": "The net income loss for the quarter was $29.8 billion [SOURCE: CNBC, https://www.cnbc.com/2026/07/30/apple-earnings-live-updates.html]."
+  },
+  {
+   "run_id": "8ecb0922-da49-4e81-ad9d-c71dbb8bfac1",
+   "slot": "b",
+   "metric": "net_income",
+   "family": "currency",
+   "alteration": "same_value",
+   "is_error": false,
+   "original": "$29.8 billion",
+   "altered": "$29.80 billion",
+   "outcome": "missed",
+   "by": [],
+   "causes": [
+    "another figure for the same metric still matched the other agent",
+    "another figure for the same metric still matched the filing (one agreeing figure passes)"
+   ],
+   "sentence": "The net income loss for the quarter was $29.8 billion [SOURCE: CNBC, https://www.cnbc.com/2026/07/30/apple-earnings-live-updates.html]."
+  },
+  {
+   "run_id": "8ecb0922-da49-4e81-ad9d-c71dbb8bfac1",
+   "slot": "b",
+   "metric": "net_income",
+   "family": "currency",
+   "alteration": "rounded",
+   "is_error": false,
+   "original": "$29.8 billion",
+   "altered": "$30 billion",
+   "outcome": "missed",
+   "by": [],
+   "causes": [
+    "another figure for the same metric still matched the other agent",
+    "another figure for the same metric still matched the filing (one agreeing figure passes)"
+   ],
+   "sentence": "The net income loss for the quarter was $29.8 billion [SOURCE: CNBC, https://www.cnbc.com/2026/07/30/apple-earnings-live-updates.html]."
+  },
+  {
+   "run_id": "881a625e-3ffe-4590-a1ae-2573baa777c9",
+   "slot": "b",
+   "metric": "eps",
+   "family": "per_share",
+   "alteration": "plus_1pct",
+   "is_error": true,
+   "original": "$4.27",
+   "altered": "$4.31",
+   "outcome": "missed",
+   "by": [],
+   "causes": [
+    "only one agent answered, so there was nothing to compare against",
+    "another figure for the same metric still matched the filing (one agreeing figure passes)"
+   ],
+   "sentence": "The earnings per share for Microsoft (MSFT) in Q3 FY2026 was $4.27, as reported by Yahoo Finance [SOURCE: Yahoo Finance, https://finance.yahoo.com/quote/MSFT/earnings/MSFT-Q3-2026-earnings_call-547930.html]."
+  },
+  {
+   "run_id": "881a625e-3ffe-4590-a1ae-2573baa777c9",
+   "slot": "b",
+   "metric": "eps",
+   "family": "per_share",
+   "alteration": "plus_10pct",
+   "is_error": true,
+   "original": "$4.27",
+   "altered": "$4.70",
+   "outcome": "missed",
+   "by": [],
+   "causes": [
+    "only one agent answered, so there was nothing to compare against",
+    "another figure for the same metric still matched the filing (one agreeing figure passes)"
+   ],
+   "sentence": "The earnings per share for Microsoft (MSFT) in Q3 FY2026 was $4.27, as reported by Yahoo Finance [SOURCE: Yahoo Finance, https://finance.yahoo.com/quote/MSFT/earnings/MSFT-Q3-2026-earnings_call-547930.html]."
+  },
+  {
+   "run_id": "881a625e-3ffe-4590-a1ae-2573baa777c9",
+   "slot": "b",
+   "metric": "eps",
+   "family": "per_share",
+   "alteration": "digit_swap",
+   "is_error": true,
+   "original": "$4.27",
+   "altered": "$4.72",
+   "outcome": "missed",
+   "by": [],
+   "causes": [
+    "only one agent answered, so there was nothing to compare against",
+    "another figure for the same metric still matched the filing (one agreeing figure passes)"
+   ],
+   "sentence": "The earnings per share for Microsoft (MSFT) in Q3 FY2026 was $4.27, as reported by Yahoo Finance [SOURCE: Yahoo Finance, https://finance.yahoo.com/quote/MSFT/earnings/MSFT-Q3-2026-earnings_call-547930.html]."
+  },
+  {
+   "run_id": "881a625e-3ffe-4590-a1ae-2573baa777c9",
+   "slot": "b",
+   "metric": "eps",
+   "family": "per_share",
+   "alteration": "same_value",
+   "is_error": false,
+   "original": "$4.27",
+   "altered": "$4.270",
+   "outcome": "missed",
+   "by": [],
+   "causes": [
+    "only one agent answered, so there was nothing to compare against",
+    "another figure for the same metric still matched the filing (one agreeing figure passes)"
+   ],
+   "sentence": "The earnings per share for Microsoft (MSFT) in Q3 FY2026 was $4.27, as reported by Yahoo Finance [SOURCE: Yahoo Finance, https://finance.yahoo.com/quote/MSFT/earnings/MSFT-Q3-2026-earnings_call-547930.html]."
+  },
+  {
+   "run_id": "881a625e-3ffe-4590-a1ae-2573baa777c9",
+   "slot": "b",
+   "metric": "eps",
+   "family": "per_share",
+   "alteration": "rounded",
+   "is_error": false,
+   "original": "$4.27",
+   "altered": "$4.3",
+   "outcome": "missed",
+   "by": [],
+   "causes": [
+    "only one agent answered, so there was nothing to compare against",
+    "another figure for the same metric still matched the filing (one agreeing figure passes)"
+   ],
+   "sentence": "The earnings per share for Microsoft (MSFT) in Q3 FY2026 was $4.27, as reported by Yahoo Finance [SOURCE: Yahoo Finance, https://finance.yahoo.com/quote/MSFT/earnings/MSFT-Q3-2026-earnings_call-547930.html]."
+  },
+  {
+   "run_id": "881a625e-3ffe-4590-a1ae-2573baa777c9",
+   "slot": "b",
+   "metric": "revenue",
+   "family": "currency",
+   "alteration": "plus_1pct",
+   "is_error": true,
+   "original": "$82.9 billion",
+   "altered": "$83.7 billion",
+   "outcome": "missed",
+   "by": [],
+   "causes": [
+    "only one agent answered, so there was nothing to compare against",
+    "no filing value for this metric was checked for this agent"
+   ],
+   "sentence": "The company's revenue increased 18% to $82.9 billion, with earnings per share of $4.27."
+  },
+  {
+   "run_id": "881a625e-3ffe-4590-a1ae-2573baa777c9",
+   "slot": "b",
+   "metric": "revenue",
+   "family": "currency",
+   "alteration": "plus_10pct",
+   "is_error": true,
+   "original": "$82.9 billion",
+   "altered": "$91.2 billion",
+   "outcome": "missed",
+   "by": [],
+   "causes": [
+    "only one agent answered, so there was nothing to compare against",
+    "no filing value for this metric was checked for this agent"
+   ],
+   "sentence": "The company's revenue increased 18% to $82.9 billion, with earnings per share of $4.27."
+  },
+  {
+   "run_id": "881a625e-3ffe-4590-a1ae-2573baa777c9",
+   "slot": "b",
+   "metric": "revenue",
+   "family": "currency",
+   "alteration": "unit_slip",
+   "is_error": true,
+   "original": "$82.9 billion",
+   "altered": "$82.9 million",
+   "outcome": "missed",
+   "by": [],
+   "causes": [
+    "only one agent answered, so there was nothing to compare against",
+    "no filing value for this metric was checked for this agent"
+   ],
+   "sentence": "The company's revenue increased 18% to $82.9 billion, with earnings per share of $4.27."
+  },
+  {
+   "run_id": "881a625e-3ffe-4590-a1ae-2573baa777c9",
+   "slot": "b",
+   "metric": "revenue",
+   "family": "currency",
+   "alteration": "digit_swap",
+   "is_error": true,
+   "original": "$82.9 billion",
+   "altered": "$28.9 billion",
+   "outcome": "missed",
+   "by": [],
+   "causes": [
+    "only one agent answered, so there was nothing to compare against",
+    "no filing value for this metric was checked for this agent"
+   ],
+   "sentence": "The company's revenue increased 18% to $82.9 billion, with earnings per share of $4.27."
+  },
+  {
+   "run_id": "881a625e-3ffe-4590-a1ae-2573baa777c9",
+   "slot": "b",
+   "metric": "revenue",
+   "family": "currency",
+   "alteration": "same_value",
+   "is_error": false,
+   "original": "$82.9 billion",
+   "altered": "$82.90 billion",
+   "outcome": "missed",
+   "by": [],
+   "causes": [
+    "only one agent answered, so there was nothing to compare against",
+    "no filing value for this metric was checked for this agent"
+   ],
+   "sentence": "The company's revenue increased 18% to $82.9 billion, with earnings per share of $4.27."
+  },
+  {
+   "run_id": "881a625e-3ffe-4590-a1ae-2573baa777c9",
+   "slot": "b",
+   "metric": "revenue",
+   "family": "currency",
+   "alteration": "rounded",
+   "is_error": false,
+   "original": "$82.9 billion",
+   "altered": "$83 billion",
+   "outcome": "missed",
+   "by": [],
+   "causes": [
+    "only one agent answered, so there was nothing to compare against",
+    "no filing value for this metric was checked for this agent"
+   ],
+   "sentence": "The company's revenue increased 18% to $82.9 billion, with earnings per share of $4.27."
+  },
+  {
+   "run_id": "881a625e-3ffe-4590-a1ae-2573baa777c9",
+   "slot": "b",
+   "metric": "eps",
+   "family": "per_share",
+   "alteration": "plus_1pct",
+   "is_error": true,
+   "original": "$4.27",
+   "altered": "$4.31",
+   "outcome": "missed",
+   "by": [],
+   "causes": [
+    "only one agent answered, so there was nothing to compare against",
+    "another figure for the same metric still matched the filing (one agreeing figure passes)"
+   ],
+   "sentence": "The company's revenue increased 18% to $82.9 billion, with earnings per share of $4.27."
+  },
+  {
+   "run_id": "881a625e-3ffe-4590-a1ae-2573baa777c9",
+   "slot": "b",
+   "metric": "eps",
+   "family": "per_share",
+   "alteration": "plus_10pct",
+   "is_error": true,
+   "original": "$4.27",
+   "altered": "$4.70",
+   "outcome": "missed",
+   "by": [],
+   "causes": [
+    "only one agent answered, so there was nothing to compare against",
+    "another figure for the same metric still matched the filing (one agreeing figure passes)"
+   ],
+   "sentence": "The company's revenue increased 18% to $82.9 billion, with earnings per share of $4.27."
+  },
+  {
+   "run_id": "881a625e-3ffe-4590-a1ae-2573baa777c9",
+   "slot": "b",
+   "metric": "eps",
+   "family": "per_share",
+   "alteration": "digit_swap",
+   "is_error": true,
+   "original": "$4.27",
+   "altered": "$4.72",
+   "outcome": "missed",
+   "by": [],
+   "causes": [
+    "only one agent answered, so there was nothing to compare against",
+    "another figure for the same metric still matched the filing (one agreeing figure passes)"
+   ],
+   "sentence": "The company's revenue increased 18% to $82.9 billion, with earnings per share of $4.27."
+  },
+  {
+   "run_id": "881a625e-3ffe-4590-a1ae-2573baa777c9",
+   "slot": "b",
+   "metric": "eps",
+   "family": "per_share",
+   "alteration": "same_value",
+   "is_error": false,
+   "original": "$4.27",
+   "altered": "$4.270",
+   "outcome": "missed",
+   "by": [],
+   "causes": [
+    "only one agent answered, so there was nothing to compare against",
+    "another figure for the same metric still matched the filing (one agreeing figure passes)"
+   ],
+   "sentence": "The company's revenue increased 18% to $82.9 billion, with earnings per share of $4.27."
+  },
+  {
+   "run_id": "881a625e-3ffe-4590-a1ae-2573baa777c9",
+   "slot": "b",
+   "metric": "eps",
+   "family": "per_share",
+   "alteration": "rounded",
+   "is_error": false,
+   "original": "$4.27",
+   "altered": "$4.3",
+   "outcome": "missed",
+   "by": [],
+   "causes": [
+    "only one agent answered, so there was nothing to compare against",
+    "another figure for the same metric still matched the filing (one agreeing figure passes)"
+   ],
+   "sentence": "The company's revenue increased 18% to $82.9 billion, with earnings per share of $4.27."
+  }
+ ],
+ "runs": [
+  "beb02048-9373-40a2-ae0c-333592d05fde",
+  "20c538e4-ea77-4765-91a1-aad8c488d4b0",
+  "7a099f0c-2bde-4a8b-b18b-edab77f69458",
+  "8ecb0922-da49-4e81-ad9d-c71dbb8bfac1",
+  "881a625e-3ffe-4590-a1ae-2573baa777c9"
+ ]
+}
